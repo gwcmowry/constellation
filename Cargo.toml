@@ -1,0 +1,14 @@
+[workspace]
+members = [
+    "crates/constellation-core",
+    "crates/constellation-cli",
+]
+resolver = "2"
+
+[profile.release]
+debug = true
+lto = "thin"
+codegen-units = 1
+
+[profile.bench]
+debug = true
