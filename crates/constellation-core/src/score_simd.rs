@@ -33,6 +33,12 @@ impl CandidateScorer for PulpScorer {
             }
             .score_bucket(reads, quals, index, bucket, out, read_score_stats);
         }
+        if self.config.library_strand != crate::score::LibraryStrand::Unstranded {
+            return ScalarScorer {
+                config: self.config,
+            }
+            .score_bucket(reads, quals, index, bucket, out, read_score_stats);
+        }
         let before = out.len();
         let block = ScoreBlock::from_bucket(reads, index, bucket);
         let mut stats = ScoreFailureStats {
@@ -49,6 +55,7 @@ impl CandidateScorer for PulpScorer {
                     transcript_id: block.transcript_ids[idx],
                     gene_id: block.gene_ids[idx],
                     pos: block.pos[idx],
+                    strand: 0,
                     mismatches,
                     score: read_seq.len().saturating_sub(mismatches as usize) as u16,
                     flags: crate::score::SCORE_FLAG_FULL_LENGTH,

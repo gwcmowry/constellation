@@ -1,10 +1,11 @@
 use crate::candidate::CandidateLocusBucket;
 use crate::index::IndexAccess;
 use crate::score::{
-    hamming_ascii, hamming_revcomp_ascii, qual_by_read_id, read_seq_by_id, CandidateScorer,
-    ScoreConfig, ScoreFailureStats, ScoredCandidate, SCORE_FLAG_FULL_LENGTH,
-    SCORE_FLAG_LEFT_SOFTCLIP, SCORE_FLAG_RIGHT_SOFTCLIP, SCORE_FLAG_TRIMMED_LOW_QUALITY,
-    SCORE_FLAG_TRIMMED_POLY_A, SCORE_FLAG_TRIMMED_POLY_T,
+    hamming_ascii, hamming_revcomp_ascii, qual_by_read_id, read_seq_by_id, tso_prefix_trim_len,
+    CandidateScorer, LibraryStrand, ScoreConfig, ScoreFailureStats, ScoredCandidate,
+    SCORE_FLAG_ANTISENSE, SCORE_FLAG_FULL_LENGTH, SCORE_FLAG_LEFT_SOFTCLIP,
+    SCORE_FLAG_RIGHT_SOFTCLIP, SCORE_FLAG_TRIMMED_LOW_QUALITY, SCORE_FLAG_TRIMMED_POLY_A,
+    SCORE_FLAG_TRIMMED_POLY_T, SCORE_FLAG_TRIMMED_TSO,
 };
 use crate::ReadId;
 
@@ -49,7 +50,7 @@ impl CandidateScorer for ScalarScorer {
             };
             let qual = qual_by_read_id(quals, hit.read_id);
             let outcome = score_hit(self.config, hit, read_seq, qual, transcript_seq);
-            let Some(candidate) = outcome.candidate else {
+            let Some(mut candidate) = outcome.candidate else {
                 match outcome.failure {
                     ScoreFailureReason::FullLengthOutOfBounds => {
                         hit_stats.candidates_out_of_bounds += 1;
@@ -72,6 +73,9 @@ impl CandidateScorer for ScalarScorer {
                 add_read_stats(read_score_stats.as_deref_mut(), hit.read_id, hit_stats);
                 continue;
             };
+            if is_antisense_candidate(self.config, hit) {
+                candidate.flags |= SCORE_FLAG_ANTISENSE;
+            }
             if candidate.flags & SCORE_FLAG_FULL_LENGTH != 0 {
                 hit_stats.candidates_passed_full_length += 1;
             } else {
@@ -82,6 +86,14 @@ impl CandidateScorer for ScalarScorer {
             add_read_stats(read_score_stats.as_deref_mut(), hit.read_id, hit_stats);
         }
         stats
+    }
+}
+
+fn is_antisense_candidate(config: ScoreConfig, hit: &crate::candidate::CandidateHit) -> bool {
+    match config.library_strand {
+        LibraryStrand::Unstranded => false,
+        LibraryStrand::Forward => hit.strand == 1,
+        LibraryStrand::Reverse => hit.strand == 0,
     }
 }
 
@@ -117,25 +129,37 @@ fn score_hit(
     qual: Option<&[u8]>,
     transcript_seq: &[u8],
 ) -> ScoreOutcome {
-    let start = hit.pos as usize;
-    let end = start + read_seq.len();
+    let tso_trim = tso_trim_len(read_seq, config);
+    let (read_window, qual_window) = trim_tso_prefix(read_seq, qual, tso_trim);
+    let ref_offset = 0;
+    let start = hit.pos as usize + ref_offset;
+    let end = start + read_window.len();
     let mut full_length_failure = ScoreFailureReason::FullLengthOutOfBounds;
     if end <= transcript_seq.len() {
         let reference = &transcript_seq[start..end];
         let mismatches = if hit.strand == 0 {
-            hamming_ascii(read_seq, reference)
+            hamming_ascii(read_window, reference)
         } else {
-            hamming_revcomp_ascii(read_seq, reference)
+            hamming_revcomp_ascii(read_window, reference)
         };
         if mismatches <= config.max_mismatches {
             return ScoreOutcome::candidate(ScoredCandidate {
                 read_id: hit.read_id,
                 transcript_id: hit.transcript_id,
                 gene_id: hit.gene_id,
-                pos: hit.pos,
+                pos: start as u32,
+                strand: hit.strand,
                 mismatches,
-                score: read_seq.len().saturating_sub(mismatches as usize) as u16,
-                flags: SCORE_FLAG_FULL_LENGTH,
+                score: read_window
+                    .len()
+                    .saturating_sub(mismatches as usize)
+                    .saturating_sub(tso_trim)
+                    .min(u16::MAX as usize) as u16,
+                flags: if tso_trim > 0 {
+                    SCORE_FLAG_TRIMMED_TSO
+                } else {
+                    SCORE_FLAG_FULL_LENGTH
+                },
             });
         }
         full_length_failure = ScoreFailureReason::FullLengthMismatchOnly;
@@ -143,7 +167,15 @@ fn score_hit(
     if config.uses_default_window() {
         return ScoreOutcome::failure(full_length_failure);
     }
-    score_trimmed_or_softclipped(config, hit, read_seq, qual, transcript_seq)
+    score_trimmed_or_softclipped(
+        config,
+        hit,
+        read_window,
+        qual_window,
+        ref_offset,
+        tso_trim,
+        transcript_seq,
+    )
 }
 
 fn score_trimmed_or_softclipped(
@@ -151,6 +183,8 @@ fn score_trimmed_or_softclipped(
     hit: &crate::candidate::CandidateHit,
     read_seq: &[u8],
     qual: Option<&[u8]>,
+    ref_offset: usize,
+    already_trimmed: usize,
     transcript_seq: &[u8],
 ) -> ScoreOutcome {
     let (oriented_read, oriented_qual) = orient_read_and_qual(read_seq, qual, hit.strand);
@@ -174,7 +208,7 @@ fn score_trimmed_or_softclipped(
                 continue;
             }
             saw_len_ok = true;
-            let ref_start = hit.pos as usize + left_clip;
+            let ref_start = hit.pos as usize + ref_offset + left_clip;
             let ref_end = ref_start + scored_len;
             if ref_end > transcript_seq.len() {
                 continue;
@@ -187,12 +221,18 @@ fn score_trimmed_or_softclipped(
                 saw_mismatch_failure = true;
                 continue;
             }
-            let total_clipped = oriented_read.len().saturating_sub(scored_len);
+            let total_clipped = oriented_read
+                .len()
+                .saturating_sub(scored_len)
+                .saturating_add(already_trimmed);
             let score = scored_len
                 .saturating_sub(mismatches as usize)
                 .saturating_sub(total_clipped)
                 .min(u16::MAX as usize) as u16;
             let mut flags = trim_flags;
+            if already_trimmed > 0 {
+                flags |= SCORE_FLAG_TRIMMED_TSO;
+            }
             if left_clip > 0 {
                 flags |= SCORE_FLAG_LEFT_SOFTCLIP;
             }
@@ -203,7 +243,8 @@ fn score_trimmed_or_softclipped(
                 read_id: hit.read_id,
                 transcript_id: hit.transcript_id,
                 gene_id: hit.gene_id,
-                pos: hit.pos + left_clip as u32,
+                pos: hit.pos + ref_offset as u32 + left_clip as u32,
+                strand: hit.strand,
                 mismatches,
                 score,
                 flags,
@@ -279,6 +320,28 @@ fn orient_read_and_qual(
     (read, qual)
 }
 
+fn trim_tso_prefix<'a>(
+    read_seq: &'a [u8],
+    qual: Option<&'a [u8]>,
+    trim_len: usize,
+) -> (&'a [u8], Option<&'a [u8]>) {
+    if trim_len == 0 {
+        return (read_seq, qual);
+    }
+    (&read_seq[trim_len..], qual.and_then(|q| q.get(trim_len..)))
+}
+
+fn tso_trim_len(read_seq: &[u8], config: ScoreConfig) -> usize {
+    if !config.trim_tso {
+        return 0;
+    }
+    tso_prefix_trim_len(
+        read_seq,
+        config.min_tso_match_len,
+        config.max_tso_mismatches,
+    )
+}
+
 fn trimmed_end(read: &[u8], qual: Option<&[u8]>, config: ScoreConfig) -> (usize, u16) {
     let mut end = read.len();
     let mut flags = 0_u16;
@@ -325,7 +388,7 @@ mod tests {
     use crate::index::{TranscriptIndex, TranscriptMeta};
     use crate::score::{
         hamming_ascii, SCORE_FLAG_RIGHT_SOFTCLIP, SCORE_FLAG_TRIMMED_LOW_QUALITY,
-        SCORE_FLAG_TRIMMED_POLY_A,
+        SCORE_FLAG_TRIMMED_POLY_A, SCORE_FLAG_TRIMMED_TSO,
     };
 
     #[test]
@@ -386,6 +449,26 @@ mod tests {
         scorer.score_bucket(&reads, &quals, &index, &bucket, &mut scored, None);
         assert_eq!(scored.len(), 1);
         assert_ne!(scored[0].flags & SCORE_FLAG_TRIMMED_LOW_QUALITY, 0);
+    }
+
+    #[test]
+    fn tso_prefix_can_trim() {
+        let index = index_with_transcript("ACGTACGT");
+        let bucket = bucket_at(0);
+        let reads = vec![(0, b"AAGCAGTGGTACGTACGT".to_vec())];
+        let quals = vec![(0, b"IIIIIIIIIIIIIIIIII".to_vec())];
+        let mut scored = Vec::new();
+        let scorer = ScalarScorer {
+            config: ScoreConfig {
+                trim_tso: true,
+                min_scored_len: 8,
+                ..ScoreConfig::default()
+            },
+        };
+        scorer.score_bucket(&reads, &quals, &index, &bucket, &mut scored, None);
+        assert_eq!(scored.len(), 1);
+        assert_eq!(scored[0].pos, 0);
+        assert_ne!(scored[0].flags & SCORE_FLAG_TRIMMED_TSO, 0);
     }
 
     #[test]

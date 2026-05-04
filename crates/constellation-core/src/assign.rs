@@ -1,4 +1,5 @@
 use crate::score::ScoredCandidate;
+use crate::score::SCORE_FLAG_ANTISENSE;
 use crate::{GeneId, ReadId, TranscriptId};
 use std::collections::BTreeSet;
 
@@ -7,6 +8,7 @@ pub enum AssignmentType {
     UniqueGene,
     AmbiguousGene,
     AmbiguousTranscriptSameGene,
+    AntisenseGene,
     Unmapped,
     LowComplexity,
     LowQuality,
@@ -18,6 +20,7 @@ impl AssignmentType {
             Self::UniqueGene => "unique_gene",
             Self::AmbiguousGene => "ambiguous_gene",
             Self::AmbiguousTranscriptSameGene => "ambiguous_transcript_same_gene",
+            Self::AntisenseGene => "antisense_gene",
             Self::Unmapped => "unmapped",
             Self::LowComplexity => "low_complexity",
             Self::LowQuality => "low_quality",
@@ -90,6 +93,47 @@ pub fn assign_read(
         .iter()
         .filter(|candidate| candidate.score == best_score)
         .collect();
+    let sense_best: Vec<_> = best
+        .iter()
+        .copied()
+        .filter(|candidate| candidate.flags & SCORE_FLAG_ANTISENSE == 0)
+        .collect();
+    if !sense_best.is_empty() {
+        return assign_from_best(
+            read_id,
+            cell_barcode,
+            umi,
+            candidates.len() as u32,
+            best_score,
+            &sense_best,
+        );
+    }
+
+    let genes: BTreeSet<_> = best.iter().map(|candidate| candidate.gene_id).collect();
+    let gene_id = (genes.len() == 1)
+        .then(|| genes.iter().next().copied())
+        .flatten();
+    return Assignment {
+        read_id,
+        cell_barcode,
+        umi,
+        assignment_type: AssignmentType::AntisenseGene,
+        gene_id,
+        transcript_id: None,
+        candidate_count: candidates.len() as u32,
+        score: best_score,
+        flags: 0,
+    };
+}
+
+fn assign_from_best(
+    read_id: ReadId,
+    cell_barcode: String,
+    umi: String,
+    candidate_count: u32,
+    best_score: u16,
+    best: &[&ScoredCandidate],
+) -> Assignment {
     let genes: BTreeSet<_> = best.iter().map(|candidate| candidate.gene_id).collect();
     let transcripts: BTreeSet<_> = best
         .iter()
@@ -119,7 +163,7 @@ pub fn assign_read(
         assignment_type,
         gene_id,
         transcript_id,
-        candidate_count: candidates.len() as u32,
+        candidate_count,
         score: best_score,
         flags: 0,
     }
@@ -155,6 +199,7 @@ mod tests {
             gene_id,
             transcript_id,
             pos: 0,
+            strand: 0,
             mismatches: 0,
             score: 10,
             flags: 0,
@@ -185,5 +230,24 @@ mod tests {
         );
         assert_eq!(assignment.gene_id, Some(1));
         assert_eq!(assignment.transcript_id, None);
+    }
+
+    #[test]
+    fn sense_candidate_beats_equal_score_antisense_candidate() {
+        let sense = candidate(0, 1, 2);
+        let mut antisense = candidate(0, 2, 3);
+        antisense.flags = SCORE_FLAG_ANTISENSE;
+        let assignment = assign_read(0, "CB".to_owned(), "UMI".to_owned(), &[antisense, sense]);
+        assert_eq!(assignment.assignment_type, AssignmentType::UniqueGene);
+        assert_eq!(assignment.gene_id, Some(1));
+    }
+
+    #[test]
+    fn antisense_only_best_candidates_are_classified() {
+        let mut antisense = candidate(0, 1, 2);
+        antisense.flags = SCORE_FLAG_ANTISENSE;
+        let assignment = assign_read(0, "CB".to_owned(), "UMI".to_owned(), &[antisense]);
+        assert_eq!(assignment.assignment_type, AssignmentType::AntisenseGene);
+        assert_eq!(assignment.gene_id, Some(1));
     }
 }

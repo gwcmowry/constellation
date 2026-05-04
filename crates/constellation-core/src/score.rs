@@ -8,6 +8,7 @@ pub struct ScoredCandidate {
     pub transcript_id: TranscriptId,
     pub gene_id: GeneId,
     pub pos: u32,
+    pub strand: u8,
     pub mismatches: u32,
     pub score: u16,
     pub flags: u16,
@@ -19,6 +20,42 @@ pub const SCORE_FLAG_TRIMMED_POLY_T: u16 = 1 << 2;
 pub const SCORE_FLAG_TRIMMED_LOW_QUALITY: u16 = 1 << 3;
 pub const SCORE_FLAG_RIGHT_SOFTCLIP: u16 = 1 << 4;
 pub const SCORE_FLAG_LEFT_SOFTCLIP: u16 = 1 << 5;
+pub const SCORE_FLAG_TRIMMED_TSO: u16 = 1 << 6;
+pub const SCORE_FLAG_ANTISENSE: u16 = 1 << 7;
+
+pub const TENX_3P_TSO: &[u8] = b"AAGCAGTGGTATCAACGCAGAGTACATGGG";
+
+pub fn tso_prefix_trim_len(read_seq: &[u8], min_match_len: u8, max_mismatches: u8) -> usize {
+    if read_seq.is_empty() {
+        return 0;
+    }
+    let max_len = read_seq.len().min(TENX_3P_TSO.len());
+    let min_len = usize::from(min_match_len).min(max_len);
+    if min_len == 0 {
+        return 0;
+    }
+    let mut best = 0;
+    for len in min_len..=max_len {
+        let mut mismatches = 0_u8;
+        for idx in 0..len {
+            if !read_seq[idx].eq_ignore_ascii_case(&TENX_3P_TSO[idx]) {
+                mismatches = mismatches.saturating_add(1);
+            }
+        }
+        if mismatches <= max_mismatches {
+            best = len;
+        }
+    }
+    best
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum LibraryStrand {
+    #[default]
+    Unstranded,
+    Forward,
+    Reverse,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ScoreConfig {
@@ -28,6 +65,10 @@ pub struct ScoreConfig {
     pub trim_poly_a: bool,
     pub trim_poly_t: bool,
     pub trim_low_quality_tail: bool,
+    pub trim_tso: bool,
+    pub max_tso_mismatches: u8,
+    pub min_tso_match_len: u8,
+    pub library_strand: LibraryStrand,
     pub min_scored_len: u16,
     pub min_tail_phred: u8,
 }
@@ -41,6 +82,10 @@ impl Default for ScoreConfig {
             trim_poly_a: false,
             trim_poly_t: false,
             trim_low_quality_tail: false,
+            trim_tso: false,
+            max_tso_mismatches: 3,
+            min_tso_match_len: 10,
+            library_strand: LibraryStrand::Unstranded,
             min_scored_len: 35,
             min_tail_phred: 10,
         }
@@ -54,6 +99,7 @@ impl ScoreConfig {
             && !self.trim_poly_a
             && !self.trim_poly_t
             && !self.trim_low_quality_tail
+            && !self.trim_tso
     }
 }
 

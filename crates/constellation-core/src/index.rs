@@ -371,6 +371,10 @@ pub trait IndexAccess: Send + Sync {
     fn max_kmer_frequency(&self) -> u32;
     fn num_genes(&self) -> usize;
     fn gene_name(&self, gene_id: GeneId) -> Option<&str>;
+    fn transcript_name(&self, transcript_id: TranscriptId) -> Option<&str>;
+    fn transcript_target_strand(&self, transcript_id: TranscriptId) -> Option<u8> {
+        transcript_target_strand_from_name(self.transcript_name(transcript_id)?)
+    }
     fn transcript_gene_id(&self, transcript_id: TranscriptId) -> Option<GeneId>;
     fn transcript_seq(&self, transcript_id: TranscriptId) -> Option<&[u8]>;
     fn posting_count(&self, kmer_code: u64) -> usize;
@@ -378,6 +382,15 @@ pub trait IndexAccess: Send + Sync {
     fn seed_postings(&self, kmer_code: u64) -> SeedPostingIter<'_>;
     fn postings(&self, kmer_code: u64) -> PostingIter<'_>;
     fn stats(&self) -> IndexStats;
+}
+
+pub fn transcript_target_strand_from_name(name: &str) -> Option<u8> {
+    let (_, rest) = name.split_once("|strand:")?;
+    match rest.as_bytes().first().copied()? {
+        b'+' => Some(b'+'),
+        b'-' => Some(b'-'),
+        _ => None,
+    }
 }
 
 impl TranscriptIndex {
@@ -981,6 +994,12 @@ impl IndexAccess for TranscriptIndex {
         self.genes.get(gene_id as usize).map(String::as_str)
     }
 
+    fn transcript_name(&self, transcript_id: TranscriptId) -> Option<&str> {
+        self.transcripts
+            .get(transcript_id as usize)
+            .map(|meta| meta.name.as_str())
+    }
+
     fn transcript_gene_id(&self, transcript_id: TranscriptId) -> Option<GeneId> {
         self.transcripts
             .get(transcript_id as usize)
@@ -1106,6 +1125,15 @@ impl IndexAccess for CompactTranscriptIndex {
         .ok()
     }
 
+    fn transcript_name(&self, transcript_id: TranscriptId) -> Option<&str> {
+        let meta = self.transcripts().get(transcript_id as usize)?;
+        std::str::from_utf8(
+            &self.transcript_names()
+                [meta.name_start as usize..(meta.name_start + meta.name_len) as usize],
+        )
+        .ok()
+    }
+
     fn transcript_gene_id(&self, transcript_id: TranscriptId) -> Option<GeneId> {
         self.transcripts()
             .get(transcript_id as usize)
@@ -1215,6 +1243,13 @@ impl IndexAccess for LoadedIndex {
         match self {
             Self::Owned(index) => index.gene_name(gene_id),
             Self::Compact(index) => index.gene_name(gene_id),
+        }
+    }
+
+    fn transcript_name(&self, transcript_id: TranscriptId) -> Option<&str> {
+        match self {
+            Self::Owned(index) => index.transcript_name(transcript_id),
+            Self::Compact(index) => index.transcript_name(transcript_id),
         }
     }
 

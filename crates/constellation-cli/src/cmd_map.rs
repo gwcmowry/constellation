@@ -1,16 +1,24 @@
-use crate::{MapArgs, MapMode, RetrievalModeArg, ScoreMode, SeedPlannerArg};
+use crate::{
+    CandidatePruningArg, CandidateSearchArg, LibraryStrandArg, MapArgs, MapMode, ReadChunkingArg,
+    RetrievalModeArg, ScoreMode, SeedPlannerArg,
+};
 use anyhow::{anyhow, Result};
 use constellation_core::assign::{assign_read, flagged_assignment, Assignment, AssignmentType};
 use constellation_core::candidate::{
-    generate_candidate_hits_seed_batched, generate_candidate_hits_with_quality_stats,
-    make_candidate_locus_buckets, make_single_hit_buckets, CandidateEarlyStopConfig,
-    CandidateGenerationStats, CandidateLocusBucket, SeedPlanner,
+    best_sparse_probe_seed_key, generate_candidate_hits_seed_batched,
+    generate_candidate_hits_with_quality_stats, make_candidate_locus_buckets,
+    make_single_hit_buckets, CandidateEarlyStopConfig, CandidateGenerationStats,
+    CandidateLocusBucket, CandidatePruningMode, CandidateSearchMode, SeedPlanner,
+    SparseProbeConfig, WandLiteConfig,
 };
 use constellation_core::chemistry::{parse_tenx_3p_v3_r1, BarcodeUmi, Chemistry};
 use constellation_core::fastq::read_fastq;
 use constellation_core::index::{IndexAccess, LoadedIndex};
 use constellation_core::metrics::MapMetrics;
-use constellation_core::score::{CandidateScorer, ScoreConfig, ScoreFailureStats, ScoredCandidate};
+use constellation_core::score::{
+    tso_prefix_trim_len, CandidateScorer, LibraryStrand, ScoreConfig, ScoreFailureStats,
+    ScoredCandidate,
+};
 use constellation_core::score_scalar::ScalarScorer;
 use constellation_core::score_simd::PulpScorer;
 use constellation_core::sketch::{sketch_read, sort_sketch_records};
@@ -62,12 +70,23 @@ pub fn run_map(args: MapArgs) -> Result<()> {
             let (barcode_umi, invalid_bc_umi) = parse_tenx_3p_v3_r1(&r1_record.seq)
                 .map(|parsed| (parsed, false))
                 .unwrap_or_else(|_| (lossy_barcode_umi(&r1_record.seq), true));
-            let low_quality = mean_phred_quality(&r2_record.qual) < args.min_mean_quality;
-            let sketch = sketch_read(read_id, &r2_record.seq, index.k());
+            let tso_trim = if args.trim_tso {
+                tso_prefix_trim_len(
+                    &r2_record.seq,
+                    args.min_tso_match_len,
+                    args.max_tso_mismatches,
+                )
+            } else {
+                0
+            };
+            let seq = r2_record.seq[tso_trim..].to_vec();
+            let qual = r2_record.qual[tso_trim..].to_vec();
+            let low_quality = mean_phred_quality(&qual) < args.min_mean_quality;
+            let sketch = sketch_read(read_id, &seq, index.k());
             PreparedRead {
                 read_id,
-                seq: r2_record.seq.clone(),
-                qual: r2_record.qual.clone(),
+                seq,
+                qual,
                 cell_barcode: barcode_umi.cell_barcode_seq,
                 umi: barcode_umi.umi_seq,
                 invalid_barcode_umi: invalid_bc_umi,
@@ -200,6 +219,7 @@ pub fn run_map(args: MapArgs) -> Result<()> {
         let same_gene_multitranscript_rate =
             rate(&assignments, AssignmentType::AmbiguousTranscriptSameGene);
         let multi_gene_ambiguous_rate = rate(&assignments, AssignmentType::AmbiguousGene);
+        let antisense_gene_rate = rate(&assignments, AssignmentType::AntisenseGene);
         let mut metrics = MapMetrics {
             mode: args.mode.as_str().to_owned(),
             score_mode: args.score_mode.as_str().to_owned(),
@@ -246,6 +266,10 @@ pub fn run_map(args: MapArgs) -> Result<()> {
                 / stats.distinct_seed_lists_loaded.max(1) as f64,
             candidate_votes_per_read: stats.candidate_votes as f64 / reads.len().max(1) as f64,
             seed_groups_skipped_due_to_frequency: stats.seed_groups_skipped_due_to_frequency,
+            sparse_probe_attempted_reads: stats.sparse_probe_attempted_reads,
+            sparse_probe_accepted_reads: stats.sparse_probe_accepted_reads,
+            sparse_probe_fallback_reads: stats.sparse_probe_fallback_reads,
+            candidate_hits_pruned: stats.candidate_hits_pruned,
             score_candidates_seen: score_stats.candidates_seen,
             score_candidates_out_of_bounds: score_stats.candidates_out_of_bounds,
             score_candidates_failed_mismatch: score_stats.candidates_failed_mismatch,
@@ -261,6 +285,7 @@ pub fn run_map(args: MapArgs) -> Result<()> {
             ambiguous_gene_rate: multi_gene_ambiguous_rate,
             same_gene_multitranscript_rate,
             multi_gene_ambiguous_rate,
+            antisense_gene_rate,
             gene_countable_rate: unique_gene_rate + same_gene_multitranscript_rate,
             low_complexity_rate: rate(&assignments, AssignmentType::LowComplexity),
             low_quality_rate: rate(&assignments, AssignmentType::LowQuality),
@@ -304,6 +329,12 @@ impl FunctionTimings {
         *self.totals.entry(name).or_default() += started.elapsed();
     }
 
+    fn add_all(&mut self, next: FunctionTimings) {
+        for (name, duration) in next.totals {
+            *self.totals.entry(name).or_default() += duration;
+        }
+    }
+
     fn into_seconds(self) -> BTreeMap<String, f64> {
         self.totals
             .into_iter()
@@ -327,6 +358,14 @@ fn score_config(args: &MapArgs) -> ScoreConfig {
         trim_poly_a: args.trim_poly_a,
         trim_poly_t: args.trim_poly_t,
         trim_low_quality_tail: args.trim_low_quality_tail,
+        trim_tso: args.trim_tso,
+        max_tso_mismatches: args.max_tso_mismatches,
+        min_tso_match_len: args.min_tso_match_len,
+        library_strand: match args.library_strand {
+            LibraryStrandArg::Unstranded => LibraryStrand::Unstranded,
+            LibraryStrandArg::Forward => LibraryStrand::Forward,
+            LibraryStrandArg::Reverse => LibraryStrand::Reverse,
+        },
         min_scored_len: args.min_scored_length,
         min_tail_phred: args.min_tail_phred,
     }
@@ -346,6 +385,33 @@ fn seed_planner(arg: SeedPlannerArg) -> SeedPlanner {
     match arg {
         SeedPlannerArg::RawFrequency => SeedPlanner::RawFrequency,
         SeedPlannerArg::GeneIdf => SeedPlanner::GeneIdf,
+    }
+}
+
+fn candidate_search(args: &MapArgs) -> CandidateSearchMode {
+    match args.candidate_search {
+        CandidateSearchArg::Full => CandidateSearchMode::Full,
+        CandidateSearchArg::SparseProbe => CandidateSearchMode::SparseProbe(SparseProbeConfig {
+            stride: args.sparse_probe_stride,
+            max_seeds: args.sparse_probe_max_seeds,
+            min_seed_hits: args.sparse_probe_min_seed_hits,
+        }),
+    }
+}
+
+fn candidate_pruning(args: &MapArgs) -> CandidatePruningMode {
+    match args.candidate_pruning {
+        CandidatePruningArg::None => CandidatePruningMode::None,
+        CandidatePruningArg::WandLite => CandidatePruningMode::WandLite(WandLiteConfig {
+            min_top_seed_count: args.wand_min_top_seed_count,
+            score_ratio_percent: args.wand_score_ratio_percent,
+            max_loci_per_gene: args.wand_max_loci_per_gene,
+        }),
+        CandidatePruningArg::GeneWandLite => CandidatePruningMode::GeneWandLite(WandLiteConfig {
+            min_top_seed_count: args.wand_min_top_seed_count,
+            score_ratio_percent: args.wand_score_ratio_percent,
+            max_loci_per_gene: args.wand_max_loci_per_gene,
+        }),
     }
 }
 
@@ -478,105 +544,86 @@ fn map_bucketed(
     read_candidate_stats: &mut [CandidateGenerationStats],
     read_score_stats: &mut [ScoreFailureStats],
 ) -> Vec<Assignment> {
+    if args.retrieval_mode == RetrievalModeArg::SeedBatched && early_stop.is_none() {
+        return map_seed_batched_streamed(
+            args,
+            reads,
+            quals,
+            barcode_umis,
+            low_quality,
+            invalid_barcode_umi,
+            sketch_flags_by_read,
+            sketches,
+            index,
+            scorer,
+            regroup_by_locus,
+            stats,
+            score_stats,
+            stage_times,
+            function_timings,
+            bucket_sizes,
+            read_candidate_stats,
+            read_score_stats,
+        );
+    }
+
     let candidate_started = Instant::now();
     let mut all_hits = Vec::new();
     let mut low_complexity = Vec::new();
     let mut low_quality_reads = Vec::new();
-    if args.retrieval_mode == RetrievalModeArg::SeedBatched && early_stop.is_none() {
-        let active_read_ids: Vec<_> = sketches
-            .iter()
-            .filter_map(|sketch| {
-                if low_quality[sketch.read_id as usize]
-                    || invalid_barcode_umi[sketch.read_id as usize]
-                {
-                    low_quality_reads.push(sketch.read_id);
-                    None
-                } else if sketch.flags & 1 != 0 {
-                    low_complexity.push(sketch.read_id);
-                    None
-                } else {
-                    Some(sketch.read_id)
-                }
-            })
-            .collect();
-        let (hits, batch_stats, per_read_stats) = generate_candidate_hits_seed_batched(
-            index,
-            reads,
-            quals,
-            &active_read_ids,
-            args.min_seed_quality,
-            args.max_seeds_per_read,
-            args.max_postings_per_seed,
-            args.search_reverse_complement,
-            seed_planner(args.seed_planner),
-        );
-        add_stats(stats, batch_stats);
-        for (read_id, read_stats) in per_read_stats {
-            if let Some(slot) = read_candidate_stats.get_mut(read_id as usize) {
-                *slot = read_stats;
+    let candidate_work: Vec<_> = sketches
+        .par_iter()
+        .map(|sketch| {
+            if low_quality[sketch.read_id as usize] || invalid_barcode_umi[sketch.read_id as usize]
+            {
+                return CandidateWork::LowQuality(sketch.read_id);
             }
-        }
-        all_hits = hits;
-    } else {
-        let candidate_work: Vec<_> = sketches
-            .par_iter()
-            .map(|sketch| {
-                if low_quality[sketch.read_id as usize]
-                    || invalid_barcode_umi[sketch.read_id as usize]
-                {
-                    return CandidateWork::LowQuality(sketch.read_id);
-                }
-                if sketch.flags & 1 != 0 {
-                    return CandidateWork::LowComplexity(sketch.read_id);
-                }
-                let (_, seq) = &reads[sketch.read_id as usize];
-                let (hits, read_stats) = generate_candidate_hits_with_quality_stats(
-                    index,
-                    sketch.read_id,
-                    seq,
-                    Some(&quals[sketch.read_id as usize].1),
-                    args.min_seed_quality,
-                    args.max_seeds_per_read,
-                    args.max_postings_per_seed,
-                    args.search_reverse_complement,
-                    early_stop,
-                    seed_planner(args.seed_planner),
-                );
-                CandidateWork::Hits {
-                    read_id: sketch.read_id,
-                    hits,
-                    read_stats,
-                }
-            })
-            .collect();
+            if sketch.flags & 1 != 0 {
+                return CandidateWork::LowComplexity(sketch.read_id);
+            }
+            let (_, seq) = &reads[sketch.read_id as usize];
+            let (hits, read_stats) = generate_candidate_hits_with_quality_stats(
+                index,
+                sketch.read_id,
+                seq,
+                Some(&quals[sketch.read_id as usize].1),
+                args.min_seed_quality,
+                args.max_seeds_per_read,
+                args.max_postings_per_seed,
+                args.search_reverse_complement,
+                early_stop,
+                seed_planner(args.seed_planner),
+            );
+            CandidateWork::Hits {
+                read_id: sketch.read_id,
+                hits,
+                read_stats,
+            }
+        })
+        .collect();
 
-        for work in candidate_work {
-            match work {
-                CandidateWork::Hits {
-                    read_id,
-                    hits,
-                    read_stats,
-                } => {
-                    add_stats(stats, read_stats);
-                    if let Some(slot) = read_candidate_stats.get_mut(read_id as usize) {
-                        *slot = read_stats;
-                    }
-                    all_hits.extend(hits);
+    for work in candidate_work {
+        match work {
+            CandidateWork::Hits {
+                read_id,
+                hits,
+                read_stats,
+            } => {
+                add_stats(stats, read_stats);
+                if let Some(slot) = read_candidate_stats.get_mut(read_id as usize) {
+                    *slot = read_stats;
                 }
-                CandidateWork::LowQuality(read_id) => low_quality_reads.push(read_id),
-                CandidateWork::LowComplexity(read_id) => low_complexity.push(read_id),
+                all_hits.extend(hits);
             }
+            CandidateWork::LowQuality(read_id) => low_quality_reads.push(read_id),
+            CandidateWork::LowComplexity(read_id) => low_complexity.push(read_id),
         }
     }
     stage_times.candidate_generation_seconds += candidate_started.elapsed().as_secs_f64();
-    if args.retrieval_mode == RetrievalModeArg::SeedBatched && early_stop.is_none() {
-        function_timings.add_elapsed("generate_candidate_hits_seed_batched", candidate_started);
-    } else {
-        function_timings.add_elapsed(
-            "generate_candidate_hits_with_quality_stats_parallel",
-            candidate_started,
-        );
-    }
+    function_timings.add_elapsed(
+        "generate_candidate_hits_with_quality_stats_parallel",
+        candidate_started,
+    );
     low_complexity.sort_unstable();
     low_quality_reads.sort_unstable();
 
@@ -601,7 +648,11 @@ fn map_bucketed(
         &buckets,
         scorer,
         function_timings,
-        read_score_stats,
+        if args.emit_unmapped_diagnostics.is_some() {
+            Some(read_score_stats)
+        } else {
+            None
+        },
     );
     add_score_stats(score_stats, bucket_score_stats);
     stage_times.scoring_seconds += scoring_started.elapsed().as_secs_f64();
@@ -646,6 +697,289 @@ fn map_bucketed(
     assignments
 }
 
+#[allow(clippy::too_many_arguments)]
+fn map_seed_batched_streamed(
+    args: &MapArgs,
+    reads: &[(u64, Vec<u8>)],
+    quals: &[(u64, Vec<u8>)],
+    barcode_umis: &[(String, String)],
+    low_quality: &[bool],
+    invalid_barcode_umi: &[bool],
+    sketch_flags_by_read: &[u16],
+    sketches: &[constellation_core::sketch::SketchRecord],
+    index: &dyn IndexAccess,
+    scorer: &dyn CandidateScorer,
+    regroup_by_locus: bool,
+    stats: &mut CandidateGenerationStats,
+    score_stats: &mut ScoreFailureStats,
+    stage_times: &mut MappingStageTimes,
+    function_timings: &mut FunctionTimings,
+    bucket_sizes: &mut Vec<usize>,
+    read_candidate_stats: &mut [CandidateGenerationStats],
+    read_score_stats: &mut [ScoreFailureStats],
+) -> Vec<Assignment> {
+    let mut active_read_ids = Vec::new();
+    let mut assignments: Vec<Option<Assignment>> = vec![None; reads.len()];
+
+    let flag_assignment_started = Instant::now();
+    for sketch in sketches {
+        let read_id = sketch.read_id;
+        let (cell_barcode, umi) = barcode_umis[read_id as usize].clone();
+        if low_quality[read_id as usize] || invalid_barcode_umi[read_id as usize] {
+            assignments[read_id as usize] = Some(flagged_assignment(
+                read_id,
+                cell_barcode,
+                umi,
+                AssignmentType::LowQuality,
+                if invalid_barcode_umi[read_id as usize] {
+                    4
+                } else {
+                    2
+                },
+            ));
+        } else if sketch.flags & 1 != 0 {
+            assignments[read_id as usize] = Some(flagged_assignment(
+                read_id,
+                cell_barcode,
+                umi,
+                AssignmentType::LowComplexity,
+                sketch_flags_by_read[read_id as usize],
+            ));
+        } else {
+            active_read_ids.push(read_id);
+        }
+    }
+    stage_times.assignment_seconds += flag_assignment_started.elapsed().as_secs_f64();
+    function_timings.add_elapsed("flagged_assignments_streamed", flag_assignment_started);
+
+    if args.read_chunking == ReadChunkingArg::BestSeed {
+        let planner = seed_planner(args.seed_planner);
+        let best_seed_sort_started = Instant::now();
+        let mut keyed_read_ids: Vec<_> = active_read_ids
+            .par_iter()
+            .map(|&read_id| {
+                let (_, seq) = &reads[read_id as usize];
+                (
+                    best_sparse_probe_seed_key(
+                        index,
+                        seq,
+                        Some(&quals[read_id as usize].1),
+                        args.min_seed_quality,
+                        planner,
+                        args.sparse_probe_stride,
+                    ),
+                    read_id,
+                )
+            })
+            .collect();
+        keyed_read_ids.par_sort_unstable();
+        active_read_ids = keyed_read_ids
+            .into_iter()
+            .map(|(_, read_id)| read_id)
+            .collect();
+        function_timings.add_elapsed("sort_reads_by_best_sparse_seed", best_seed_sort_started);
+    }
+
+    let chunk_size = args.batch_size.max(1);
+    if args.emit_unmapped_diagnostics.is_none() {
+        let chunk_results: Vec<_> = active_read_ids
+            .par_chunks(chunk_size)
+            .map(|chunk_read_ids| {
+                map_seed_batched_chunk(
+                    args,
+                    reads,
+                    quals,
+                    barcode_umis,
+                    chunk_read_ids,
+                    index,
+                    scorer,
+                    regroup_by_locus,
+                    None,
+                )
+            })
+            .collect();
+        for chunk_result in chunk_results {
+            merge_streamed_chunk_result(
+                chunk_result,
+                stats,
+                score_stats,
+                stage_times,
+                function_timings,
+                bucket_sizes,
+                read_candidate_stats,
+                &mut assignments,
+            );
+        }
+    } else {
+        for chunk_read_ids in active_read_ids.chunks(chunk_size) {
+            let chunk_result = map_seed_batched_chunk(
+                args,
+                reads,
+                quals,
+                barcode_umis,
+                chunk_read_ids,
+                index,
+                scorer,
+                regroup_by_locus,
+                Some(&mut *read_score_stats),
+            );
+            merge_streamed_chunk_result(
+                chunk_result,
+                stats,
+                score_stats,
+                stage_times,
+                function_timings,
+                bucket_sizes,
+                read_candidate_stats,
+                &mut assignments,
+            );
+        }
+    }
+
+    assignments
+        .into_iter()
+        .enumerate()
+        .map(|(read_id, assignment)| {
+            assignment.unwrap_or_else(|| {
+                let (cell_barcode, umi) = barcode_umis[read_id].clone();
+                assign_read(read_id as u64, cell_barcode, umi, &[])
+            })
+        })
+        .collect()
+}
+
+struct StreamedChunkResult {
+    assignments: Vec<(u64, Assignment)>,
+    stats: CandidateGenerationStats,
+    per_read_stats: Vec<(u64, CandidateGenerationStats)>,
+    score_stats: ScoreFailureStats,
+    stage_times: MappingStageTimes,
+    function_timings: FunctionTimings,
+    bucket_sizes: Vec<usize>,
+}
+
+#[allow(clippy::too_many_arguments)]
+fn map_seed_batched_chunk(
+    args: &MapArgs,
+    reads: &[(u64, Vec<u8>)],
+    quals: &[(u64, Vec<u8>)],
+    barcode_umis: &[(String, String)],
+    chunk_read_ids: &[u64],
+    index: &dyn IndexAccess,
+    scorer: &dyn CandidateScorer,
+    regroup_by_locus: bool,
+    read_score_stats: Option<&mut [ScoreFailureStats]>,
+) -> StreamedChunkResult {
+    let mut function_timings = FunctionTimings::default();
+    let mut stage_times = MappingStageTimes::default();
+
+    let candidate_started = Instant::now();
+    let (hits, stats, per_read_stats) = generate_candidate_hits_seed_batched(
+        index,
+        reads,
+        quals,
+        chunk_read_ids,
+        args.min_seed_quality,
+        args.max_seeds_per_read,
+        args.max_postings_per_seed,
+        args.search_reverse_complement,
+        seed_planner(args.seed_planner),
+        candidate_search(args),
+        candidate_pruning(args),
+    );
+    stage_times.candidate_generation_seconds += candidate_started.elapsed().as_secs_f64();
+    function_timings.add_elapsed("generate_candidate_hits_seed_batched", candidate_started);
+
+    let bucket_started = Instant::now();
+    let buckets = if regroup_by_locus {
+        make_candidate_locus_buckets(hits, args.candidate_bin_size)
+    } else {
+        make_single_hit_buckets(hits, args.candidate_bin_size)
+    };
+    stage_times.bucket_build_seconds += bucket_started.elapsed().as_secs_f64();
+    if regroup_by_locus {
+        function_timings.add_elapsed("make_candidate_locus_buckets", bucket_started);
+    } else {
+        function_timings.add_elapsed("make_single_hit_buckets", bucket_started);
+    }
+    let bucket_sizes = buckets.iter().map(|bucket| bucket.hits.len()).collect();
+
+    let scoring_started = Instant::now();
+    let (scored, score_stats) = score_buckets_flat(
+        reads,
+        quals,
+        index,
+        &buckets,
+        scorer,
+        &mut function_timings,
+        read_score_stats,
+    );
+    stage_times.scoring_seconds += scoring_started.elapsed().as_secs_f64();
+
+    let assignment_started = Instant::now();
+    let assignments = make_streamed_chunk_assignments(chunk_read_ids, &scored, barcode_umis);
+    stage_times.assignment_seconds += assignment_started.elapsed().as_secs_f64();
+    function_timings.add_elapsed("assign_streamed_chunk", assignment_started);
+
+    StreamedChunkResult {
+        assignments,
+        stats,
+        per_read_stats,
+        score_stats,
+        stage_times,
+        function_timings,
+        bucket_sizes,
+    }
+}
+
+fn make_streamed_chunk_assignments(
+    chunk_read_ids: &[u64],
+    scored: &[ScoredCandidate],
+    barcode_umis: &[(String, String)],
+) -> Vec<(u64, Assignment)> {
+    let mut assignments = Vec::with_capacity(chunk_read_ids.len());
+    for &read_id in chunk_read_ids {
+        let start = scored.partition_point(|candidate| candidate.read_id < read_id);
+        let end = start + scored[start..].partition_point(|candidate| candidate.read_id == read_id);
+        let (cell_barcode, umi) = barcode_umis[read_id as usize].clone();
+        assignments.push((
+            read_id,
+            assign_read(read_id, cell_barcode, umi, &scored[start..end]),
+        ));
+    }
+    assignments
+}
+
+#[allow(clippy::too_many_arguments)]
+fn merge_streamed_chunk_result(
+    chunk_result: StreamedChunkResult,
+    stats: &mut CandidateGenerationStats,
+    score_stats: &mut ScoreFailureStats,
+    stage_times: &mut MappingStageTimes,
+    function_timings: &mut FunctionTimings,
+    bucket_sizes: &mut Vec<usize>,
+    read_candidate_stats: &mut [CandidateGenerationStats],
+    assignments: &mut [Option<Assignment>],
+) {
+    add_stats(stats, chunk_result.stats);
+    add_score_stats(score_stats, chunk_result.score_stats);
+    stage_times.candidate_generation_seconds +=
+        chunk_result.stage_times.candidate_generation_seconds;
+    stage_times.bucket_build_seconds += chunk_result.stage_times.bucket_build_seconds;
+    stage_times.scoring_seconds += chunk_result.stage_times.scoring_seconds;
+    stage_times.assignment_seconds += chunk_result.stage_times.assignment_seconds;
+    function_timings.add_all(chunk_result.function_timings);
+    bucket_sizes.extend(chunk_result.bucket_sizes);
+    for (read_id, read_stats) in chunk_result.per_read_stats {
+        if let Some(slot) = read_candidate_stats.get_mut(read_id as usize) {
+            *slot = read_stats;
+        }
+    }
+    for (read_id, assignment) in chunk_result.assignments {
+        assignments[read_id as usize] = Some(assignment);
+    }
+}
+
 enum CandidateWork {
     Hits {
         read_id: u64,
@@ -663,8 +997,66 @@ fn score_buckets(
     buckets: &[CandidateLocusBucket],
     scorer: &dyn CandidateScorer,
     function_timings: &mut FunctionTimings,
-    read_score_stats: &mut [ScoreFailureStats],
+    read_score_stats: Option<&mut [ScoreFailureStats]>,
 ) -> (Vec<Vec<ScoredCandidate>>, ScoreFailureStats) {
+    let (scored, score_stats) = score_buckets_flat(
+        reads,
+        quals,
+        index,
+        buckets,
+        scorer,
+        function_timings,
+        read_score_stats,
+    );
+
+    let group_started = Instant::now();
+    let mut by_read = vec![Vec::new(); reads.len()];
+    for candidate in scored {
+        if let Some(candidates) = by_read.get_mut(candidate.read_id as usize) {
+            candidates.push(candidate);
+        }
+    }
+    function_timings.add_elapsed("group_scored_candidates_by_read", group_started);
+    (by_read, score_stats)
+}
+
+fn score_buckets_flat(
+    reads: &[(u64, Vec<u8>)],
+    quals: &[(u64, Vec<u8>)],
+    index: &dyn IndexAccess,
+    buckets: &[CandidateLocusBucket],
+    scorer: &dyn CandidateScorer,
+    function_timings: &mut FunctionTimings,
+    read_score_stats: Option<&mut [ScoreFailureStats]>,
+) -> (Vec<ScoredCandidate>, ScoreFailureStats) {
+    if read_score_stats.is_none() {
+        let score_bucket_started = Instant::now();
+        let scored_work: Vec<_> = buckets
+            .par_iter()
+            .map(|bucket| {
+                let mut scored = Vec::new();
+                let stats = scorer.score_bucket(reads, quals, index, bucket, &mut scored, None);
+                (scored, stats)
+            })
+            .collect();
+        function_timings.add_elapsed(
+            "CandidateScorer::score_bucket_parallel",
+            score_bucket_started,
+        );
+
+        let mut scored = Vec::new();
+        let mut score_stats = ScoreFailureStats::default();
+        for (mut bucket_scored, bucket_stats) in scored_work {
+            scored.append(&mut bucket_scored);
+            add_score_stats(&mut score_stats, bucket_stats);
+        }
+        let sort_started = Instant::now();
+        scored.sort();
+        function_timings.add_elapsed("ScoredCandidate::sort", sort_started);
+        return (scored, score_stats);
+    }
+
+    let read_score_stats = read_score_stats.expect("checked above");
     let mut scored = Vec::new();
     let mut score_stats = ScoreFailureStats::default();
     for bucket in buckets {
@@ -683,16 +1075,7 @@ fn score_buckets(
     let sort_started = Instant::now();
     scored.sort();
     function_timings.add_elapsed("ScoredCandidate::sort", sort_started);
-
-    let group_started = Instant::now();
-    let mut by_read = vec![Vec::new(); reads.len()];
-    for candidate in scored {
-        if let Some(candidates) = by_read.get_mut(candidate.read_id as usize) {
-            candidates.push(candidate);
-        }
-    }
-    function_timings.add_elapsed("group_scored_candidates_by_read", group_started);
-    (by_read, score_stats)
+    (scored, score_stats)
 }
 
 fn add_stats(total: &mut CandidateGenerationStats, next: CandidateGenerationStats) {
@@ -717,6 +1100,10 @@ fn add_stats(total: &mut CandidateGenerationStats, next: CandidateGenerationStat
     total.distinct_seed_lists_loaded += next.distinct_seed_lists_loaded;
     total.candidate_votes += next.candidate_votes;
     total.seed_groups_skipped_due_to_frequency += next.seed_groups_skipped_due_to_frequency;
+    total.sparse_probe_attempted_reads += next.sparse_probe_attempted_reads;
+    total.sparse_probe_accepted_reads += next.sparse_probe_accepted_reads;
+    total.sparse_probe_fallback_reads += next.sparse_probe_fallback_reads;
+    total.candidate_hits_pruned += next.candidate_hits_pruned;
 }
 
 fn add_score_stats(total: &mut ScoreFailureStats, next: ScoreFailureStats) {
@@ -890,6 +1277,7 @@ fn diagnostic_reason(
         }
         AssignmentType::Unmapped => "unmapped_unknown",
         AssignmentType::AmbiguousGene => "multi_gene_ambiguous",
+        AssignmentType::AntisenseGene => "antisense_gene",
         AssignmentType::UniqueGene | AssignmentType::AmbiguousTranscriptSameGene => {
             "gene_countable"
         }

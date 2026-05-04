@@ -4,6 +4,7 @@ use crate::{GeneId, ReadId, TranscriptId};
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
+use std::cmp::Reverse;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CandidateHit {
@@ -37,6 +38,35 @@ pub enum SeedPlanner {
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum CandidateSearchMode {
+    #[default]
+    Full,
+    SparseProbe(SparseProbeConfig),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SparseProbeConfig {
+    pub stride: u32,
+    pub max_seeds: usize,
+    pub min_seed_hits: u16,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum CandidatePruningMode {
+    #[default]
+    None,
+    WandLite(WandLiteConfig),
+    GeneWandLite(WandLiteConfig),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct WandLiteConfig {
+    pub min_top_seed_count: u16,
+    pub score_ratio_percent: u16,
+    pub max_loci_per_gene: usize,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct CandidateGenerationStats {
     pub seed_lookups: u64,
     pub candidate_hits: u64,
@@ -58,6 +88,10 @@ pub struct CandidateGenerationStats {
     pub distinct_seed_lists_loaded: u64,
     pub candidate_votes: u64,
     pub seed_groups_skipped_due_to_frequency: u64,
+    pub sparse_probe_attempted_reads: u64,
+    pub sparse_probe_accepted_reads: u64,
+    pub sparse_probe_fallback_reads: u64,
+    pub candidate_hits_pruned: u64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -261,6 +295,27 @@ pub fn generate_candidate_hits_with_quality_stats(
     (hits, stats)
 }
 
+pub fn best_sparse_probe_seed_key(
+    index: &dyn IndexAccess,
+    seq: &[u8],
+    qual: Option<&[u8]>,
+    min_seed_quality: u8,
+    seed_planner: SeedPlanner,
+    stride: u32,
+) -> u64 {
+    let (choices, _) = select_sparse_probe_seed_choices_for_read(
+        index,
+        seq,
+        qual,
+        min_seed_quality,
+        1,
+        false,
+        seed_planner,
+        stride.max(1),
+    );
+    choices.first().map_or(u64::MAX, |seed| seed.kmer_code)
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn generate_candidate_hits_seed_batched(
     index: &dyn IndexAccess,
@@ -272,12 +327,189 @@ pub fn generate_candidate_hits_seed_batched(
     max_postings_per_seed: usize,
     search_reverse_complement: bool,
     seed_planner: SeedPlanner,
+    candidate_search: CandidateSearchMode,
+    candidate_pruning: CandidatePruningMode,
 ) -> (
     Vec<CandidateHit>,
     CandidateGenerationStats,
     Vec<(ReadId, CandidateGenerationStats)>,
 ) {
-    let seed_limit = max_seeds_per_read.max(1);
+    if let CandidateSearchMode::SparseProbe(config) = candidate_search {
+        return generate_candidate_hits_seed_batched_sparse_fallback(
+            index,
+            reads,
+            quals,
+            read_ids,
+            min_seed_quality,
+            max_seeds_per_read,
+            max_postings_per_seed,
+            search_reverse_complement,
+            seed_planner,
+            config,
+            candidate_pruning,
+        );
+    }
+    generate_candidate_hits_seed_batched_full(
+        index,
+        reads,
+        quals,
+        read_ids,
+        min_seed_quality,
+        max_seeds_per_read,
+        max_postings_per_seed,
+        search_reverse_complement,
+        seed_planner,
+        candidate_pruning,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_candidate_hits_seed_batched_full(
+    index: &dyn IndexAccess,
+    reads: &[(ReadId, Vec<u8>)],
+    quals: &[(ReadId, Vec<u8>)],
+    read_ids: &[ReadId],
+    min_seed_quality: u8,
+    max_seeds_per_read: usize,
+    max_postings_per_seed: usize,
+    search_reverse_complement: bool,
+    seed_planner: SeedPlanner,
+    candidate_pruning: CandidatePruningMode,
+) -> (
+    Vec<CandidateHit>,
+    CandidateGenerationStats,
+    Vec<(ReadId, CandidateGenerationStats)>,
+) {
+    generate_candidate_hits_seed_batched_with_selection(
+        index,
+        reads,
+        quals,
+        read_ids,
+        min_seed_quality,
+        max_seeds_per_read.max(1),
+        max_postings_per_seed,
+        search_reverse_complement,
+        seed_planner,
+        SeedSelectionMode::Full,
+        candidate_pruning,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_candidate_hits_seed_batched_sparse_fallback(
+    index: &dyn IndexAccess,
+    reads: &[(ReadId, Vec<u8>)],
+    quals: &[(ReadId, Vec<u8>)],
+    read_ids: &[ReadId],
+    min_seed_quality: u8,
+    max_seeds_per_read: usize,
+    max_postings_per_seed: usize,
+    search_reverse_complement: bool,
+    seed_planner: SeedPlanner,
+    config: SparseProbeConfig,
+    candidate_pruning: CandidatePruningMode,
+) -> (
+    Vec<CandidateHit>,
+    CandidateGenerationStats,
+    Vec<(ReadId, CandidateGenerationStats)>,
+) {
+    let probe_limit = config.max_seeds.max(1).min(max_seeds_per_read.max(1));
+    let (mut probe_hits, mut total_stats, mut read_stats) =
+        generate_candidate_hits_seed_batched_with_selection(
+            index,
+            reads,
+            quals,
+            read_ids,
+            min_seed_quality,
+            probe_limit,
+            max_postings_per_seed,
+            search_reverse_complement,
+            seed_planner,
+            SeedSelectionMode::SparseProbe(config),
+            candidate_pruning,
+        );
+
+    let mut accepted = FxHashMap::default();
+    for hit in &probe_hits {
+        if hit.seed_count >= config.min_seed_hits.max(1) {
+            accepted.insert(hit.read_id, true);
+        }
+    }
+    let fallback_read_ids: Vec<_> = read_ids
+        .iter()
+        .copied()
+        .filter(|read_id| !accepted.contains_key(read_id))
+        .collect();
+    total_stats.sparse_probe_attempted_reads += read_ids.len() as u64;
+    total_stats.sparse_probe_accepted_reads +=
+        read_ids.len().saturating_sub(fallback_read_ids.len()) as u64;
+    total_stats.sparse_probe_fallback_reads += fallback_read_ids.len() as u64;
+
+    if fallback_read_ids.is_empty() {
+        return (probe_hits, total_stats, read_stats);
+    }
+
+    let (fallback_hits, fallback_stats, fallback_read_stats) =
+        generate_candidate_hits_seed_batched_full(
+            index,
+            reads,
+            quals,
+            &fallback_read_ids,
+            min_seed_quality,
+            max_seeds_per_read,
+            max_postings_per_seed,
+            search_reverse_complement,
+            seed_planner,
+            candidate_pruning,
+        );
+    add_total_stats(&mut total_stats, fallback_stats);
+
+    probe_hits.retain(|hit| accepted.contains_key(&hit.read_id));
+    probe_hits.extend(fallback_hits);
+    probe_hits.sort_unstable_by_key(|hit| {
+        (
+            hit.read_id,
+            hit.transcript_id,
+            hit.pos,
+            hit.strand,
+            hit.seed_count,
+            hit.seed_score,
+        )
+    });
+
+    let fallback_stats_by_read: FxHashMap<_, _> = fallback_read_stats.into_iter().collect();
+    for (read_id, stats) in &mut read_stats {
+        if let Some(fallback_stats) = fallback_stats_by_read.get(read_id) {
+            *stats = *fallback_stats;
+        }
+    }
+    (probe_hits, total_stats, read_stats)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SeedSelectionMode {
+    Full,
+    SparseProbe(SparseProbeConfig),
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_candidate_hits_seed_batched_with_selection(
+    index: &dyn IndexAccess,
+    reads: &[(ReadId, Vec<u8>)],
+    quals: &[(ReadId, Vec<u8>)],
+    read_ids: &[ReadId],
+    min_seed_quality: u8,
+    seed_limit: usize,
+    max_postings_per_seed: usize,
+    search_reverse_complement: bool,
+    seed_planner: SeedPlanner,
+    selection_mode: SeedSelectionMode,
+    candidate_pruning: CandidatePruningMode,
+) -> (
+    Vec<CandidateHit>,
+    CandidateGenerationStats,
+    Vec<(ReadId, CandidateGenerationStats)>,
+) {
     let mut total_stats = CandidateGenerationStats::default();
     let mut read_stats = Vec::with_capacity(read_ids.len());
     let mut query_seeds = Vec::new();
@@ -287,14 +519,15 @@ pub fn generate_candidate_hits_seed_batched(
             continue;
         };
         let qual = quals.get(read_id as usize).map(|(_, qual)| qual.as_slice());
-        let (selected, mut stats) = select_seed_choices_for_read(
+        let (selected, mut stats) = select_seed_choices_for_read_mode(
             index,
             seq,
             qual,
             min_seed_quality,
-            seed_limit,
+            seed_limit.max(1),
             search_reverse_complement,
             seed_planner,
+            selection_mode,
         );
         stats.query_seed_occurrences = selected.len() as u64;
         for seed in selected {
@@ -310,6 +543,29 @@ pub fn generate_candidate_hits_seed_batched(
         add_generation_stats(&mut total_stats, stats);
         read_stats.push((read_id, stats));
     }
+
+    reduce_query_seeds_to_hits(
+        index,
+        query_seeds,
+        read_stats,
+        max_postings_per_seed,
+        total_stats,
+        candidate_pruning,
+    )
+}
+
+fn reduce_query_seeds_to_hits(
+    index: &dyn IndexAccess,
+    mut query_seeds: Vec<QuerySeed>,
+    mut read_stats: Vec<(ReadId, CandidateGenerationStats)>,
+    max_postings_per_seed: usize,
+    mut total_stats: CandidateGenerationStats,
+    candidate_pruning: CandidatePruningMode,
+) -> (
+    Vec<CandidateHit>,
+    CandidateGenerationStats,
+    Vec<(ReadId, CandidateGenerationStats)>,
+) {
     let read_stat_offsets: FxHashMap<ReadId, usize> = read_stats
         .iter()
         .enumerate()
@@ -405,6 +661,9 @@ pub fn generate_candidate_hits_seed_batched(
             seed_score,
         });
     }
+    let pre_prune_hits = hits.len();
+    apply_candidate_pruning(&mut hits, candidate_pruning);
+    total_stats.candidate_hits_pruned += pre_prune_hits.saturating_sub(hits.len()) as u64;
     total_stats.candidate_hits = hits.len() as u64;
 
     for (read_id, stats) in &mut read_stats {
@@ -432,6 +691,144 @@ pub fn generate_candidate_hits_seed_batched(
     }
 
     (hits, total_stats, read_stats)
+}
+
+fn apply_candidate_pruning(hits: &mut Vec<CandidateHit>, mode: CandidatePruningMode) {
+    match mode {
+        CandidatePruningMode::None => {}
+        CandidatePruningMode::WandLite(config) => apply_locus_wand_lite_pruning(hits, config),
+        CandidatePruningMode::GeneWandLite(config) => apply_gene_wand_lite_pruning(hits, config),
+    }
+}
+
+fn apply_locus_wand_lite_pruning(hits: &mut Vec<CandidateHit>, config: WandLiteConfig) {
+    if hits.is_empty() {
+        return;
+    }
+    let ratio_percent = u32::from(config.score_ratio_percent.clamp(1, 100));
+    let min_top_seed_count = config.min_top_seed_count.max(1);
+    let mut pruned = Vec::with_capacity(hits.len());
+    let mut start = 0;
+    while start < hits.len() {
+        let read_id = hits[start].read_id;
+        let mut end = start + 1;
+        while end < hits.len() && hits[end].read_id == read_id {
+            end += 1;
+        }
+        let group = &hits[start..end];
+        let top_seed_count = group.iter().map(|hit| hit.seed_count).max().unwrap_or(0);
+        let top_seed_score = group.iter().map(|hit| hit.seed_score).max().unwrap_or(0);
+        if top_seed_count < min_top_seed_count || top_seed_score == 0 {
+            pruned.extend_from_slice(group);
+        } else {
+            let threshold = (u32::from(top_seed_score) * ratio_percent).div_ceil(100);
+            pruned.extend(
+                group
+                    .iter()
+                    .copied()
+                    .filter(|hit| u32::from(hit.seed_score) >= threshold),
+            );
+        }
+        start = end;
+    }
+    *hits = pruned;
+}
+
+fn apply_gene_wand_lite_pruning(hits: &mut Vec<CandidateHit>, config: WandLiteConfig) {
+    if hits.is_empty() {
+        return;
+    }
+    let ratio_percent = u32::from(config.score_ratio_percent.clamp(1, 100));
+    let min_top_seed_count = config.min_top_seed_count.max(1);
+    let max_loci_per_gene = config.max_loci_per_gene;
+    let mut gene_best_scores: FxHashMap<GeneId, u16> = FxHashMap::default();
+    let mut gene_kept_counts: FxHashMap<GeneId, usize> = FxHashMap::default();
+    let mut pruned = Vec::with_capacity(hits.len());
+    let mut retained_group = Vec::new();
+    let mut start = 0;
+    while start < hits.len() {
+        let read_id = hits[start].read_id;
+        let mut end = start + 1;
+        while end < hits.len() && hits[end].read_id == read_id {
+            end += 1;
+        }
+        let group = &hits[start..end];
+        let top_seed_count = group.iter().map(|hit| hit.seed_count).max().unwrap_or(0);
+        if top_seed_count < min_top_seed_count {
+            pruned.extend_from_slice(group);
+            start = end;
+            continue;
+        }
+
+        gene_best_scores.clear();
+        for hit in group {
+            let entry = gene_best_scores.entry(hit.gene_id).or_default();
+            *entry = (*entry).max(hit.seed_score);
+        }
+        let top_gene_score = gene_best_scores.values().copied().max().unwrap_or(0);
+        if top_gene_score == 0 {
+            pruned.extend_from_slice(group);
+        } else {
+            let threshold = (u32::from(top_gene_score) * ratio_percent).div_ceil(100);
+            retained_group.clear();
+            retained_group.extend(group.iter().copied().filter(|hit| {
+                gene_best_scores
+                    .get(&hit.gene_id)
+                    .is_some_and(|&score| u32::from(score) >= threshold)
+            }));
+            if max_loci_per_gene > 0 {
+                cap_loci_per_gene(
+                    &mut retained_group,
+                    max_loci_per_gene,
+                    &mut gene_kept_counts,
+                );
+            }
+            pruned.extend_from_slice(&retained_group);
+        }
+        start = end;
+    }
+    *hits = pruned;
+}
+
+fn cap_loci_per_gene(
+    hits: &mut Vec<CandidateHit>,
+    max_loci_per_gene: usize,
+    gene_kept_counts: &mut FxHashMap<GeneId, usize>,
+) {
+    hits.sort_unstable_by_key(|hit| {
+        (
+            hit.gene_id,
+            Reverse(hit.seed_count),
+            Reverse(hit.seed_score),
+            hit.transcript_id,
+            hit.pos,
+            hit.strand,
+        )
+    });
+    gene_kept_counts.clear();
+    hits.retain(|hit| {
+        let count = gene_kept_counts.entry(hit.gene_id).or_default();
+        if *count >= max_loci_per_gene {
+            false
+        } else {
+            *count += 1;
+            true
+        }
+    });
+    sort_hits_for_pruning(hits);
+}
+
+fn sort_hits_for_pruning(hits: &mut [CandidateHit]) {
+    hits.sort_unstable_by_key(|hit| {
+        (
+            hit.read_id,
+            hit.transcript_id,
+            hit.pos,
+            hit.strand,
+            hit.seed_count,
+            hit.seed_score,
+        )
+    });
 }
 
 fn collect_seed_choices(
@@ -523,6 +920,137 @@ fn select_seed_choices_for_read(
     (seed_choices, stats)
 }
 
+fn select_seed_choices_for_read_mode(
+    index: &dyn IndexAccess,
+    seq: &[u8],
+    qual: Option<&[u8]>,
+    min_seed_quality: u8,
+    seed_limit: usize,
+    search_reverse_complement: bool,
+    seed_planner: SeedPlanner,
+    selection_mode: SeedSelectionMode,
+) -> (SmallVec<[QuerySeedChoice; 256]>, CandidateGenerationStats) {
+    match selection_mode {
+        SeedSelectionMode::Full => select_seed_choices_for_read(
+            index,
+            seq,
+            qual,
+            min_seed_quality,
+            seed_limit,
+            search_reverse_complement,
+            seed_planner,
+        ),
+        SeedSelectionMode::SparseProbe(config) => select_sparse_probe_seed_choices_for_read(
+            index,
+            seq,
+            qual,
+            min_seed_quality,
+            seed_limit.min(config.max_seeds.max(1)),
+            search_reverse_complement,
+            seed_planner,
+            config.stride.max(1),
+        ),
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn select_sparse_probe_seed_choices_for_read(
+    index: &dyn IndexAccess,
+    seq: &[u8],
+    qual: Option<&[u8]>,
+    min_seed_quality: u8,
+    seed_limit: usize,
+    search_reverse_complement: bool,
+    seed_planner: SeedPlanner,
+    stride: u32,
+) -> (SmallVec<[QuerySeedChoice; 256]>, CandidateGenerationStats) {
+    let encoded = encode_acgt(seq);
+    let mut stats = CandidateGenerationStats::default();
+    let mut seed_choices = SmallVec::new();
+    collect_sparse_probe_seed_choices(
+        index,
+        &encoded,
+        qual,
+        min_seed_quality,
+        0,
+        seed_planner,
+        stride,
+        &mut stats,
+        &mut seed_choices,
+    );
+    if search_reverse_complement {
+        let reverse_encoded = reverse_complement(&encoded);
+        collect_sparse_probe_seed_choices(
+            index,
+            &reverse_encoded,
+            None,
+            min_seed_quality,
+            1,
+            seed_planner,
+            stride,
+            &mut stats,
+            &mut seed_choices,
+        );
+    }
+    sort_seed_choices(&mut seed_choices, seed_planner);
+    let selected_seed_count = seed_choices.len().min(seed_limit.max(1));
+    stats.selected_seeds = selected_seed_count as u64;
+    stats.seed_lookups = selected_seed_count as u64;
+    if stats.seed_candidates_considered == 0 {
+        stats.reads_with_no_valid_kmers = 1;
+    }
+    if selected_seed_count == 0 {
+        stats.reads_with_no_selected_seeds = 1;
+    }
+    seed_choices.truncate(selected_seed_count);
+    (seed_choices, stats)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn collect_sparse_probe_seed_choices(
+    index: &dyn IndexAccess,
+    encoded: &crate::dna::EncodedSeq,
+    qual: Option<&[u8]>,
+    min_seed_quality: u8,
+    read_strand: u8,
+    seed_planner: SeedPlanner,
+    stride: u32,
+    stats: &mut CandidateGenerationStats,
+    seed_choices: &mut SmallVec<[QuerySeedChoice; 256]>,
+) {
+    for seed in iter_kmers_2bit(encoded, index.k()) {
+        if seed.pos % stride != 0 {
+            continue;
+        }
+        if let Some(qual) = qual {
+            let start = seed.pos as usize;
+            let end = start + index.k() as usize;
+            if end <= qual.len()
+                && qual[start..end]
+                    .iter()
+                    .any(|&q| q.saturating_sub(33) < min_seed_quality)
+            {
+                stats.seeds_skipped_due_to_quality += 1;
+                continue;
+            }
+        }
+        stats.seed_candidates_considered += 1;
+        let stats_for_seed = index.kmer_stats(seed.code);
+        let (raw_postings, transcript_df, gene_df) = stats_for_seed
+            .map(|stats| (stats.raw_postings, stats.transcript_df, stats.gene_df))
+            .unwrap_or((0, 0, 0));
+        seed_choices.push(QuerySeedChoice {
+            seed_pos: seed.pos,
+            kmer_code: seed.code,
+            read_strand,
+            raw_postings,
+            transcript_df,
+            gene_df,
+            seed_score: seed_score(index.num_genes(), gene_df, seed_planner),
+        });
+    }
+}
+
 fn update_seed_stats_for_group(
     group: &[QuerySeed],
     read_stats: &mut [(ReadId, CandidateGenerationStats)],
@@ -545,6 +1073,34 @@ fn add_generation_stats(total: &mut CandidateGenerationStats, next: CandidateGen
     total.reads_with_no_valid_kmers += next.reads_with_no_valid_kmers;
     total.reads_with_no_selected_seeds += next.reads_with_no_selected_seeds;
     total.query_seed_occurrences += next.query_seed_occurrences;
+}
+
+fn add_total_stats(total: &mut CandidateGenerationStats, next: CandidateGenerationStats) {
+    total.seed_lookups += next.seed_lookups;
+    total.candidate_hits += next.candidate_hits;
+    total.postings_skipped_due_to_frequency += next.postings_skipped_due_to_frequency;
+    total.seeds_skipped_due_to_quality += next.seeds_skipped_due_to_quality;
+    total.seed_candidates_considered += next.seed_candidates_considered;
+    total.early_stopped_reads += next.early_stopped_reads;
+    total.seed_lookups_saved_by_early_stop += next.seed_lookups_saved_by_early_stop;
+    total.selected_seeds += next.selected_seeds;
+    total.reads_with_no_valid_kmers += next.reads_with_no_valid_kmers;
+    total.reads_with_no_selected_seeds += next.reads_with_no_selected_seeds;
+    total.reads_with_no_seed_postings += next.reads_with_no_seed_postings;
+    total.reads_all_selected_seeds_over_frequency_cap +=
+        next.reads_all_selected_seeds_over_frequency_cap;
+    total.reads_with_candidate_hits += next.reads_with_candidate_hits;
+    total.selected_seeds_absent_from_index += next.selected_seeds_absent_from_index;
+    total.selected_seeds_over_frequency_cap += next.selected_seeds_over_frequency_cap;
+    total.selected_seeds_with_postings += next.selected_seeds_with_postings;
+    total.query_seed_occurrences += next.query_seed_occurrences;
+    total.distinct_seed_lists_loaded += next.distinct_seed_lists_loaded;
+    total.candidate_votes += next.candidate_votes;
+    total.seed_groups_skipped_due_to_frequency += next.seed_groups_skipped_due_to_frequency;
+    total.sparse_probe_attempted_reads += next.sparse_probe_attempted_reads;
+    total.sparse_probe_accepted_reads += next.sparse_probe_accepted_reads;
+    total.sparse_probe_fallback_reads += next.sparse_probe_fallback_reads;
+    total.candidate_hits_pruned += next.candidate_hits_pruned;
 }
 
 fn sort_seed_choices(seed_choices: &mut [QuerySeedChoice], seed_planner: SeedPlanner) {
@@ -808,12 +1364,82 @@ mod tests {
             256,
             false,
             SeedPlanner::RawFrequency,
+            CandidateSearchMode::Full,
+            CandidatePruningMode::None,
         );
         sort_hits_for_test(&mut per_read);
         sort_hits_for_test(&mut batched);
         assert_eq!(batched, per_read);
         assert!(stats.distinct_seed_lists_loaded < stats.query_seed_occurrences);
         assert!(stats.candidate_votes >= stats.candidate_hits);
+    }
+
+    #[test]
+    fn gene_wand_lite_prunes_by_gene_not_locus() {
+        let mut hits = vec![
+            test_hit(0, 10, 1, 2, 10),
+            test_hit(0, 11, 1, 1, 2),
+            test_hit(0, 20, 2, 2, 6),
+        ];
+
+        apply_candidate_pruning(
+            &mut hits,
+            CandidatePruningMode::GeneWandLite(WandLiteConfig {
+                min_top_seed_count: 2,
+                score_ratio_percent: 70,
+                max_loci_per_gene: 0,
+            }),
+        );
+
+        assert_eq!(hits.len(), 2);
+        assert!(hits.iter().all(|hit| hit.gene_id == 1));
+        assert!(hits.iter().any(|hit| hit.seed_score == 2));
+    }
+
+    #[test]
+    fn gene_wand_lite_can_cap_loci_per_gene() {
+        let mut hits = vec![
+            test_hit(0, 10, 1, 2, 10),
+            test_hit(0, 11, 1, 2, 8),
+            test_hit(0, 12, 1, 1, 7),
+            test_hit(0, 20, 2, 2, 9),
+            test_hit(0, 21, 2, 1, 5),
+        ];
+
+        apply_candidate_pruning(
+            &mut hits,
+            CandidatePruningMode::GeneWandLite(WandLiteConfig {
+                min_top_seed_count: 2,
+                score_ratio_percent: 50,
+                max_loci_per_gene: 1,
+            }),
+        );
+
+        assert_eq!(hits.len(), 2);
+        assert!(hits
+            .iter()
+            .any(|hit| hit.gene_id == 1 && hit.seed_score == 10));
+        assert!(hits
+            .iter()
+            .any(|hit| hit.gene_id == 2 && hit.seed_score == 9));
+    }
+
+    fn test_hit(
+        read_id: ReadId,
+        transcript_id: TranscriptId,
+        gene_id: GeneId,
+        seed_count: u16,
+        seed_score: u16,
+    ) -> CandidateHit {
+        CandidateHit {
+            read_id,
+            transcript_id,
+            gene_id,
+            pos: 0,
+            strand: 0,
+            seed_count,
+            seed_score,
+        }
     }
 
     fn sort_hits_for_test(hits: &mut [CandidateHit]) {

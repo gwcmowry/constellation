@@ -22,42 +22,86 @@ This repository was initialized from the original `cachebatch` project brief, wi
 - Rare-anchor seed selection that prefers lower-frequency k-mers before candidate lookup.
 - Gene-level k-mer document frequency in compact v3 indexes, stored as a compact side array for `gene-idf` seed planning.
 - Seed-batched retrieval mode that groups query seed occurrences by k-mer and loads each selected posting list once per batch.
+- Sparse-probe candidate search with fallback for faster average-case lookup.
+- Streamed seed-batched mapping chunks so candidate generation, scoring, and assignment run on bounded working sets.
+- Gene-level WAND-lite candidate pruning with configurable score ratio and max loci per retained gene.
+- Reverse-complement seed lookup generated on the fly from encoded query k-mers, without building a larger reverse-complement index.
 - Hot candidate-search tables use 16-byte k-mer entries and 8-byte postings so reference slices can fit more cleanly into L1/L2 cache.
 - Scalar scoring plus a `pulp` feature-gated SIMD Hamming path with scalar-vs-SIMD differential tests.
-- Configurable mismatch, poly-A/poly-T trimming, low-quality tail trimming, and softclip fallback scoring.
+- Configurable mismatch, poly-A/poly-T trimming, TSO trimming, low-quality tail trimming, and softclip fallback scoring.
 - Assignment TSV output, JSON metrics, and truth-aware benchmark reporting for simulated reads.
 - UMI-deduplicated `count` output as Matrix Market plus barcode/features TSVs.
-- Split assignment metrics for unique gene, same-gene multi-transcript, multi-gene ambiguous, and gene-countable rates.
+- Split assignment metrics for unique gene, same-gene multi-transcript, multi-gene ambiguous, antisense-gene diagnostics, and gene-countable rates.
 - Per-read unmapped diagnostics and aggregate score-failure decomposition.
 
 ## Current Performance Snapshot
 
-Latest local benchmark: 100k read pairs from 10x PBMC 10k v3, lane L001 subset, mapped with release build against an Ensembl 93 exon-plus-gene-body compact index.
+Latest local benchmark: 100k read pairs from 10x PBMC 10k v3, lane L001 subset, mapped with release build against the Ensembl 93 exon-plus-gene-body compact v3 index:
 
 ```text
-config                         max_mismatches=6, right softclip=16, polyA/polyT/lowQ trim
-wall time                      1.32 s
-throughput                     75.7k reads/s
-unique gene rate               26.34%
-same-gene multi-transcript     41.72%
-multi-gene ambiguous           10.62%
-gene-countable rate            68.07%
-unmapped rate                  20.51%
+benchdata/reference/ensembl93/human_ensembl93_exon_plus_gene_body.k21.genedf.cbidx
 ```
 
-Mismatch sweep on the same target showed stable speed and mostly stable gene identities:
+The current fast path is seed-batched, sparse-probe candidate search, streamed chunks, gene-level WAND-lite pruning, reverse-complement search, TSO/polyA/polyT/low-quality trimming, and softclip scoring. Use the internal metrics JSON wall-clock fields for timing; process-level `/usr/bin/time` includes mmap/load/teardown effects that are not comparable with the mapper hot path.
 
 ```text
-max mismatches   gene-countable   unmapped   throughput
-4                66.54%           22.44%     73.6k reads/s
-6                68.07%           20.51%     75.7k reads/s
-8                69.29%           19.05%     76.4k reads/s
-10               70.22%           17.90%     77.4k reads/s
+config                         max_mismatches=6, right softclip=16, RC + TSO/polyA/polyT/lowQ trim
+internal wall time             0.669 s
+mapping hot-path time          0.512 s
+throughput                     149.5k reads/s
+unique gene rate               42.77%
+same-gene multi-transcript     33.53%
+multi-gene ambiguous           10.07%
+gene-countable rate            76.30%
+unmapped rate                  12.68%
+low-complexity rate            0.88%
 ```
 
-For `max_mismatches=6`, 99.84% of reads already countable at `max_mismatches=4` kept the same gene call. Aggregate gene counts had Pearson correlation around 0.942 against the public 10x filtered matrix, using the full 10x matrix as a coarse reference.
+Reverse-complement search is a large recall gain but costs throughput. On the same 100k subset:
 
-The current full exon-plus-gene-body index on disk was built before compact v3 gene-DF support, so `--seed-planner gene-idf` falls back to raw posting frequency on that file. Rebuild the large index to get real gene-level IDF seed planning.
+```text
+mode             gene-countable   unmapped   internal throughput
+forward only     68.03%           20.41%     172.4k reads/s
+RC enabled       73.98%           15.52%     165.0k reads/s
+RC + TSO trim    76.30%           12.68%     149.5k reads/s
+```
+
+Cell Ranger comparison is currently only against `filtered_feature_bc_matrix`, which is a cell/gene UMI matrix rather than read-level mapping truth. On the 100k PBMC subset, about 91.5% of Constellation UMIs land in Cell Ranger filtered barcodes, all Cell Ranger genes are present in the Ensembl 93 reference, and about 5.6% of Constellation UMIs are assigned to genes outside the Cell Ranger feature set. Log gene-total correlation against the filtered matrix is about 0.51 Pearson and 0.56 Spearman on this tiny read subset, so use it as a rough sanity check rather than a mapping-rate target.
+
+## Handoff Status
+
+Implemented recall and speed work from the Codex mapping brief:
+
+```text
+done   gene-countable same-gene transcript ambiguity
+done   split assignment metrics and score-failure diagnostics
+done   exon-plus-gene-body target generation for intron/pre-mRNA support
+done   compact v3 gene-DF index support and gene-idf seed planning
+done   sparse-probe candidate search with full fallback
+done   streamed seed-batched candidate generation/scoring/assignment
+done   WAND-lite and gene-level WAND-lite pruning
+done   on-the-fly reverse-complement lookup
+done   TSO trimming and antisense diagnostic assignment class
+```
+
+Open architecture questions for the next handoff:
+
+```text
+1. Cell Ranger comparability:
+   add a feature whitelist/evaluation mode based on Cell Ranger features.tsv so assignments to genes outside the 10x feature set can be separated from real recall loss.
+
+2. Target class priority:
+   track exon, intron, and gene-body hits separately and prefer exonic confident hits over intronic/gene-body hits when both explain the read.
+
+3. Barcode and UMI correction:
+   implement 10x whitelist barcode correction and molecule-level UMI correction before comparing counts to Cell Ranger output.
+
+4. Rescue alignment:
+   add a bounded fallback for reads with weak exact-k seed support, such as shorter/spaced seeds plus local alignment, instead of only loosening the full fast path.
+
+5. Reference architecture:
+   evaluate a Cell Ranger-like feature reference or splici-style reference so high genome mapping rates do not come from reads that are not countable transcriptome evidence.
+```
 
 ## Example
 

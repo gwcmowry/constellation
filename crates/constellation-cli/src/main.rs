@@ -130,6 +130,32 @@ enum RetrievalModeArg {
     SeedBatched,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum CandidateSearchArg {
+    Full,
+    SparseProbe,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum ReadChunkingArg {
+    Sketch,
+    BestSeed,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum CandidatePruningArg {
+    None,
+    WandLite,
+    GeneWandLite,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum LibraryStrandArg {
+    Unstranded,
+    Forward,
+    Reverse,
+}
+
 #[derive(Debug, Parser)]
 struct MapArgs {
     #[arg(long)]
@@ -140,7 +166,7 @@ struct MapArgs {
     r2: PathBuf,
     #[arg(long, default_value = "tenx-3p-v3")]
     chemistry: String,
-    #[arg(long, default_value_t = 2048)]
+    #[arg(long, default_value_t = 1024)]
     batch_size: usize,
     #[arg(long, value_enum, default_value_t = ScoreMode::Scalar)]
     score_mode: ScoreMode,
@@ -152,6 +178,24 @@ struct MapArgs {
     seed_planner: SeedPlannerArg,
     #[arg(long, value_enum, default_value_t = RetrievalModeArg::PerRead)]
     retrieval_mode: RetrievalModeArg,
+    #[arg(long, value_enum, default_value_t = CandidateSearchArg::Full)]
+    candidate_search: CandidateSearchArg,
+    #[arg(long, value_enum, default_value_t = CandidatePruningArg::GeneWandLite)]
+    candidate_pruning: CandidatePruningArg,
+    #[arg(long, default_value_t = 2)]
+    wand_min_top_seed_count: u16,
+    #[arg(long, default_value_t = 20)]
+    wand_score_ratio_percent: u16,
+    #[arg(long, default_value_t = 4)]
+    wand_max_loci_per_gene: usize,
+    #[arg(long, value_enum, default_value_t = ReadChunkingArg::Sketch)]
+    read_chunking: ReadChunkingArg,
+    #[arg(long, default_value_t = 12)]
+    sparse_probe_stride: u32,
+    #[arg(long, default_value_t = 3)]
+    sparse_probe_max_seeds: usize,
+    #[arg(long, default_value_t = 2)]
+    sparse_probe_min_seed_hits: u16,
     #[arg(long, default_value_t = 256)]
     max_postings_per_seed: usize,
     #[arg(long, default_value_t = 64)]
@@ -172,6 +216,14 @@ struct MapArgs {
     trim_poly_t: bool,
     #[arg(long, default_value_t = false)]
     trim_low_quality_tail: bool,
+    #[arg(long, default_value_t = false)]
+    trim_tso: bool,
+    #[arg(long, default_value_t = 3)]
+    max_tso_mismatches: u8,
+    #[arg(long, default_value_t = 10)]
+    min_tso_match_len: u8,
+    #[arg(long, value_enum, default_value_t = LibraryStrandArg::Unstranded)]
+    library_strand: LibraryStrandArg,
     #[arg(long, default_value_t = 35)]
     min_scored_length: u16,
     #[arg(long, default_value_t = 10)]
