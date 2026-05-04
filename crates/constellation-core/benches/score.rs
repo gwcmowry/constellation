@@ -25,6 +25,10 @@ fn bench_score(c: &mut Criterion) {
     let reads: Vec<_> = (0..1024)
         .map(|read_id| (read_id, b"ACGTACGTACGTACGTACGTACGTACGTACGT".to_vec()))
         .collect();
+    let quals: Vec<_> = reads
+        .iter()
+        .map(|(read_id, seq)| (*read_id, vec![b'I'; seq.len()]))
+        .collect();
     let bucket = CandidateLocusBucket {
         key: CandidateBucketKey {
             transcript_id: 0,
@@ -50,9 +54,11 @@ fn bench_score(c: &mut Criterion) {
             let mut out = Vec::new();
             ScalarScorer::default().score_bucket(
                 black_box(&reads),
+                black_box(&quals),
                 black_box(&index),
                 black_box(&bucket),
                 black_box(&mut out),
+                None,
             );
             out
         });
@@ -63,9 +69,11 @@ fn bench_score(c: &mut Criterion) {
             let mut out = Vec::new();
             PulpScorer::default().score_bucket(
                 black_box(&reads),
+                black_box(&quals),
                 black_box(&index),
                 black_box(&bucket),
                 black_box(&mut out),
+                None,
             );
             out
         });

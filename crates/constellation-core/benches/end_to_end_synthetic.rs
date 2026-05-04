@@ -19,6 +19,10 @@ fn bench_end_to_end(c: &mut Criterion) {
     let reads: Vec<_> = (0..512)
         .map(|read_id| (read_id, b"ACGTACGTACGTACGTACGTACGTACGTACGT".to_vec()))
         .collect();
+    let quals: Vec<_> = reads
+        .iter()
+        .map(|(read_id, seq)| (*read_id, vec![b'I'; seq.len()]))
+        .collect();
 
     c.bench_function("end_to_end_synthetic_512", |b| {
         b.iter(|| {
@@ -31,9 +35,11 @@ fn bench_end_to_end(c: &mut Criterion) {
             for bucket in &buckets {
                 ScalarScorer::default().score_bucket(
                     black_box(&reads),
+                    black_box(&quals),
                     black_box(&index),
                     black_box(bucket),
                     black_box(&mut scored),
+                    None,
                 );
             }
             scored

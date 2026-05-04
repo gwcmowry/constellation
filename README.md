@@ -10,48 +10,54 @@ This repository was initialized from the original `cachebatch` project brief, wi
 - 2-bit DNA encoding, decoding, reverse complement, k-mer iteration, and tests.
 - Transcript FASTA parser and in-memory k-mer index builder.
 - Compact mmap-backed `.cbidx` serialization, with JSON loading retained for prototype compatibility.
+- Streaming compact-index builder for large FASTA targets that avoid holding all postings in memory.
 - `constellation index`, `inspect-index`, `simulate`, `map`, and `bench-report` commands.
 - Deterministic synthetic paired FASTQ generation.
 - Read-at-a-time, sketch-bucket, and candidate-locus mapping modes for cache-locality comparisons.
 - Gzip and plain FASTQ input support.
 - `needletail` FASTA parsing, `rayon` sorting, and mmap-backed index loading.
 - Optional `--gtf` transcript-to-gene mapping during indexing.
+- GTF/genome-derived target generation for exon transcripts, gene bodies, introns-only, and exon-plus-gene-body targets.
 - Low-quality and low-complexity read classification.
 - Rare-anchor seed selection that prefers lower-frequency k-mers before candidate lookup.
+- Gene-level k-mer document frequency in compact v3 indexes, stored as a compact side array for `gene-idf` seed planning.
+- Seed-batched retrieval mode that groups query seed occurrences by k-mer and loads each selected posting list once per batch.
 - Hot candidate-search tables use 16-byte k-mer entries and 8-byte postings so reference slices can fit more cleanly into L1/L2 cache.
 - Scalar scoring plus a `pulp` feature-gated SIMD Hamming path with scalar-vs-SIMD differential tests.
+- Configurable mismatch, poly-A/poly-T trimming, low-quality tail trimming, and softclip fallback scoring.
 - Assignment TSV output, JSON metrics, and truth-aware benchmark reporting for simulated reads.
 - UMI-deduplicated `count` output as Matrix Market plus barcode/features TSVs.
-- GTF/genome-derived exon transcript FASTA generation with `build-transcriptome-target`.
+- Split assignment metrics for unique gene, same-gene multi-transcript, multi-gene ambiguous, and gene-countable rates.
+- Per-read unmapped diagnostics and aggregate score-failure decomposition.
 
 ## Current Performance Snapshot
 
-Latest local benchmark: 100k read pairs from 10x PBMC 10k v3, lane L001 subset, mapped with release build against the Ensembl 93 GTF-derived exon transcript compact index.
+Latest local benchmark: 100k read pairs from 10x PBMC 10k v3, lane L001 subset, mapped with release build against an Ensembl 93 exon-plus-gene-body compact index.
 
 ```text
-wall time             0.571 s
-throughput            175k reads/s
-unique gene rate      13.65%
-ambiguous gene rate   35.59%
-unmapped rate         49.96%
-low complexity rate    0.73%
-low quality rate       0.07%
+config                         max_mismatches=6, right softclip=16, polyA/polyT/lowQ trim
+wall time                      1.32 s
+throughput                     75.7k reads/s
+unique gene rate               26.34%
+same-gene multi-transcript     41.72%
+multi-gene ambiguous           10.62%
+gene-countable rate            68.07%
+unmapped rate                  20.51%
 ```
 
-Function-family timing from that run:
+Mismatch sweep on the same target showed stable speed and mostly stable gene identities:
 
 ```text
-candidate generation   240 ms   generate_candidate_hits_with_quality_stats_parallel
-scoring                113 ms   CandidateScorer::score_bucket plus candidate sorting/grouping
-FASTQ loading           95 ms   read_fastq_r1/read_fastq_r2
-bucket building         32 ms   make_candidate_locus_buckets
-preprocess/sketching    21 ms   prepare_reads_parallel plus sketch sorting
-assignment              14 ms   assignments_by_read
-output writing          22 ms   assignment TSV and metrics output
-index load            <0.1 ms   mmap-backed compact index
+max mismatches   gene-countable   unmapped   throughput
+4                66.54%           22.44%     73.6k reads/s
+6                68.07%           20.51%     75.7k reads/s
+8                69.29%           19.05%     76.4k reads/s
+10               70.22%           17.90%     77.4k reads/s
 ```
 
-The previous Ensembl cDNA compact index on the same 100k subset had an unmapped rate of about 53.0%, so the GTF-derived target is a modest improvement but does not fully explain the remaining high unmapped fraction.
+For `max_mismatches=6`, 99.84% of reads already countable at `max_mismatches=4` kept the same gene call. Aggregate gene counts had Pearson correlation around 0.942 against the public 10x filtered matrix, using the full 10x matrix as a coarse reference.
+
+The current full exon-plus-gene-body index on disk was built before compact v3 gene-DF support, so `--seed-planner gene-idf` falls back to raw posting frequency on that file. Rebuild the large index to get real gene-level IDF seed planning.
 
 ## Example
 
@@ -75,6 +81,8 @@ cargo run -p constellation-cli -- map \
   --r2 /tmp/sim_R2.fastq \
   --chemistry tenx-3p-v3 \
   --mode candidate-locus \
+  --seed-planner raw-frequency \
+  --retrieval-mode per-read \
   --out /tmp/assignments.tsv \
   --emit-metrics /tmp/metrics.json
 
@@ -108,6 +116,37 @@ Mapping modes:
 read-at-a-time   baseline mode; scores each read's candidate hits independently
 sketch-bucket    sketch-sorted read order without candidate-locus regrouping
 candidate-locus  sketch-sorted reads plus candidate hit regrouping by transcript/locus
+```
+
+Seed planners:
+
+```text
+raw-frequency  prefer selected seeds with fewer raw postings
+gene-idf       prefer low gene-document-frequency seeds and weight candidate votes by gene-level IDF
+```
+
+Retrieval modes:
+
+```text
+per-read      load selected posting lists independently for each read
+seed-batched  sort selected query seeds by k-mer, load each posting list once, then reduce candidate votes
+```
+
+Target kinds:
+
+```bash
+cargo run -p constellation-cli -- build-transcriptome-target \
+  --genome /path/to/genome.fa \
+  --gtf /path/to/annotation.gtf \
+  --target-kind exon-plus-gene-body \
+  --out /tmp/target.fa
+```
+
+```text
+exon-transcripts
+gene-bodies
+introns-only
+exon-plus-gene-body
 ```
 
 Simulation scenarios:

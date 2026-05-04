@@ -22,6 +22,8 @@ fn bench_lookup(c: &mut Criterion) {
             postings_start: 0,
             postings_len: 16,
             freq_class: 0,
+            transcript_df: 1,
+            gene_df: 1,
         }],
         postings: (0..16)
             .map(|pos| Posting {

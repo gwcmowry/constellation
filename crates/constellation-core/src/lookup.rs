@@ -30,6 +30,8 @@ mod tests {
                 postings_start: 0,
                 postings_len: 1,
                 freq_class: 0,
+                transcript_df: 1,
+                gene_df: 1,
             }],
             postings: vec![crate::index::Posting {
                 transcript_id: 0,

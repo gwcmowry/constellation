@@ -114,9 +114,15 @@ fn report_truth_comparison(
     let mut correct = 0_u64;
     let mut unique = 0_u64;
     let mut unique_correct = 0_u64;
+    let mut same_gene_multitranscript = 0_u64;
+    let mut same_gene_multitranscript_correct = 0_u64;
+    let mut multi_gene_ambiguous = 0_u64;
     let mut missing_truth = 0_u64;
 
     for assignment in assignments {
+        if assignment.assignment_type == "ambiguous_gene" {
+            multi_gene_ambiguous += 1;
+        }
         let Some(truth_gene) = truth_by_read.get(&assignment.read_id) else {
             missing_truth += 1;
             continue;
@@ -136,6 +142,11 @@ fn report_truth_comparison(
             if assigned_gene == *truth_gene {
                 unique_correct += 1;
             }
+        } else if assignment.assignment_type == "ambiguous_transcript_same_gene" {
+            same_gene_multitranscript += 1;
+            if assigned_gene == *truth_gene {
+                same_gene_multitranscript_correct += 1;
+            }
         }
     }
 
@@ -149,6 +160,16 @@ fn report_truth_comparison(
     println!(
         "unique_gene_correct_rate\t{:.6}",
         ratio(unique_correct, unique)
+    );
+    println!("same_gene_multitranscript_assignments\t{same_gene_multitranscript}");
+    println!(
+        "same_gene_multitranscript_correct_rate\t{:.6}",
+        ratio(same_gene_multitranscript_correct, same_gene_multitranscript)
+    );
+    println!("multi_gene_ambiguous_assignments\t{multi_gene_ambiguous}");
+    println!(
+        "gene_countable_assignments\t{}",
+        unique + same_gene_multitranscript
     );
     if index.is_none() {
         println!(

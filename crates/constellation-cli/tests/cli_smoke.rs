@@ -66,6 +66,7 @@ fn cli_index_simulate_map_modes_and_report() {
     for mode in ["read-at-a-time", "sketch-bucket", "candidate-locus"] {
         let assignments = tmp.path().join(format!("{mode}.assignments.tsv"));
         let metrics = tmp.path().join(format!("{mode}.metrics.json"));
+        let diagnostics = tmp.path().join(format!("{mode}.unmapped.tsv"));
         assert_success(
             constellation()
                 .args([
@@ -82,12 +83,18 @@ fn cli_index_simulate_map_modes_and_report() {
                     path(&assignments),
                     "--emit-metrics",
                     path(&metrics),
+                    "--emit-unmapped-diagnostics",
+                    path(&diagnostics),
                 ])
                 .output()
                 .unwrap(),
         );
         let metrics_text = fs::read_to_string(&metrics).unwrap();
         assert!(metrics_text.contains(&format!("\"mode\": \"{mode}\"")));
+        assert!(metrics_text.contains("\"same_gene_multitranscript_rate\""));
+        assert!(metrics_text.contains("\"gene_countable_rate\""));
+        let diagnostics_text = fs::read_to_string(&diagnostics).unwrap();
+        assert!(diagnostics_text.starts_with("read_id\treason\tseq_len\t"));
 
         let report = constellation()
             .args([
@@ -256,4 +263,77 @@ fn cli_golden_assignment_types() {
     assert!(rows.contains("\tunmapped\t"));
     assert!(rows.contains("\tlow_complexity\t"));
     assert!(rows.contains("\tlow_quality\t"));
+
+    let manual_assignments = tmp.path().join("manual_assignments.tsv");
+    fs::write(
+        &manual_assignments,
+        concat!(
+            "read_id\tcell_barcode\tumi\tassignment_type\tgene_id\ttranscript_id\tcandidate_count\tscore\tflags\n",
+            "0\tCB\tUMI1\tunique_gene\t0\t0\t1\t12\t0\n",
+            "1\tCB\tUMI2\tambiguous_transcript_same_gene\t0\t.\t2\t12\t0\n",
+            "2\tCB\tUMI3\tambiguous_gene\t.\t.\t2\t12\t0\n",
+        ),
+    )
+    .unwrap();
+    let count_prefix = tmp.path().join("manual_counts");
+    assert_success(
+        constellation()
+            .args([
+                "count",
+                "--assignments",
+                path(&manual_assignments),
+                "--index",
+                path(&index),
+                "--out-prefix",
+                path(&count_prefix),
+            ])
+            .output()
+            .unwrap(),
+    );
+    let matrix = fs::read_to_string(tmp.path().join("manual_counts_matrix.mtx")).unwrap();
+    assert!(matrix.contains("\n1 1 2\n"));
+}
+
+#[test]
+fn cli_build_transcriptome_target_kinds() {
+    let tmp = tempfile::tempdir().unwrap();
+    let genome = tmp.path().join("genome.fa");
+    fs::write(&genome, ">1\nAACCGGTTAACCGGTT\n").unwrap();
+    let gtf = tmp.path().join("genes.gtf");
+    fs::write(
+        &gtf,
+        concat!(
+            "1\ttest\tgene\t2\t15\t.\t+\t.\tgene_id \"GENE1\";\n",
+            "1\ttest\texon\t2\t4\t.\t+\t.\tgene_id \"GENE1\"; transcript_id \"TX1\";\n",
+            "1\ttest\texon\t9\t12\t.\t+\t.\tgene_id \"GENE1\"; transcript_id \"TX1\";\n",
+        ),
+    )
+    .unwrap();
+
+    for (kind, target_marker) in [
+        ("exon-transcripts", "target:exon_transcript"),
+        ("gene-bodies", "target:gene_body"),
+        ("introns-only", "target:intron"),
+        ("exon-plus-gene-body", "target:gene_body"),
+    ] {
+        let out = tmp.path().join(format!("{kind}.fa"));
+        assert_success(
+            constellation()
+                .args([
+                    "build-transcriptome-target",
+                    "--genome",
+                    path(&genome),
+                    "--gtf",
+                    path(&gtf),
+                    "--target-kind",
+                    kind,
+                    "--out",
+                    path(&out),
+                ])
+                .output()
+                .unwrap(),
+        );
+        let text = fs::read_to_string(out).unwrap();
+        assert!(text.contains(target_marker));
+    }
 }

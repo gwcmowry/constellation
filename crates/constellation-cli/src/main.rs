@@ -72,8 +72,18 @@ struct BuildTranscriptomeTargetArgs {
     genome: PathBuf,
     #[arg(long)]
     gtf: PathBuf,
+    #[arg(long, value_enum, default_value_t = TargetKindArg::ExonTranscripts)]
+    target_kind: TargetKindArg,
     #[arg(long)]
     out: PathBuf,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum TargetKindArg {
+    ExonTranscripts,
+    GeneBodies,
+    IntronsOnly,
+    ExonPlusGeneBody,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
@@ -108,6 +118,18 @@ impl MapMode {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum SeedPlannerArg {
+    RawFrequency,
+    GeneIdf,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum RetrievalModeArg {
+    PerRead,
+    SeedBatched,
+}
+
 #[derive(Debug, Parser)]
 struct MapArgs {
     #[arg(long)]
@@ -126,6 +148,10 @@ struct MapArgs {
     mode: MapMode,
     #[arg(long, default_value_t = 8)]
     max_seeds_per_read: usize,
+    #[arg(long, value_enum, default_value_t = SeedPlannerArg::RawFrequency)]
+    seed_planner: SeedPlannerArg,
+    #[arg(long, value_enum, default_value_t = RetrievalModeArg::PerRead)]
+    retrieval_mode: RetrievalModeArg,
     #[arg(long, default_value_t = 256)]
     max_postings_per_seed: usize,
     #[arg(long, default_value_t = 64)]
@@ -134,6 +160,22 @@ struct MapArgs {
     min_mean_quality: f64,
     #[arg(long, default_value_t = 10)]
     min_seed_quality: u8,
+    #[arg(long, default_value_t = 6)]
+    max_mismatches: u32,
+    #[arg(long, default_value_t = 0)]
+    max_right_softclip: u16,
+    #[arg(long, default_value_t = 0)]
+    max_left_softclip: u16,
+    #[arg(long, default_value_t = false)]
+    trim_poly_a: bool,
+    #[arg(long, default_value_t = false)]
+    trim_poly_t: bool,
+    #[arg(long, default_value_t = false)]
+    trim_low_quality_tail: bool,
+    #[arg(long, default_value_t = 35)]
+    min_scored_length: u16,
+    #[arg(long, default_value_t = 10)]
+    min_tail_phred: u8,
     #[arg(long, default_value_t = false)]
     search_reverse_complement: bool,
     #[arg(long, default_value_t = 1.0)]
@@ -146,6 +188,8 @@ struct MapArgs {
     early_stop_min_top_seed_count: u16,
     #[arg(long)]
     emit_metrics: Option<PathBuf>,
+    #[arg(long)]
+    emit_unmapped_diagnostics: Option<PathBuf>,
     #[arg(long)]
     out: PathBuf,
 }

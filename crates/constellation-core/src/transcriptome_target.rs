@@ -11,6 +11,9 @@ use thiserror::Error;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TranscriptomeTargetKind {
     ExonTranscripts,
+    GeneBodies,
+    IntronsOnly,
+    ExonPlusGeneBody,
 }
 
 #[derive(Debug, Error)]
@@ -57,37 +60,99 @@ struct TranscriptExons {
     exons: Vec<Exon>,
 }
 
+#[derive(Debug, Clone)]
+struct GeneModel {
+    gene_id: String,
+    seqname: String,
+    strand: u8,
+    explicit_start: Option<u32>,
+    explicit_end: Option<u32>,
+    exon_start: u32,
+    exon_end: u32,
+    exons: Vec<Exon>,
+}
+
+impl GeneModel {
+    fn body_interval(&self) -> Option<Exon> {
+        match (self.explicit_start, self.explicit_end) {
+            (Some(start), Some(end)) => Some(Exon { start, end }),
+            _ if self.exon_start <= self.exon_end => Some(Exon {
+                start: self.exon_start,
+                end: self.exon_end,
+            }),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+struct GtfModels {
+    transcripts: Vec<TranscriptExons>,
+    genes: Vec<GeneModel>,
+}
+
 pub fn build_transcriptome_target(
     genome_fasta: impl AsRef<Path>,
     gtf: impl AsRef<Path>,
     out_fasta: impl AsRef<Path>,
     kind: TranscriptomeTargetKind,
 ) -> Result<TranscriptomeTargetStats, TranscriptomeTargetError> {
-    match kind {
-        TranscriptomeTargetKind::ExonTranscripts => {
-            build_exon_transcript_target(genome_fasta, gtf, out_fasta)
-        }
-    }
-}
-
-fn build_exon_transcript_target(
-    genome_fasta: impl AsRef<Path>,
-    gtf: impl AsRef<Path>,
-    out_fasta: impl AsRef<Path>,
-) -> Result<TranscriptomeTargetStats, TranscriptomeTargetError> {
     let genome = read_genome_fasta(genome_fasta)?;
-    let mut transcripts = read_gtf_exons(gtf)?;
-    if transcripts.is_empty() {
+    let mut models = read_gtf_models(gtf)?;
+    if models.transcripts.is_empty() {
         return Err(TranscriptomeTargetError::NoTranscripts);
     }
-    transcripts.sort_by(|a, b| a.transcript_id.cmp(&b.transcript_id));
+    models
+        .transcripts
+        .sort_by(|a, b| a.transcript_id.cmp(&b.transcript_id));
+    models.genes.sort_by(|a, b| a.gene_id.cmp(&b.gene_id));
 
     let out = File::create(out_fasta)?;
     let mut writer = BufWriter::new(out);
-    let mut num_exons = 0_usize;
-    let mut total_bases = 0_usize;
+    let mut stats = TranscriptomeTargetStats {
+        num_genome_contigs: genome.len(),
+        num_transcripts: 0,
+        num_exons: 0,
+        total_bases: 0,
+    };
 
-    for transcript in &mut transcripts {
+    match kind {
+        TranscriptomeTargetKind::ExonTranscripts => {
+            write_exon_transcript_targets(
+                &genome,
+                &mut writer,
+                &mut models.transcripts,
+                &mut stats,
+            )?;
+        }
+        TranscriptomeTargetKind::GeneBodies => {
+            write_gene_body_targets(&genome, &mut writer, &models.genes, &mut stats)?;
+        }
+        TranscriptomeTargetKind::IntronsOnly => {
+            write_intron_targets(&genome, &mut writer, &models.genes, &mut stats)?;
+        }
+        TranscriptomeTargetKind::ExonPlusGeneBody => {
+            write_exon_transcript_targets(
+                &genome,
+                &mut writer,
+                &mut models.transcripts,
+                &mut stats,
+            )?;
+            write_gene_body_targets(&genome, &mut writer, &models.genes, &mut stats)?;
+        }
+    }
+    writer.flush()?;
+
+    Ok(stats)
+}
+
+fn write_exon_transcript_targets(
+    genome: &FxHashMap<String, Vec<u8>>,
+    writer: &mut impl Write,
+    transcripts: &mut [TranscriptExons],
+    stats: &mut TranscriptomeTargetStats,
+) -> Result<(), TranscriptomeTargetError> {
+    for transcript in transcripts {
         if transcript.strand == b'-' {
             transcript.exons.sort_by_key(|exon| Reverse(exon.start));
         } else {
@@ -119,21 +184,96 @@ fn build_exon_transcript_target(
 
         writeln!(
             writer,
-            ">{}|gene:{}",
-            transcript.transcript_id, transcript.gene_id
+            ">{}|gene:{}|target:exon_transcript|contig:{}|strand:{}|start:{}|end:{}",
+            transcript.transcript_id,
+            transcript.gene_id,
+            transcript.seqname,
+            transcript.strand as char,
+            transcript
+                .exons
+                .iter()
+                .map(|exon| exon.start)
+                .min()
+                .unwrap_or(0),
+            transcript
+                .exons
+                .iter()
+                .map(|exon| exon.end)
+                .max()
+                .unwrap_or(0)
         )?;
-        write_wrapped_fasta(&mut writer, &seq, 80)?;
-        num_exons += transcript.exons.len();
-        total_bases += seq.len();
+        write_wrapped_fasta(writer, &seq, 80)?;
+        stats.num_transcripts += 1;
+        stats.num_exons += transcript.exons.len();
+        stats.total_bases += seq.len();
     }
-    writer.flush()?;
+    Ok(())
+}
 
-    Ok(TranscriptomeTargetStats {
-        num_genome_contigs: genome.len(),
-        num_transcripts: transcripts.len(),
-        num_exons,
-        total_bases,
-    })
+fn write_gene_body_targets(
+    genome: &FxHashMap<String, Vec<u8>>,
+    writer: &mut impl Write,
+    genes: &[GeneModel],
+    stats: &mut TranscriptomeTargetStats,
+) -> Result<(), TranscriptomeTargetError> {
+    for gene in genes {
+        let Some(body) = gene.body_interval() else {
+            continue;
+        };
+        let contig = genome
+            .get(&gene.seqname)
+            .ok_or_else(|| TranscriptomeTargetError::MissingContig(gene.seqname.clone()))?;
+        let mut seq = Vec::new();
+        append_interval_sequence(contig, &gene.seqname, gene.strand, &body, &mut seq)?;
+        writeln!(
+            writer,
+            ">{}|gene:{}|target:gene_body|contig:{}|strand:{}|start:{}|end:{}",
+            gene.gene_id, gene.gene_id, gene.seqname, gene.strand as char, body.start, body.end
+        )?;
+        write_wrapped_fasta(writer, &seq, 80)?;
+        stats.num_transcripts += 1;
+        stats.num_exons += 1;
+        stats.total_bases += seq.len();
+    }
+    Ok(())
+}
+
+fn write_intron_targets(
+    genome: &FxHashMap<String, Vec<u8>>,
+    writer: &mut impl Write,
+    genes: &[GeneModel],
+    stats: &mut TranscriptomeTargetStats,
+) -> Result<(), TranscriptomeTargetError> {
+    for gene in genes {
+        let Some(body) = gene.body_interval() else {
+            continue;
+        };
+        let introns = intron_intervals(&body, &gene.exons);
+        if introns.is_empty() {
+            continue;
+        }
+        let contig = genome
+            .get(&gene.seqname)
+            .ok_or_else(|| TranscriptomeTargetError::MissingContig(gene.seqname.clone()))?;
+        let mut ordered_introns = introns;
+        if gene.strand == b'-' {
+            ordered_introns.sort_by_key(|intron| Reverse(intron.start));
+        }
+        let mut seq = Vec::new();
+        for intron in &ordered_introns {
+            append_interval_sequence(contig, &gene.seqname, gene.strand, intron, &mut seq)?;
+        }
+        writeln!(
+            writer,
+            ">{}|gene:{}|target:intron|contig:{}|strand:{}|start:{}|end:{}",
+            gene.gene_id, gene.gene_id, gene.seqname, gene.strand as char, body.start, body.end
+        )?;
+        write_wrapped_fasta(writer, &seq, 80)?;
+        stats.num_transcripts += 1;
+        stats.num_exons += ordered_introns.len();
+        stats.total_bases += seq.len();
+    }
+    Ok(())
 }
 
 fn read_genome_fasta(
@@ -143,7 +283,8 @@ fn read_genome_fasta(
         .map_err(|err| TranscriptomeTargetError::MalformedFasta(err.to_string()))?;
     let mut genome = FxHashMap::default();
     while let Some(record) = reader.next() {
-        let record = record.map_err(|err| TranscriptomeTargetError::MalformedFasta(err.to_string()))?;
+        let record =
+            record.map_err(|err| TranscriptomeTargetError::MalformedFasta(err.to_string()))?;
         let id = String::from_utf8_lossy(record.id())
             .split_whitespace()
             .next()
@@ -164,11 +305,10 @@ fn read_genome_fasta(
     Ok(genome)
 }
 
-fn read_gtf_exons(
-    path: impl AsRef<Path>,
-) -> Result<Vec<TranscriptExons>, TranscriptomeTargetError> {
+fn read_gtf_models(path: impl AsRef<Path>) -> Result<GtfModels, TranscriptomeTargetError> {
     let reader = open_text_maybe_gz(path)?;
     let mut transcripts_by_id: FxHashMap<String, TranscriptExons> = FxHashMap::default();
+    let mut genes_by_id: FxHashMap<String, GeneModel> = FxHashMap::default();
 
     for (idx, line) in reader.lines().enumerate() {
         let line_number = idx + 1;
@@ -183,16 +323,17 @@ fn read_gtf_exons(
                 message: "expected at least 9 tab-delimited fields".to_owned(),
             });
         }
-        if fields[2] != "exon" {
+        if fields[2] != "exon" && fields[2] != "gene" {
             continue;
         }
 
-        let start = fields[3]
-            .parse::<u32>()
-            .map_err(|_| TranscriptomeTargetError::MalformedGtf {
-                line: line_number,
-                message: format!("invalid start coordinate {}", fields[3]),
-            })?;
+        let start =
+            fields[3]
+                .parse::<u32>()
+                .map_err(|_| TranscriptomeTargetError::MalformedGtf {
+                    line: line_number,
+                    message: format!("invalid start coordinate {}", fields[3]),
+                })?;
         let end = fields[4]
             .parse::<u32>()
             .map_err(|_| TranscriptomeTargetError::MalformedGtf {
@@ -211,26 +352,55 @@ fn read_gtf_exons(
         };
 
         let attrs = parse_attributes(fields[8]);
-        let Some(transcript_id) = attrs.get("transcript_id") else {
-            continue;
-        };
         let Some(gene_id) = attrs.get("gene_id") else {
             continue;
         };
-        let transcript_name = versioned_id(transcript_id, attrs.get("transcript_version"));
         let gene_name = gene_id.clone();
         let seqname = fields[0].to_owned();
 
-        let entry =
-            transcripts_by_id
-                .entry(transcript_name.clone())
-                .or_insert_with(|| TranscriptExons {
-                    transcript_id: transcript_name,
-                    gene_id: gene_name,
-                    seqname: seqname.clone(),
-                    strand,
-                    exons: Vec::new(),
-                });
+        let gene = genes_by_id
+            .entry(gene_name.clone())
+            .or_insert_with(|| GeneModel {
+                gene_id: gene_name.clone(),
+                seqname: seqname.clone(),
+                strand,
+                explicit_start: None,
+                explicit_end: None,
+                exon_start: u32::MAX,
+                exon_end: 0,
+                exons: Vec::new(),
+            });
+        if gene.seqname != seqname || gene.strand != strand {
+            return Err(TranscriptomeTargetError::MalformedGtf {
+                line: line_number,
+                message: format!("gene {} has inconsistent seqname or strand", gene.gene_id),
+            });
+        }
+
+        if fields[2] == "gene" {
+            gene.explicit_start = Some(start);
+            gene.explicit_end = Some(end);
+            continue;
+        }
+
+        gene.exon_start = gene.exon_start.min(start);
+        gene.exon_end = gene.exon_end.max(end);
+        gene.exons.push(Exon { start, end });
+
+        let Some(transcript_id) = attrs.get("transcript_id") else {
+            continue;
+        };
+        let transcript_name = versioned_id(transcript_id, attrs.get("transcript_version"));
+
+        let entry = transcripts_by_id
+            .entry(transcript_name.clone())
+            .or_insert_with(|| TranscriptExons {
+                transcript_id: transcript_name,
+                gene_id: gene_name,
+                seqname: seqname.clone(),
+                strand,
+                exons: Vec::new(),
+            });
         if entry.seqname != seqname || entry.strand != strand {
             return Err(TranscriptomeTargetError::MalformedGtf {
                 line: line_number,
@@ -243,7 +413,10 @@ fn read_gtf_exons(
         entry.exons.push(Exon { start, end });
     }
 
-    Ok(transcripts_by_id.into_values().collect())
+    Ok(GtfModels {
+        transcripts: transcripts_by_id.into_values().collect(),
+        genes: genes_by_id.into_values().collect(),
+    })
 }
 
 fn open_text_maybe_gz(
@@ -275,11 +448,74 @@ fn push_reverse_complement(seq: &[u8], out: &mut Vec<u8>) {
     }
 }
 
-fn write_wrapped_fasta(
-    writer: &mut impl Write,
-    seq: &[u8],
-    width: usize,
-) -> Result<(), io::Error> {
+fn append_interval_sequence(
+    contig: &[u8],
+    seqname: &str,
+    strand: u8,
+    interval: &Exon,
+    out: &mut Vec<u8>,
+) -> Result<(), TranscriptomeTargetError> {
+    let start = interval.start as usize;
+    let end = interval.end as usize;
+    if start == 0 || end < start || end > contig.len() {
+        return Err(TranscriptomeTargetError::IntervalOutOfBounds {
+            seqname: seqname.to_owned(),
+            start: interval.start,
+            end: interval.end,
+            len: contig.len(),
+        });
+    }
+    let slice = &contig[(start - 1)..end];
+    if strand == b'-' {
+        push_reverse_complement(slice, out);
+    } else {
+        out.extend_from_slice(slice);
+    }
+    Ok(())
+}
+
+fn intron_intervals(body: &Exon, exons: &[Exon]) -> Vec<Exon> {
+    let mut merged_exons = exons
+        .iter()
+        .filter_map(|exon| {
+            let start = exon.start.max(body.start);
+            let end = exon.end.min(body.end);
+            (start <= end).then_some(Exon { start, end })
+        })
+        .collect::<Vec<_>>();
+    merged_exons.sort_by_key(|exon| exon.start);
+
+    let mut merged = Vec::<Exon>::new();
+    for exon in merged_exons {
+        match merged.last_mut() {
+            Some(last) if exon.start <= last.end.saturating_add(1) => {
+                last.end = last.end.max(exon.end);
+            }
+            _ => merged.push(exon),
+        }
+    }
+
+    let mut introns = Vec::new();
+    let mut cursor = body.start;
+    for exon in merged {
+        if cursor < exon.start {
+            introns.push(Exon {
+                start: cursor,
+                end: exon.start - 1,
+            });
+        }
+        cursor = cursor.max(exon.end.saturating_add(1));
+    }
+    if cursor <= body.end {
+        introns.push(Exon {
+            start: cursor,
+            end: body.end,
+        });
+    }
+    introns
+}
+
+fn write_wrapped_fasta(writer: &mut impl Write, seq: &[u8], width: usize) -> Result<(), io::Error> {
     for chunk in seq.chunks(width) {
         writer.write_all(chunk)?;
         writer.write_all(b"\n")?;
@@ -330,7 +566,88 @@ mod tests {
 
         assert_eq!(stats.num_transcripts, 2);
         assert_eq!(stats.num_exons, 4);
-        assert!(text.contains(">TX1.3|gene:GENE1\nACCAACC"));
-        assert!(text.contains(">TX2|gene:GENE2\nTTGGTT"));
+        assert!(text.contains(
+            ">TX1.3|gene:GENE1|target:exon_transcript|contig:1|strand:+|start:2|end:12\nACCAACC"
+        ));
+        assert!(text.contains(
+            ">TX2|gene:GENE2|target:exon_transcript|contig:1|strand:-|start:1|end:10\nTTGGTT"
+        ));
+    }
+
+    #[test]
+    fn builds_gene_body_and_intron_targets() {
+        let mut genome = tempfile::NamedTempFile::new().unwrap();
+        writeln!(genome, ">1\nAACCGGTTAACCGGTT").unwrap();
+        let mut gtf = tempfile::NamedTempFile::new().unwrap();
+        writeln!(gtf, "1\ttest\tgene\t2\t15\t.\t+\t.\tgene_id \"GENE1\";").unwrap();
+        writeln!(
+            gtf,
+            "1\ttest\texon\t2\t4\t.\t+\t.\tgene_id \"GENE1\"; transcript_id \"TX1\";"
+        )
+        .unwrap();
+        writeln!(
+            gtf,
+            "1\ttest\texon\t9\t12\t.\t+\t.\tgene_id \"GENE1\"; transcript_id \"TX1\";"
+        )
+        .unwrap();
+
+        let gene_body_out = tempfile::NamedTempFile::new().unwrap();
+        let gene_body_stats = build_transcriptome_target(
+            genome.path(),
+            gtf.path(),
+            gene_body_out.path(),
+            TranscriptomeTargetKind::GeneBodies,
+        )
+        .unwrap();
+        let gene_body_text = std::fs::read_to_string(gene_body_out.path()).unwrap();
+        assert_eq!(gene_body_stats.num_transcripts, 1);
+        assert!(gene_body_text.contains(
+            ">GENE1|gene:GENE1|target:gene_body|contig:1|strand:+|start:2|end:15\nACCGGTTAACCGGT"
+        ));
+
+        let intron_out = tempfile::NamedTempFile::new().unwrap();
+        let intron_stats = build_transcriptome_target(
+            genome.path(),
+            gtf.path(),
+            intron_out.path(),
+            TranscriptomeTargetKind::IntronsOnly,
+        )
+        .unwrap();
+        let intron_text = std::fs::read_to_string(intron_out.path()).unwrap();
+        assert_eq!(intron_stats.num_transcripts, 1);
+        assert_eq!(intron_stats.num_exons, 2);
+        assert!(intron_text
+            .contains(">GENE1|gene:GENE1|target:intron|contig:1|strand:+|start:2|end:15\nGGTTGGT"));
+    }
+
+    #[test]
+    fn exon_plus_gene_body_emits_both_target_classes() {
+        let mut genome = tempfile::NamedTempFile::new().unwrap();
+        writeln!(genome, ">1\nAACCGGTTAACCGGTT").unwrap();
+        let mut gtf = tempfile::NamedTempFile::new().unwrap();
+        writeln!(
+            gtf,
+            "1\ttest\texon\t2\t4\t.\t+\t.\tgene_id \"GENE1\"; transcript_id \"TX1\";"
+        )
+        .unwrap();
+        writeln!(
+            gtf,
+            "1\ttest\texon\t9\t12\t.\t+\t.\tgene_id \"GENE1\"; transcript_id \"TX1\";"
+        )
+        .unwrap();
+        let out = tempfile::NamedTempFile::new().unwrap();
+
+        let stats = build_transcriptome_target(
+            genome.path(),
+            gtf.path(),
+            out.path(),
+            TranscriptomeTargetKind::ExonPlusGeneBody,
+        )
+        .unwrap();
+        let text = std::fs::read_to_string(out.path()).unwrap();
+
+        assert_eq!(stats.num_transcripts, 2);
+        assert!(text.contains("|target:exon_transcript|"));
+        assert!(text.contains("|target:gene_body|"));
     }
 }

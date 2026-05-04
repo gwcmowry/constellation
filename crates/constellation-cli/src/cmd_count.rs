@@ -22,7 +22,9 @@ pub fn run_count(args: CountArgs) -> Result<()> {
                 line_idx + 1
             ));
         }
-        if fields[3] != "unique_gene" || fields[4] == "." {
+        if !matches!(fields[3], "unique_gene" | "ambiguous_transcript_same_gene")
+            || fields[4] == "."
+        {
             continue;
         }
         let gene_id: u32 = fields[4].parse()?;

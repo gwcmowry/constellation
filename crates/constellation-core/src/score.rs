@@ -13,14 +13,72 @@ pub struct ScoredCandidate {
     pub flags: u16,
 }
 
+pub const SCORE_FLAG_FULL_LENGTH: u16 = 1 << 0;
+pub const SCORE_FLAG_TRIMMED_POLY_A: u16 = 1 << 1;
+pub const SCORE_FLAG_TRIMMED_POLY_T: u16 = 1 << 2;
+pub const SCORE_FLAG_TRIMMED_LOW_QUALITY: u16 = 1 << 3;
+pub const SCORE_FLAG_RIGHT_SOFTCLIP: u16 = 1 << 4;
+pub const SCORE_FLAG_LEFT_SOFTCLIP: u16 = 1 << 5;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ScoreConfig {
+    pub max_mismatches: u32,
+    pub max_right_softclip: u16,
+    pub max_left_softclip: u16,
+    pub trim_poly_a: bool,
+    pub trim_poly_t: bool,
+    pub trim_low_quality_tail: bool,
+    pub min_scored_len: u16,
+    pub min_tail_phred: u8,
+}
+
+impl Default for ScoreConfig {
+    fn default() -> Self {
+        Self {
+            max_mismatches: 6,
+            max_right_softclip: 0,
+            max_left_softclip: 0,
+            trim_poly_a: false,
+            trim_poly_t: false,
+            trim_low_quality_tail: false,
+            min_scored_len: 35,
+            min_tail_phred: 10,
+        }
+    }
+}
+
+impl ScoreConfig {
+    pub fn uses_default_window(self) -> bool {
+        self.max_right_softclip == 0
+            && self.max_left_softclip == 0
+            && !self.trim_poly_a
+            && !self.trim_poly_t
+            && !self.trim_low_quality_tail
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct ScoreFailureStats {
+    pub candidates_seen: u64,
+    pub candidates_out_of_bounds: u64,
+    pub candidates_failed_mismatch: u64,
+    pub candidates_failed_min_scored_len: u64,
+    pub candidates_failed_trimmed_out_of_bounds: u64,
+    pub candidates_full_length_mismatch_only: u64,
+    pub candidates_passed_full_length: u64,
+    pub candidates_passed_trimmed_or_softclipped: u64,
+}
+
 pub trait CandidateScorer: Send + Sync {
     fn score_bucket(
         &self,
         reads: &[(ReadId, Vec<u8>)],
+        quals: &[(ReadId, Vec<u8>)],
         index: &dyn IndexAccess,
         bucket: &CandidateLocusBucket,
         out: &mut Vec<ScoredCandidate>,
-    );
+        read_score_stats: Option<&mut [ScoreFailureStats]>,
+    ) -> ScoreFailureStats;
 }
 
 pub fn read_seq_by_id(reads: &[(ReadId, Vec<u8>)], read_id: ReadId) -> Option<&[u8]> {
@@ -28,6 +86,16 @@ pub fn read_seq_by_id(reads: &[(ReadId, Vec<u8>)], read_id: ReadId) -> Option<&[
     let (stored_id, seq) = reads.get(idx)?;
     if *stored_id == read_id {
         Some(seq.as_slice())
+    } else {
+        None
+    }
+}
+
+pub fn qual_by_read_id(quals: &[(ReadId, Vec<u8>)], read_id: ReadId) -> Option<&[u8]> {
+    let idx = usize::try_from(read_id).ok()?;
+    let (stored_id, qual) = quals.get(idx)?;
+    if *stored_id == read_id {
+        Some(qual.as_slice())
     } else {
         None
     }

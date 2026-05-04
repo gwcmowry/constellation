@@ -174,4 +174,16 @@ mod tests {
         let assignment = assign_read(0, "CB".to_owned(), "UMI".to_owned(), &candidates);
         assert_eq!(assignment.assignment_type, AssignmentType::AmbiguousGene);
     }
+
+    #[test]
+    fn same_gene_multi_transcript_assignment_is_gene_countable() {
+        let candidates = [candidate(0, 1, 2), candidate(0, 1, 3)];
+        let assignment = assign_read(0, "CB".to_owned(), "UMI".to_owned(), &candidates);
+        assert_eq!(
+            assignment.assignment_type,
+            AssignmentType::AmbiguousTranscriptSameGene
+        );
+        assert_eq!(assignment.gene_id, Some(1));
+        assert_eq!(assignment.transcript_id, None);
+    }
 }
