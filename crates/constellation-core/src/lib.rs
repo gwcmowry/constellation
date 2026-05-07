@@ -3,6 +3,7 @@ pub mod batch;
 pub mod candidate;
 pub mod chemistry;
 pub mod dna;
+pub mod ec_index;
 pub mod fastq;
 pub mod gtf;
 pub mod index;

@@ -22,6 +22,10 @@ pub const SCORE_FLAG_RIGHT_SOFTCLIP: u16 = 1 << 4;
 pub const SCORE_FLAG_LEFT_SOFTCLIP: u16 = 1 << 5;
 pub const SCORE_FLAG_TRIMMED_TSO: u16 = 1 << 6;
 pub const SCORE_FLAG_ANTISENSE: u16 = 1 << 7;
+pub const SCORE_FLAG_TARGET_EXON: u16 = 1 << 8;
+pub const SCORE_FLAG_TARGET_INTRON: u16 = 1 << 9;
+pub const SCORE_FLAG_TARGET_GENE_BODY: u16 = 1 << 10;
+pub const SCORE_FLAG_RESCUED: u16 = 1 << 11;
 
 pub const TENX_3P_TSO: &[u8] = b"AAGCAGTGGTATCAACGCAGAGTACATGGG";
 
@@ -35,14 +39,13 @@ pub fn tso_prefix_trim_len(read_seq: &[u8], min_match_len: u8, max_mismatches: u
         return 0;
     }
     let mut best = 0;
-    for len in min_len..=max_len {
-        let mut mismatches = 0_u8;
-        for idx in 0..len {
-            if !read_seq[idx].eq_ignore_ascii_case(&TENX_3P_TSO[idx]) {
-                mismatches = mismatches.saturating_add(1);
-            }
+    let mut mismatches = 0_u8;
+    for len in 1..=max_len {
+        let idx = len - 1;
+        if !ascii_base_eq(read_seq[idx], TENX_3P_TSO[idx]) {
+            mismatches = mismatches.saturating_add(1);
         }
-        if mismatches <= max_mismatches {
+        if len >= min_len && mismatches <= max_mismatches {
             best = len;
         }
     }
@@ -220,7 +223,7 @@ pub fn hamming_ascii(a: &[u8], b: &[u8]) -> u32 {
     let shared = a.len().min(b.len());
     let mut mismatches = a.len().abs_diff(b.len()) as u32;
     for idx in 0..shared {
-        if !a[idx].eq_ignore_ascii_case(&b[idx]) {
+        if !ascii_base_eq(a[idx], b[idx]) {
             mismatches += 1;
         }
     }
@@ -232,19 +235,25 @@ pub fn hamming_revcomp_ascii(read: &[u8], reference: &[u8]) -> u32 {
     let mut mismatches = read.len().abs_diff(reference.len()) as u32;
     for idx in 0..shared {
         let read_base = complement_ascii(read[read.len() - 1 - idx]);
-        if !read_base.eq_ignore_ascii_case(&reference[idx]) {
+        if !ascii_base_eq(read_base, reference[idx]) {
             mismatches += 1;
         }
     }
     mismatches
 }
 
+#[inline(always)]
+fn ascii_base_eq(a: u8, b: u8) -> bool {
+    a == b || (a | 0x20) == (b | 0x20)
+}
+
+#[inline(always)]
 fn complement_ascii(base: u8) -> u8 {
-    match base.to_ascii_uppercase() {
-        b'A' => b'T',
-        b'C' => b'G',
-        b'G' => b'C',
-        b'T' | b'U' => b'A',
+    match base {
+        b'A' | b'a' => b'T',
+        b'C' | b'c' => b'G',
+        b'G' | b'g' => b'C',
+        b'T' | b't' | b'U' | b'u' => b'A',
         _ => b'N',
     }
 }

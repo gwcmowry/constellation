@@ -269,7 +269,9 @@ dependencies = [
  "anyhow",
  "clap",
  "constellation-core",
+ "flate2",
  "rayon",
+ "rustc-hash",
  "serde_json",
  "tempfile",
 ]

@@ -9,7 +9,9 @@ pub fn run_build_transcriptome_target(args: BuildTranscriptomeTargetArgs) -> Res
         crate::TargetKindArg::ExonTranscripts => TranscriptomeTargetKind::ExonTranscripts,
         crate::TargetKindArg::GeneBodies => TranscriptomeTargetKind::GeneBodies,
         crate::TargetKindArg::IntronsOnly => TranscriptomeTargetKind::IntronsOnly,
+        crate::TargetKindArg::IntronFlanks => TranscriptomeTargetKind::IntronFlanks,
         crate::TargetKindArg::ExonPlusGeneBody => TranscriptomeTargetKind::ExonPlusGeneBody,
+        crate::TargetKindArg::ExonPlusIntronsOnly => TranscriptomeTargetKind::ExonPlusIntronsOnly,
     };
     let stats = build_transcriptome_target(args.genome, args.gtf, args.out, kind)?;
     println!("num_genome_contigs\t{}", stats.num_genome_contigs);

@@ -1,5 +1,5 @@
 use crate::dna::{encode_acgt, iter_kmers_2bit, reverse_complement};
-use crate::index::IndexAccess;
+use crate::index::{IndexAccess, KmerLookup, SeedPosting, TargetClass};
 use crate::{GeneId, ReadId, TranscriptId};
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
@@ -41,7 +41,9 @@ pub enum SeedPlanner {
 pub enum CandidateSearchMode {
     #[default]
     Full,
+    ExonFirst(SparseProbeConfig),
     SparseProbe(SparseProbeConfig),
+    SparseProbeNoFallback(SparseProbeConfig),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -103,6 +105,7 @@ pub struct QuerySeedChoice {
     pub transcript_df: u32,
     pub gene_df: u32,
     pub seed_score: u16,
+    pub lookup: Option<KmerLookup>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -113,6 +116,7 @@ pub struct QuerySeed {
     pub read_strand: u8,
     pub raw_postings: u32,
     pub seed_score: u16,
+    pub lookup: Option<KmerLookup>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -122,6 +126,12 @@ pub struct CandidateVote {
     pub candidate_start: u32,
     pub strand: u8,
     pub seed_score: u16,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+struct CandidateVoteAggregate {
+    seed_count: u16,
+    seed_score: u16,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -334,20 +344,53 @@ pub fn generate_candidate_hits_seed_batched(
     CandidateGenerationStats,
     Vec<(ReadId, CandidateGenerationStats)>,
 ) {
-    if let CandidateSearchMode::SparseProbe(config) = candidate_search {
-        return generate_candidate_hits_seed_batched_sparse_fallback(
-            index,
-            reads,
-            quals,
-            read_ids,
-            min_seed_quality,
-            max_seeds_per_read,
-            max_postings_per_seed,
-            search_reverse_complement,
-            seed_planner,
-            config,
-            candidate_pruning,
-        );
+    match candidate_search {
+        CandidateSearchMode::SparseProbe(config) => {
+            return generate_candidate_hits_seed_batched_sparse_fallback(
+                index,
+                reads,
+                quals,
+                read_ids,
+                min_seed_quality,
+                max_seeds_per_read,
+                max_postings_per_seed,
+                search_reverse_complement,
+                seed_planner,
+                config,
+                candidate_pruning,
+            );
+        }
+        CandidateSearchMode::SparseProbeNoFallback(config) => {
+            return generate_candidate_hits_seed_batched_sparse_no_fallback(
+                index,
+                reads,
+                quals,
+                read_ids,
+                min_seed_quality,
+                max_seeds_per_read,
+                max_postings_per_seed,
+                search_reverse_complement,
+                seed_planner,
+                config,
+                candidate_pruning,
+            );
+        }
+        CandidateSearchMode::ExonFirst(config) => {
+            return generate_candidate_hits_seed_batched_exon_first(
+                index,
+                reads,
+                quals,
+                read_ids,
+                min_seed_quality,
+                max_seeds_per_read,
+                max_postings_per_seed,
+                search_reverse_complement,
+                seed_planner,
+                config,
+                candidate_pruning,
+            );
+        }
+        CandidateSearchMode::Full => {}
     }
     generate_candidate_hits_seed_batched_full(
         index,
@@ -391,8 +434,52 @@ fn generate_candidate_hits_seed_batched_full(
         search_reverse_complement,
         seed_planner,
         SeedSelectionMode::Full,
+        PostingFilter::All,
         candidate_pruning,
     )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_candidate_hits_seed_batched_sparse_no_fallback(
+    index: &dyn IndexAccess,
+    reads: &[(ReadId, Vec<u8>)],
+    quals: &[(ReadId, Vec<u8>)],
+    read_ids: &[ReadId],
+    min_seed_quality: u8,
+    max_seeds_per_read: usize,
+    max_postings_per_seed: usize,
+    search_reverse_complement: bool,
+    seed_planner: SeedPlanner,
+    config: SparseProbeConfig,
+    candidate_pruning: CandidatePruningMode,
+) -> (
+    Vec<CandidateHit>,
+    CandidateGenerationStats,
+    Vec<(ReadId, CandidateGenerationStats)>,
+) {
+    let probe_limit = config.max_seeds.max(1).min(max_seeds_per_read.max(1));
+    let (hits, mut total_stats, mut read_stats) =
+        generate_candidate_hits_seed_batched_with_selection(
+            index,
+            reads,
+            quals,
+            read_ids,
+            min_seed_quality,
+            probe_limit,
+            max_postings_per_seed,
+            search_reverse_complement,
+            seed_planner,
+            SeedSelectionMode::SparseProbe(config),
+            PostingFilter::All,
+            candidate_pruning,
+        );
+    total_stats.sparse_probe_attempted_reads += read_ids.len() as u64;
+    total_stats.sparse_probe_accepted_reads += read_ids.len() as u64;
+    for (_, stats) in &mut read_stats {
+        stats.sparse_probe_attempted_reads = 1;
+        stats.sparse_probe_accepted_reads = 1;
+    }
+    (hits, total_stats, read_stats)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -426,6 +513,7 @@ fn generate_candidate_hits_seed_batched_sparse_fallback(
             search_reverse_complement,
             seed_planner,
             SeedSelectionMode::SparseProbe(config),
+            PostingFilter::All,
             candidate_pruning,
         );
 
@@ -439,6 +527,11 @@ fn generate_candidate_hits_seed_batched_sparse_fallback(
         .iter()
         .copied()
         .filter(|read_id| !accepted.contains_key(read_id))
+        .collect();
+    let fallback_read_set: FxHashMap<_, _> = fallback_read_ids
+        .iter()
+        .copied()
+        .map(|read_id| (read_id, true))
         .collect();
     total_stats.sparse_probe_attempted_reads += read_ids.len() as u64;
     total_stats.sparse_probe_accepted_reads +=
@@ -482,14 +575,115 @@ fn generate_candidate_hits_seed_batched_sparse_fallback(
         if let Some(fallback_stats) = fallback_stats_by_read.get(read_id) {
             *stats = *fallback_stats;
         }
+        stats.sparse_probe_attempted_reads = 1;
+        if fallback_read_set.contains_key(read_id) {
+            stats.sparse_probe_fallback_reads = 1;
+        } else {
+            stats.sparse_probe_accepted_reads = 1;
+        }
     }
     (probe_hits, total_stats, read_stats)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_candidate_hits_seed_batched_exon_first(
+    index: &dyn IndexAccess,
+    reads: &[(ReadId, Vec<u8>)],
+    quals: &[(ReadId, Vec<u8>)],
+    read_ids: &[ReadId],
+    min_seed_quality: u8,
+    max_seeds_per_read: usize,
+    max_postings_per_seed: usize,
+    search_reverse_complement: bool,
+    seed_planner: SeedPlanner,
+    config: SparseProbeConfig,
+    candidate_pruning: CandidatePruningMode,
+) -> (
+    Vec<CandidateHit>,
+    CandidateGenerationStats,
+    Vec<(ReadId, CandidateGenerationStats)>,
+) {
+    let probe_limit = config.max_seeds.max(1).min(max_seeds_per_read.max(1));
+    let (mut exon_hits, mut total_stats, mut read_stats) =
+        generate_candidate_hits_seed_batched_with_selection(
+            index,
+            reads,
+            quals,
+            read_ids,
+            min_seed_quality,
+            probe_limit,
+            max_postings_per_seed,
+            search_reverse_complement,
+            seed_planner,
+            SeedSelectionMode::SparseProbe(config),
+            PostingFilter::TargetClass(TargetClass::ExonTranscript),
+            candidate_pruning,
+        );
+
+    let min_seed_hits = config.min_seed_hits.max(1);
+    let mut accepted = FxHashMap::default();
+    for hit in &exon_hits {
+        if hit.seed_count >= min_seed_hits {
+            accepted.insert(hit.read_id, true);
+        }
+    }
+    let fallback_read_ids: Vec<_> = read_ids
+        .iter()
+        .copied()
+        .filter(|read_id| !accepted.contains_key(read_id))
+        .collect();
+    if fallback_read_ids.is_empty() {
+        return (exon_hits, total_stats, read_stats);
+    }
+
+    let (fallback_hits, fallback_stats, fallback_read_stats) =
+        generate_candidate_hits_seed_batched_sparse_fallback(
+            index,
+            reads,
+            quals,
+            &fallback_read_ids,
+            min_seed_quality,
+            max_seeds_per_read,
+            max_postings_per_seed,
+            search_reverse_complement,
+            seed_planner,
+            config,
+            candidate_pruning,
+        );
+    add_total_stats(&mut total_stats, fallback_stats);
+
+    exon_hits.retain(|hit| accepted.contains_key(&hit.read_id));
+    exon_hits.extend(fallback_hits);
+    exon_hits.sort_unstable_by_key(|hit| {
+        (
+            hit.read_id,
+            hit.transcript_id,
+            hit.pos,
+            hit.strand,
+            hit.seed_count,
+            hit.seed_score,
+        )
+    });
+
+    let fallback_stats_by_read: FxHashMap<_, _> = fallback_read_stats.into_iter().collect();
+    for (read_id, stats) in &mut read_stats {
+        if let Some(fallback_stats) = fallback_stats_by_read.get(read_id) {
+            *stats = *fallback_stats;
+        }
+    }
+    (exon_hits, total_stats, read_stats)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum SeedSelectionMode {
     Full,
     SparseProbe(SparseProbeConfig),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PostingFilter {
+    All,
+    TargetClass(TargetClass),
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -504,6 +698,7 @@ fn generate_candidate_hits_seed_batched_with_selection(
     search_reverse_complement: bool,
     seed_planner: SeedPlanner,
     selection_mode: SeedSelectionMode,
+    posting_filter: PostingFilter,
     candidate_pruning: CandidatePruningMode,
 ) -> (
     Vec<CandidateHit>,
@@ -538,6 +733,7 @@ fn generate_candidate_hits_seed_batched_with_selection(
                 read_strand: seed.read_strand,
                 raw_postings: seed.raw_postings,
                 seed_score: seed.seed_score,
+                lookup: seed.lookup,
             });
         }
         add_generation_stats(&mut total_stats, stats);
@@ -550,6 +746,7 @@ fn generate_candidate_hits_seed_batched_with_selection(
         read_stats,
         max_postings_per_seed,
         total_stats,
+        posting_filter,
         candidate_pruning,
     )
 }
@@ -560,6 +757,7 @@ fn reduce_query_seeds_to_hits(
     mut read_stats: Vec<(ReadId, CandidateGenerationStats)>,
     max_postings_per_seed: usize,
     mut total_stats: CandidateGenerationStats,
+    posting_filter: PostingFilter,
     candidate_pruning: CandidatePruningMode,
 ) -> (
     Vec<CandidateHit>,
@@ -573,7 +771,12 @@ fn reduce_query_seeds_to_hits(
         .collect();
 
     query_seeds.sort_unstable();
-    let mut votes = Vec::new();
+    let mut grouped_votes: FxHashMap<u128, CandidateVoteAggregate> =
+        FxHashMap::with_capacity_and_hasher(
+            query_seeds.len().saturating_mul(8),
+            Default::default(),
+        );
+    let mut candidate_votes = 0_u64;
     let mut group_start = 0;
     while group_start < query_seeds.len() {
         let kmer_code = query_seeds[group_start].kmer_code;
@@ -592,7 +795,7 @@ fn reduce_query_seeds_to_hits(
             group_start = group_end;
             continue;
         }
-        if postings_len > max_postings_per_seed {
+        if posting_filter == PostingFilter::All && postings_len > max_postings_per_seed {
             total_stats.postings_skipped_due_to_frequency +=
                 postings_len as u64 * (group_end - group_start) as u64;
             total_stats.seed_groups_skipped_due_to_frequency += 1;
@@ -609,58 +812,86 @@ fn reduce_query_seeds_to_hits(
             continue;
         }
         total_stats.distinct_seed_lists_loaded += 1;
-        update_seed_stats_for_group(
-            &query_seeds[group_start..group_end],
-            &mut read_stats,
-            &read_stat_offsets,
-            |stats| stats.selected_seeds_with_postings += 1,
-        );
-        for posting in index.seed_postings(kmer_code) {
-            for seed in &query_seeds[group_start..group_end] {
-                if posting.pos < seed.seed_pos {
+        match posting_filter {
+            PostingFilter::All => {
+                update_seed_stats_for_group(
+                    &query_seeds[group_start..group_end],
+                    &mut read_stats,
+                    &read_stat_offsets,
+                    |stats| stats.selected_seeds_with_postings += 1,
+                );
+                let Some(lookup) = query_seeds[group_start].lookup else {
+                    group_start = group_end;
+                    continue;
+                };
+                for posting in index.seed_postings_for_lookup(lookup) {
+                    candidate_votes += aggregate_votes_for_posting(
+                        posting,
+                        &query_seeds[group_start..group_end],
+                        &mut grouped_votes,
+                    );
+                }
+            }
+            PostingFilter::TargetClass(target_class) => {
+                let postings = index
+                    .seed_postings_for_target_class(kmer_code, target_class)
+                    .take(max_postings_per_seed.saturating_add(1))
+                    .collect::<Vec<_>>();
+                if postings.is_empty() {
+                    group_start = group_end;
                     continue;
                 }
-                votes.push(CandidateVote {
-                    read_id: seed.read_id,
-                    transcript_id: posting.transcript_id,
-                    candidate_start: posting.pos - seed.seed_pos,
-                    strand: seed.read_strand,
-                    seed_score: seed.seed_score,
-                });
+                if postings.len() > max_postings_per_seed {
+                    total_stats.postings_skipped_due_to_frequency +=
+                        postings.len() as u64 * (group_end - group_start) as u64;
+                    total_stats.seed_groups_skipped_due_to_frequency += 1;
+                    update_seed_stats_for_group(
+                        &query_seeds[group_start..group_end],
+                        &mut read_stats,
+                        &read_stat_offsets,
+                        |stats| {
+                            stats.selected_seeds_over_frequency_cap += 1;
+                            stats.postings_skipped_due_to_frequency += postings.len() as u64;
+                        },
+                    );
+                    group_start = group_end;
+                    continue;
+                }
+                update_seed_stats_for_group(
+                    &query_seeds[group_start..group_end],
+                    &mut read_stats,
+                    &read_stat_offsets,
+                    |stats| stats.selected_seeds_with_postings += 1,
+                );
+                for posting in postings {
+                    candidate_votes += aggregate_votes_for_posting(
+                        posting,
+                        &query_seeds[group_start..group_end],
+                        &mut grouped_votes,
+                    );
+                }
             }
         }
         group_start = group_end;
     }
-    total_stats.candidate_votes = votes.len() as u64;
+    total_stats.candidate_votes = candidate_votes;
 
-    votes.sort_unstable();
-    let mut hits = Vec::new();
-    let mut idx = 0;
-    while idx < votes.len() {
-        let first = votes[idx];
-        let mut seed_count = 1_u16;
-        let mut seed_score = first.seed_score;
-        idx += 1;
-        while idx < votes.len()
-            && votes[idx].read_id == first.read_id
-            && votes[idx].transcript_id == first.transcript_id
-            && votes[idx].candidate_start == first.candidate_start
-            && votes[idx].strand == first.strand
-        {
-            seed_count = seed_count.saturating_add(1);
-            seed_score = seed_score.saturating_add(votes[idx].seed_score);
-            idx += 1;
-        }
-        hits.push(CandidateHit {
-            read_id: first.read_id,
-            transcript_id: first.transcript_id,
-            gene_id: index.transcript_gene_id(first.transcript_id).unwrap_or(0),
-            pos: first.candidate_start,
-            strand: first.strand,
-            seed_count,
-            seed_score,
-        });
-    }
+    let mut hits: Vec<_> = grouped_votes
+        .into_iter()
+        .map(|(key, aggregate)| {
+            let (read_id, transcript_id, pos, strand) = unpack_batch_candidate_key(key);
+            CandidateHit {
+                read_id,
+                transcript_id,
+                gene_id: index.transcript_gene_id(transcript_id).unwrap_or(0),
+                pos,
+                strand,
+                seed_count: aggregate.seed_count,
+                seed_score: aggregate.seed_score,
+            }
+        })
+        .collect();
+    hits.sort_unstable_by_key(|hit| (hit.read_id, hit.transcript_id, hit.pos, hit.strand));
     let pre_prune_hits = hits.len();
     apply_candidate_pruning(&mut hits, candidate_pruning);
     total_stats.candidate_hits_pruned += pre_prune_hits.saturating_sub(hits.len()) as u64;
@@ -691,6 +922,30 @@ fn reduce_query_seeds_to_hits(
     }
 
     (hits, total_stats, read_stats)
+}
+
+fn aggregate_votes_for_posting(
+    posting: SeedPosting,
+    seeds: &[QuerySeed],
+    grouped_votes: &mut FxHashMap<u128, CandidateVoteAggregate>,
+) -> u64 {
+    let mut votes = 0_u64;
+    for seed in seeds {
+        if posting.pos < seed.seed_pos {
+            continue;
+        }
+        let key = pack_batch_candidate_key(
+            seed.read_id,
+            posting.transcript_id,
+            posting.pos - seed.seed_pos,
+            seed.read_strand,
+        );
+        let aggregate = grouped_votes.entry(key).or_default();
+        aggregate.seed_count = aggregate.seed_count.saturating_add(1);
+        aggregate.seed_score = aggregate.seed_score.saturating_add(seed.seed_score);
+        votes += 1;
+    }
+    votes
 }
 
 fn apply_candidate_pruning(hits: &mut Vec<CandidateHit>, mode: CandidatePruningMode) {
@@ -855,9 +1110,9 @@ fn collect_seed_choices(
             }
         }
         stats.seed_candidates_considered += 1;
-        let stats_for_seed = index.kmer_stats(seed.code);
-        let (raw_postings, transcript_df, gene_df) = stats_for_seed
-            .map(|stats| (stats.raw_postings, stats.transcript_df, stats.gene_df))
+        let lookup = index.kmer_lookup(seed.code);
+        let (raw_postings, transcript_df, gene_df) = lookup
+            .map(|lookup| (lookup.postings_len, lookup.transcript_df, lookup.gene_df))
             .unwrap_or((0, 0, 0));
         seed_choices.push(QuerySeedChoice {
             seed_pos: seed.pos,
@@ -867,6 +1122,7 @@ fn collect_seed_choices(
             transcript_df,
             gene_df,
             seed_score: seed_score(index.num_genes(), gene_df, seed_planner),
+            lookup,
         });
     }
 }
@@ -992,8 +1248,8 @@ fn select_sparse_probe_seed_choices_for_read(
             &mut seed_choices,
         );
     }
-    sort_seed_choices(&mut seed_choices, seed_planner);
     let selected_seed_count = seed_choices.len().min(seed_limit.max(1));
+    keep_best_seed_choices(&mut seed_choices, selected_seed_count, seed_planner);
     stats.selected_seeds = selected_seed_count as u64;
     stats.seed_lookups = selected_seed_count as u64;
     if stats.seed_candidates_considered == 0 {
@@ -1035,9 +1291,9 @@ fn collect_sparse_probe_seed_choices(
             }
         }
         stats.seed_candidates_considered += 1;
-        let stats_for_seed = index.kmer_stats(seed.code);
-        let (raw_postings, transcript_df, gene_df) = stats_for_seed
-            .map(|stats| (stats.raw_postings, stats.transcript_df, stats.gene_df))
+        let lookup = index.kmer_lookup(seed.code);
+        let (raw_postings, transcript_df, gene_df) = lookup
+            .map(|lookup| (lookup.postings_len, lookup.transcript_df, lookup.gene_df))
             .unwrap_or((0, 0, 0));
         seed_choices.push(QuerySeedChoice {
             seed_pos: seed.pos,
@@ -1047,6 +1303,7 @@ fn collect_sparse_probe_seed_choices(
             transcript_df,
             gene_df,
             seed_score: seed_score(index.num_genes(), gene_df, seed_planner),
+            lookup,
         });
     }
 }
@@ -1128,6 +1385,43 @@ fn sort_seed_choices(seed_choices: &mut [QuerySeedChoice], seed_planner: SeedPla
     }
 }
 
+fn keep_best_seed_choices(
+    seed_choices: &mut SmallVec<[QuerySeedChoice; 256]>,
+    seed_limit: usize,
+    seed_planner: SeedPlanner,
+) {
+    if seed_choices.len() > seed_limit {
+        match seed_planner {
+            SeedPlanner::RawFrequency => {
+                seed_choices.select_nth_unstable_by_key(seed_limit, |seed| {
+                    (
+                        seed.raw_postings == 0,
+                        nonzero_or_max(seed.raw_postings),
+                        seed.seed_pos,
+                        seed.kmer_code,
+                        seed.read_strand,
+                    )
+                });
+            }
+            SeedPlanner::GeneIdf => {
+                seed_choices.select_nth_unstable_by_key(seed_limit, |seed| {
+                    (
+                        seed.raw_postings == 0,
+                        nonzero_or_max(seed.gene_df),
+                        std::cmp::Reverse(seed.seed_score),
+                        nonzero_or_max(seed.raw_postings),
+                        seed.seed_pos,
+                        seed.kmer_code,
+                        seed.read_strand,
+                    )
+                });
+            }
+        }
+        seed_choices.truncate(seed_limit);
+    }
+    sort_seed_choices(seed_choices, seed_planner);
+}
+
 fn nonzero_or_max(value: u32) -> u32 {
     if value == 0 {
         u32::MAX
@@ -1179,6 +1473,23 @@ fn should_stop_early(
     let remaining = selected_seed_count.saturating_sub(seed_lookups) as u16;
     posterior_top_vs_runner_up >= config.posterior_threshold
         && top > second.saturating_add(remaining)
+}
+
+#[inline]
+fn pack_batch_candidate_key(
+    read_id: ReadId,
+    transcript_id: TranscriptId,
+    pos: u32,
+    strand: u8,
+) -> u128 {
+    ((read_id as u128) << 64) | u128::from(pack_candidate_key(transcript_id, pos, strand))
+}
+
+#[inline]
+fn unpack_batch_candidate_key(key: u128) -> (ReadId, TranscriptId, u32, u8) {
+    let read_id = (key >> 64) as ReadId;
+    let (transcript_id, pos, strand) = unpack_candidate_key(key as u64);
+    (read_id, transcript_id, pos, strand)
 }
 
 #[inline]
@@ -1372,6 +1683,40 @@ mod tests {
         assert_eq!(batched, per_read);
         assert!(stats.distinct_seed_lists_loaded < stats.query_seed_occurrences);
         assert!(stats.candidate_votes >= stats.candidate_hits);
+    }
+
+    #[test]
+    fn exon_first_search_prefers_exon_hits_before_full_fallback() {
+        let mut fasta = tempfile::NamedTempFile::new().unwrap();
+        writeln!(
+            fasta,
+            ">gb|gene:GENE_A|target:gene_body\nACGTAC\n>ex|gene:GENE_A|target:exon_transcript\nACGTAC"
+        )
+        .unwrap();
+        let index = build_transcript_index(fasta.path(), 3, 256).unwrap();
+        let reads = vec![(0, b"ACG".to_vec())];
+        let quals = vec![(0, b"III".to_vec())];
+
+        let (hits, _, _) = generate_candidate_hits_seed_batched(
+            &index,
+            &reads,
+            &quals,
+            &[0],
+            0,
+            1,
+            256,
+            false,
+            SeedPlanner::RawFrequency,
+            CandidateSearchMode::ExonFirst(SparseProbeConfig {
+                stride: 1,
+                max_seeds: 1,
+                min_seed_hits: 1,
+            }),
+            CandidatePruningMode::None,
+        );
+
+        assert!(!hits.is_empty());
+        assert!(hits.iter().all(|hit| hit.transcript_id == 1));
     }
 
     #[test]

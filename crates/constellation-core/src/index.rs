@@ -1,16 +1,19 @@
 use crate::{GeneId, TranscriptId};
 use bytemuck::{Pod, Zeroable};
-use memmap2::Mmap;
+use memmap2::{Advice, Mmap, UncheckedAdvice};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::Path;
 use thiserror::Error;
 
 const LEGACY_MAGIC: &[u8; 8] = b"CSTLIDX1";
 const COMPACT_MAGIC: [u8; 8] = *b"CSTLCB2\0";
-const COMPACT_VERSION: u32 = 3;
+const COMPACT_VERSION: u32 = 4;
 const COMPACT_MIN_SUPPORTED_VERSION: u32 = 2;
+const COMPACT_CLASS_PARTITIONED_VERSION: u32 = 4;
+const COMPACT_KMER_PREFIX_BITS: u8 = 22;
+const COMPACT_PREFIX_MAGIC: &[u8; 8] = b"CSTLPFX1";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TranscriptMeta {
@@ -18,6 +21,24 @@ pub struct TranscriptMeta {
     pub gene_id: GeneId,
     pub name: String,
     pub len: u32,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub enum TargetClass {
+    #[default]
+    Unknown,
+    GeneBody,
+    Intron,
+    ExonTranscript,
+}
+
+pub fn target_class_posting_rank(target_class: TargetClass) -> u8 {
+    match target_class {
+        TargetClass::ExonTranscript => 0,
+        TargetClass::Intron => 1,
+        TargetClass::GeneBody => 2,
+        TargetClass::Unknown => 3,
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -52,6 +73,25 @@ pub struct KmerStats {
     pub raw_postings: u32,
     pub transcript_df: u32,
     pub gene_df: u32,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord)]
+pub struct KmerLookup {
+    pub kmer_code: u64,
+    pub postings_start: u64,
+    pub postings_len: u32,
+    pub transcript_df: u32,
+    pub gene_df: u32,
+}
+
+impl KmerLookup {
+    pub fn stats(self) -> KmerStats {
+        KmerStats {
+            raw_postings: self.postings_len,
+            transcript_df: self.transcript_df,
+            gene_df: self.gene_df,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -302,6 +342,9 @@ impl CompactPosting {
 pub struct CompactTranscriptIndex {
     mmap: Mmap,
     header: CompactHeader,
+    transcript_target_classes: Vec<TargetClass>,
+    kmer_prefix_offsets: Vec<u32>,
+    kmer_prefix_bits: u8,
 }
 
 #[derive(Debug)]
@@ -326,6 +369,7 @@ pub struct SeedPostingIter<'a>(SeedPostingIterInner<'a>);
 enum SeedPostingIterInner<'a> {
     Owned(std::iter::Copied<std::slice::Iter<'a, Posting>>),
     Compact(std::iter::Copied<std::slice::Iter<'a, CompactPosting>>),
+    Vec(std::vec::IntoIter<SeedPosting>),
     Empty,
 }
 
@@ -361,6 +405,7 @@ impl Iterator for SeedPostingIter<'_> {
                 pos: posting.pos_strand >> 1,
                 strand: (posting.pos_strand & 1) as u8,
             }),
+            SeedPostingIterInner::Vec(iter) => iter.next(),
             SeedPostingIterInner::Empty => None,
         }
     }
@@ -369,17 +414,44 @@ impl Iterator for SeedPostingIter<'_> {
 pub trait IndexAccess: Send + Sync {
     fn k(&self) -> u8;
     fn max_kmer_frequency(&self) -> u32;
+    fn num_transcripts(&self) -> usize;
     fn num_genes(&self) -> usize;
     fn gene_name(&self, gene_id: GeneId) -> Option<&str>;
     fn transcript_name(&self, transcript_id: TranscriptId) -> Option<&str>;
     fn transcript_target_strand(&self, transcript_id: TranscriptId) -> Option<u8> {
         transcript_target_strand_from_name(self.transcript_name(transcript_id)?)
     }
+    fn transcript_target_class(&self, transcript_id: TranscriptId) -> TargetClass {
+        transcript_target_class_from_name(self.transcript_name(transcript_id).unwrap_or_default())
+    }
     fn transcript_gene_id(&self, transcript_id: TranscriptId) -> Option<GeneId>;
     fn transcript_seq(&self, transcript_id: TranscriptId) -> Option<&[u8]>;
     fn posting_count(&self, kmer_code: u64) -> usize;
     fn kmer_stats(&self, kmer_code: u64) -> Option<KmerStats>;
+    fn kmer_lookup(&self, kmer_code: u64) -> Option<KmerLookup> {
+        self.kmer_stats(kmer_code).map(|stats| KmerLookup {
+            kmer_code,
+            postings_start: 0,
+            postings_len: stats.raw_postings,
+            transcript_df: stats.transcript_df,
+            gene_df: stats.gene_df,
+        })
+    }
     fn seed_postings(&self, kmer_code: u64) -> SeedPostingIter<'_>;
+    fn seed_postings_for_lookup(&self, lookup: KmerLookup) -> SeedPostingIter<'_> {
+        self.seed_postings(lookup.kmer_code)
+    }
+    fn seed_postings_for_target_class(
+        &self,
+        kmer_code: u64,
+        target_class: TargetClass,
+    ) -> SeedPostingIter<'_> {
+        let postings = self
+            .seed_postings(kmer_code)
+            .filter(|posting| self.transcript_target_class(posting.transcript_id) == target_class)
+            .collect::<Vec<_>>();
+        SeedPostingIter(SeedPostingIterInner::Vec(postings.into_iter()))
+    }
     fn postings(&self, kmer_code: u64) -> PostingIter<'_>;
     fn stats(&self) -> IndexStats;
 }
@@ -390,6 +462,19 @@ pub fn transcript_target_strand_from_name(name: &str) -> Option<u8> {
         b'+' => Some(b'+'),
         b'-' => Some(b'-'),
         _ => None,
+    }
+}
+
+pub fn transcript_target_class_from_name(name: &str) -> TargetClass {
+    let Some((_, rest)) = name.split_once("|target:") else {
+        return TargetClass::Unknown;
+    };
+    let target = rest.split('|').next().unwrap_or_default();
+    match target {
+        "exon_transcript" => TargetClass::ExonTranscript,
+        "intron" => TargetClass::Intron,
+        "gene_body" => TargetClass::GeneBody,
+        _ => TargetClass::Unknown,
     }
 }
 
@@ -412,6 +497,7 @@ impl TranscriptIndex {
     }
 
     pub fn save_compact(&self, path: impl AsRef<Path>) -> Result<(), IndexIoError> {
+        let path = path.as_ref();
         let mut gene_names = Vec::new();
         let mut genes = Vec::with_capacity(self.genes.len());
         for gene in &self.genes {
@@ -446,11 +532,17 @@ impl TranscriptIndex {
             });
         }
 
+        let transcript_classes = self
+            .transcripts
+            .iter()
+            .map(|meta| transcript_target_class_from_name(&meta.name))
+            .collect::<Vec<_>>();
         let mut kmers = Vec::with_capacity(self.kmers.len());
         let mut gene_dfs = Vec::with_capacity(self.kmers.len());
+        let mut postings = Vec::with_capacity(self.postings.len());
         for entry in &self.kmers {
-            let postings_start: u32 = entry
-                .postings_start
+            let postings_start: u32 = postings
+                .len()
                 .try_into()
                 .map_err(|_| IndexIoError::TooLarge("postings_start"))?;
             let stats = self.kmer_stats(entry.kmer_code).unwrap_or(KmerStats {
@@ -464,10 +556,24 @@ impl TranscriptIndex {
                 postings_len: entry.postings_len,
             });
             gene_dfs.push(saturating_u16(stats.gene_df));
-        }
-        let mut postings = Vec::with_capacity(self.postings.len());
-        for posting in &self.postings {
-            postings.push(CompactPosting::from_posting(*posting)?);
+            let start = entry.postings_start as usize;
+            let end = start + entry.postings_len as usize;
+            let mut kmer_postings = self.postings[start..end].to_vec();
+            kmer_postings.sort_unstable_by_key(|posting| {
+                (
+                    transcript_classes
+                        .get(posting.transcript_id as usize)
+                        .copied()
+                        .map(target_class_posting_rank)
+                        .unwrap_or_else(|| target_class_posting_rank(TargetClass::Unknown)),
+                    posting.transcript_id,
+                    posting.pos,
+                    posting.strand,
+                )
+            });
+            for posting in kmer_postings {
+                postings.push(CompactPosting::from_posting(posting)?);
+            }
         }
 
         let mut cursor = align_up(std::mem::size_of::<CompactHeader>() as u64, 8);
@@ -568,6 +674,7 @@ impl TranscriptIndex {
             sequences_offset,
         )?;
         file.write_all(&sequences)?;
+        write_kmer_prefix_sidecar_from_entries(path, self.k, COMPACT_KMER_PREFIX_BITS, &kmers)?;
         Ok(())
     }
 
@@ -583,6 +690,7 @@ impl TranscriptIndex {
         sequences_len: u64,
         temp_files: CompactIndexTempFiles<'_>,
     ) -> Result<(), IndexIoError> {
+        let path = path.as_ref();
         let mut gene_names = Vec::new();
         let mut compact_genes = Vec::with_capacity(genes.len());
         for gene in genes {
@@ -705,6 +813,13 @@ impl TranscriptIndex {
             sequences_offset,
         )?;
         copy_file_contents(temp_files.sequences_path, &mut file)?;
+        write_kmer_prefix_sidecar_from_kmer_file(
+            path,
+            k,
+            COMPACT_KMER_PREFIX_BITS,
+            num_kmers,
+            temp_files.kmers_path,
+        )?;
         Ok(())
     }
 
@@ -772,11 +887,42 @@ impl LoadedIndex {
         let file = File::open(path)?;
         let mmap = unsafe { Mmap::map(&file)? };
         if mmap.starts_with(&COMPACT_MAGIC) {
-            Ok(Self::Compact(CompactTranscriptIndex::from_mmap(mmap)?))
+            let mut index = CompactTranscriptIndex::from_mmap(mmap)?;
+            index.load_kmer_prefix_sidecar(path)?;
+            Ok(Self::Compact(index))
         } else if mmap.starts_with(LEGACY_MAGIC) {
             Ok(Self::Owned(TranscriptIndex::from_legacy_mmap(&mmap)?))
         } else {
             Ok(Self::Owned(serde_json::from_slice(&mmap)?))
+        }
+    }
+
+    pub fn advise_dontneed(&self) -> std::io::Result<()> {
+        match self {
+            // The compact index is read-only and no references into the mapping are
+            // retained across mapper stages when this is called.
+            Self::Compact(index) => unsafe {
+                index.mmap.unchecked_advise(UncheckedAdvice::DontNeed)
+            },
+            Self::Owned(_) => Ok(()),
+        }
+    }
+
+    pub fn preload(&self) -> std::io::Result<()> {
+        match self {
+            Self::Compact(index) => {
+                index.mmap.advise(Advice::WillNeed)?;
+                let mut checksum = 0_u8;
+                for offset in (0..index.mmap.len()).step_by(4096) {
+                    checksum ^= std::hint::black_box(index.mmap[offset]);
+                }
+                if let Some(&last) = index.mmap.last() {
+                    checksum ^= std::hint::black_box(last);
+                }
+                std::hint::black_box(checksum);
+                Ok(())
+            }
+            Self::Owned(_) => Ok(()),
         }
     }
 }
@@ -802,8 +948,22 @@ impl CompactTranscriptIndex {
         } else {
             CompactHeader::from(header_v2)
         };
-        let this = Self { mmap, header };
+        let mut this = Self {
+            mmap,
+            header,
+            transcript_target_classes: Vec::new(),
+            kmer_prefix_offsets: Vec::new(),
+            kmer_prefix_bits: 0,
+        };
         this.validate()?;
+        this.transcript_target_classes = (0..this.header.num_transcripts)
+            .map(|idx| {
+                transcript_target_class_from_name(
+                    this.transcript_name(idx as TranscriptId)
+                        .unwrap_or_default(),
+                )
+            })
+            .collect();
         Ok(this)
     }
 
@@ -859,9 +1019,66 @@ impl CompactTranscriptIndex {
             .expect("validated compact kmers")
     }
 
+    fn load_kmer_prefix_sidecar(&mut self, index_path: &Path) -> Result<(), IndexIoError> {
+        let sidecar_path = kmer_prefix_sidecar_path(index_path, COMPACT_KMER_PREFIX_BITS);
+        let bytes = match std::fs::read(&sidecar_path) {
+            Ok(bytes) => bytes,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+            Err(error) => return Err(IndexIoError::Io(error)),
+        };
+        if bytes.len() < 24 || &bytes[..8] != COMPACT_PREFIX_MAGIC {
+            return Err(IndexIoError::InvalidMagic);
+        }
+        let prefix_bits = u32::from_le_bytes(bytes[8..12].try_into().unwrap()) as u8;
+        let k = u32::from_le_bytes(bytes[12..16].try_into().unwrap()) as u8;
+        let num_offsets = u64::from_le_bytes(bytes[16..24].try_into().unwrap()) as usize;
+        if prefix_bits > self.k().saturating_mul(2) || k != self.k() {
+            return Err(IndexIoError::UnsupportedVersion(prefix_bits as u32));
+        }
+        let expected_offsets = (1_usize << prefix_bits) + 1;
+        if num_offsets != expected_offsets {
+            return Err(IndexIoError::Truncated);
+        }
+        let offset_bytes = bytes.get(24..).ok_or(IndexIoError::Truncated)?;
+        let offsets: &[u32] =
+            bytemuck::try_cast_slice(offset_bytes).map_err(|_| IndexIoError::Misaligned)?;
+        if offsets.len() != num_offsets {
+            return Err(IndexIoError::Truncated);
+        }
+        if offsets.first().copied() != Some(0)
+            || offsets.last().copied() != Some(self.header.num_kmers as u32)
+            || offsets.windows(2).any(|window| window[0] > window[1])
+        {
+            return Err(IndexIoError::Truncated);
+        }
+        self.kmer_prefix_offsets = offsets.to_vec();
+        self.kmer_prefix_bits = prefix_bits;
+        Ok(())
+    }
+
+    fn kmer_prefix_range(&self, kmer_code: u64) -> std::ops::Range<usize> {
+        if self.kmer_prefix_offsets.len() < 2 || self.kmer_prefix_bits == 0 {
+            return 0..self.header.num_kmers as usize;
+        }
+        let total_bits = self.k().saturating_mul(2);
+        let shift = total_bits.saturating_sub(self.kmer_prefix_bits);
+        let mask = (1_u64 << self.kmer_prefix_bits) - 1;
+        let bucket = ((kmer_code >> shift) & mask) as usize;
+        let start = self.kmer_prefix_offsets[bucket] as usize;
+        let end = self.kmer_prefix_offsets[bucket + 1] as usize;
+        start..end
+    }
+
     fn postings_slice(&self) -> &[CompactPosting] {
         self.slice(self.header.postings_offset, self.header.num_postings)
             .expect("validated compact postings")
+    }
+
+    fn compact_posting_target_class(&self, posting: CompactPosting) -> TargetClass {
+        self.transcript_target_classes
+            .get(posting.transcript_id as usize)
+            .copied()
+            .unwrap_or_default()
     }
 
     fn gene_names(&self) -> &[u8] {
@@ -883,10 +1100,15 @@ impl CompactTranscriptIndex {
     }
 
     fn entry(&self, kmer_code: u64) -> Option<CompactKmerEntryView> {
-        self.kmers_v2()
+        self.entry_index(kmer_code).map(|idx| self.entry_at(idx))
+    }
+
+    fn entry_index(&self, kmer_code: u64) -> Option<usize> {
+        let range = self.kmer_prefix_range(kmer_code);
+        self.kmers_v2()[range.clone()]
             .binary_search_by_key(&kmer_code, |entry| entry.kmer_code)
             .ok()
-            .map(|idx| self.entry_at(idx))
+            .map(|idx| range.start + idx)
     }
 
     fn for_each_kmer_entry(&self, mut f: impl FnMut(CompactKmerEntryView)) {
@@ -990,6 +1212,10 @@ impl IndexAccess for TranscriptIndex {
         self.genes.len()
     }
 
+    fn num_transcripts(&self) -> usize {
+        self.transcripts.len()
+    }
+
     fn gene_name(&self, gene_id: GeneId) -> Option<&str> {
         self.genes.get(gene_id as usize).map(String::as_str)
     }
@@ -1034,6 +1260,22 @@ impl IndexAccess for TranscriptIndex {
             })
     }
 
+    fn kmer_lookup(&self, kmer_code: u64) -> Option<KmerLookup> {
+        self.kmers
+            .binary_search_by_key(&kmer_code, |entry| entry.kmer_code)
+            .ok()
+            .map(|idx| {
+                let entry = &self.kmers[idx];
+                KmerLookup {
+                    kmer_code,
+                    postings_start: entry.postings_start,
+                    postings_len: entry.postings_len,
+                    transcript_df: nonzero_or(entry.transcript_df, entry.postings_len),
+                    gene_df: nonzero_or(entry.gene_df, entry.postings_len),
+                }
+            })
+    }
+
     fn seed_postings(&self, kmer_code: u64) -> SeedPostingIter<'_> {
         match self
             .kmers
@@ -1049,6 +1291,17 @@ impl IndexAccess for TranscriptIndex {
             }
             Err(_) => SeedPostingIter(SeedPostingIterInner::Empty),
         }
+    }
+
+    fn seed_postings_for_lookup(&self, lookup: KmerLookup) -> SeedPostingIter<'_> {
+        let start = lookup.postings_start as usize;
+        let end = start.saturating_add(lookup.postings_len as usize);
+        if end > self.postings.len() {
+            return SeedPostingIter(SeedPostingIterInner::Empty);
+        }
+        SeedPostingIter(SeedPostingIterInner::Owned(
+            self.postings[start..end].iter().copied(),
+        ))
     }
 
     fn postings(&self, kmer_code: u64) -> PostingIter<'_> {
@@ -1116,6 +1369,10 @@ impl IndexAccess for CompactTranscriptIndex {
         self.header.num_genes as usize
     }
 
+    fn num_transcripts(&self) -> usize {
+        self.header.num_transcripts as usize
+    }
+
     fn gene_name(&self, gene_id: GeneId) -> Option<&str> {
         let meta = self.genes().get(gene_id as usize)?;
         std::str::from_utf8(
@@ -1132,6 +1389,13 @@ impl IndexAccess for CompactTranscriptIndex {
                 [meta.name_start as usize..(meta.name_start + meta.name_len) as usize],
         )
         .ok()
+    }
+
+    fn transcript_target_class(&self, transcript_id: TranscriptId) -> TargetClass {
+        self.transcript_target_classes
+            .get(transcript_id as usize)
+            .copied()
+            .unwrap_or_default()
     }
 
     fn transcript_gene_id(&self, transcript_id: TranscriptId) -> Option<GeneId> {
@@ -1160,6 +1424,23 @@ impl IndexAccess for CompactTranscriptIndex {
         })
     }
 
+    fn kmer_lookup(&self, kmer_code: u64) -> Option<KmerLookup> {
+        let idx = self.entry_index(kmer_code)?;
+        let entry = self.kmers_v2()[idx];
+        let gene_df = if self.header.version >= 3 {
+            u32::from(self.gene_dfs()[idx])
+        } else {
+            entry.postings_len
+        };
+        Some(KmerLookup {
+            kmer_code,
+            postings_start: entry.postings_start as u64,
+            postings_len: entry.postings_len,
+            transcript_df: entry.postings_len,
+            gene_df,
+        })
+    }
+
     fn seed_postings(&self, kmer_code: u64) -> SeedPostingIter<'_> {
         match self.entry(kmer_code) {
             Some(entry) => {
@@ -1171,6 +1452,56 @@ impl IndexAccess for CompactTranscriptIndex {
             }
             None => SeedPostingIter(SeedPostingIterInner::Empty),
         }
+    }
+
+    fn seed_postings_for_lookup(&self, lookup: KmerLookup) -> SeedPostingIter<'_> {
+        let start = lookup.postings_start as usize;
+        let end = start.saturating_add(lookup.postings_len as usize);
+        let postings = self.postings_slice();
+        if end > postings.len() {
+            return SeedPostingIter(SeedPostingIterInner::Empty);
+        }
+        SeedPostingIter(SeedPostingIterInner::Compact(
+            postings[start..end].iter().copied(),
+        ))
+    }
+
+    fn seed_postings_for_target_class(
+        &self,
+        kmer_code: u64,
+        target_class: TargetClass,
+    ) -> SeedPostingIter<'_> {
+        let Some(entry) = self.entry(kmer_code) else {
+            return SeedPostingIter(SeedPostingIterInner::Empty);
+        };
+        let start = entry.postings_start as usize;
+        let end = start + entry.postings_len as usize;
+        let postings = &self.postings_slice()[start..end];
+        if self.header.version >= COMPACT_CLASS_PARTITIONED_VERSION {
+            let target_rank = target_class_posting_rank(target_class);
+            let class_start = postings.partition_point(|posting| {
+                target_class_posting_rank(self.compact_posting_target_class(*posting)) < target_rank
+            });
+            let class_end = class_start
+                + postings[class_start..].partition_point(|posting| {
+                    self.compact_posting_target_class(*posting) == target_class
+                });
+            return SeedPostingIter(SeedPostingIterInner::Compact(
+                postings[class_start..class_end].iter().copied(),
+            ));
+        }
+
+        let filtered = postings
+            .iter()
+            .copied()
+            .filter(|posting| self.compact_posting_target_class(*posting) == target_class)
+            .map(|posting| SeedPosting {
+                transcript_id: posting.transcript_id,
+                pos: posting.pos_strand >> 1,
+                strand: (posting.pos_strand & 1) as u8,
+            })
+            .collect::<Vec<_>>();
+        SeedPostingIter(SeedPostingIterInner::Vec(filtered.into_iter()))
     }
 
     fn postings(&self, kmer_code: u64) -> PostingIter<'_> {
@@ -1239,6 +1570,13 @@ impl IndexAccess for LoadedIndex {
         }
     }
 
+    fn num_transcripts(&self) -> usize {
+        match self {
+            Self::Owned(index) => index.num_transcripts(),
+            Self::Compact(index) => index.num_transcripts(),
+        }
+    }
+
     fn gene_name(&self, gene_id: GeneId) -> Option<&str> {
         match self {
             Self::Owned(index) => index.gene_name(gene_id),
@@ -1250,6 +1588,13 @@ impl IndexAccess for LoadedIndex {
         match self {
             Self::Owned(index) => index.transcript_name(transcript_id),
             Self::Compact(index) => index.transcript_name(transcript_id),
+        }
+    }
+
+    fn transcript_target_class(&self, transcript_id: TranscriptId) -> TargetClass {
+        match self {
+            Self::Owned(index) => index.transcript_target_class(transcript_id),
+            Self::Compact(index) => index.transcript_target_class(transcript_id),
         }
     }
 
@@ -1281,10 +1626,35 @@ impl IndexAccess for LoadedIndex {
         }
     }
 
+    fn kmer_lookup(&self, kmer_code: u64) -> Option<KmerLookup> {
+        match self {
+            Self::Owned(index) => index.kmer_lookup(kmer_code),
+            Self::Compact(index) => index.kmer_lookup(kmer_code),
+        }
+    }
+
     fn seed_postings(&self, kmer_code: u64) -> SeedPostingIter<'_> {
         match self {
             Self::Owned(index) => index.seed_postings(kmer_code),
             Self::Compact(index) => index.seed_postings(kmer_code),
+        }
+    }
+
+    fn seed_postings_for_lookup(&self, lookup: KmerLookup) -> SeedPostingIter<'_> {
+        match self {
+            Self::Owned(index) => index.seed_postings_for_lookup(lookup),
+            Self::Compact(index) => index.seed_postings_for_lookup(lookup),
+        }
+    }
+
+    fn seed_postings_for_target_class(
+        &self,
+        kmer_code: u64,
+        target_class: TargetClass,
+    ) -> SeedPostingIter<'_> {
+        match self {
+            Self::Owned(index) => index.seed_postings_for_target_class(kmer_code, target_class),
+            Self::Compact(index) => index.seed_postings_for_target_class(kmer_code, target_class),
         }
     }
 
@@ -1313,6 +1683,106 @@ fn write_padding(file: &mut File, from: u64, to: u64) -> Result<(), IndexIoError
         file.write_all(&vec![0_u8; (to - from) as usize])?;
     }
     Ok(())
+}
+
+fn write_kmer_prefix_sidecar_from_entries(
+    index_path: &Path,
+    k: u8,
+    prefix_bits: u8,
+    kmers: &[CompactKmerEntryV2],
+) -> Result<(), IndexIoError> {
+    let offsets = kmer_prefix_offsets_for_entries(k, prefix_bits, kmers);
+    write_kmer_prefix_sidecar(index_path, k, prefix_bits, &offsets)
+}
+
+fn write_kmer_prefix_sidecar_from_kmer_file(
+    index_path: &Path,
+    k: u8,
+    prefix_bits: u8,
+    num_kmers: u64,
+    kmers_path: &Path,
+) -> Result<(), IndexIoError> {
+    let offsets = kmer_prefix_offsets_for_file(k, prefix_bits, num_kmers, kmers_path)?;
+    write_kmer_prefix_sidecar(index_path, k, prefix_bits, &offsets)
+}
+
+fn write_kmer_prefix_sidecar(
+    index_path: &Path,
+    k: u8,
+    prefix_bits: u8,
+    offsets: &[u32],
+) -> Result<(), IndexIoError> {
+    let prefix_bits = prefix_bits.min(k.saturating_mul(2));
+    if prefix_bits == 0 {
+        return Ok(());
+    }
+    let sidecar_path = kmer_prefix_sidecar_path(index_path, prefix_bits);
+    let mut writer = BufWriter::new(File::create(sidecar_path)?);
+    writer.write_all(COMPACT_PREFIX_MAGIC)?;
+    writer.write_all(&(prefix_bits as u32).to_le_bytes())?;
+    writer.write_all(&(k as u32).to_le_bytes())?;
+    writer.write_all(&(offsets.len() as u64).to_le_bytes())?;
+    writer.write_all(bytemuck::cast_slice(offsets))?;
+    Ok(())
+}
+
+fn kmer_prefix_offsets_for_entries(
+    k: u8,
+    prefix_bits: u8,
+    kmers: &[CompactKmerEntryV2],
+) -> Vec<u32> {
+    let total_bits = k.saturating_mul(2);
+    let prefix_bits = prefix_bits.min(total_bits);
+    let bucket_count = 1_usize << prefix_bits;
+    let shift = total_bits - prefix_bits;
+    let mut offsets = Vec::with_capacity(bucket_count + 1);
+    let mut idx = 0_usize;
+    for bucket in 0..bucket_count {
+        offsets.push(idx as u32);
+        let upper = ((bucket as u64) + 1) << shift;
+        while idx < kmers.len() && kmers[idx].kmer_code < upper {
+            idx += 1;
+        }
+    }
+    offsets.push(kmers.len() as u32);
+    offsets
+}
+
+fn kmer_prefix_offsets_for_file(
+    k: u8,
+    prefix_bits: u8,
+    num_kmers: u64,
+    kmers_path: &Path,
+) -> Result<Vec<u32>, IndexIoError> {
+    let total_bits = k.saturating_mul(2);
+    let prefix_bits = prefix_bits.min(total_bits);
+    let bucket_count = 1_usize << prefix_bits;
+    let shift = total_bits - prefix_bits;
+    let mut offsets = Vec::with_capacity(bucket_count + 1);
+    let mut reader = BufReader::new(File::open(kmers_path)?);
+    let mut entry_buf = [0_u8; std::mem::size_of::<CompactKmerEntryV2>()];
+    let mut idx = 0_u64;
+    let mut current_code = if num_kmers == 0 {
+        None
+    } else {
+        reader.read_exact(&mut entry_buf)?;
+        Some(u64::from_le_bytes(entry_buf[..8].try_into().unwrap()))
+    };
+    for bucket in 0..bucket_count {
+        offsets.push(idx as u32);
+        let upper = ((bucket as u64) + 1) << shift;
+        while current_code.is_some_and(|code| code < upper) {
+            idx += 1;
+            if idx >= num_kmers {
+                current_code = None;
+            } else {
+                reader.read_exact(&mut entry_buf)?;
+                current_code = Some(u64::from_le_bytes(entry_buf[..8].try_into().unwrap()));
+            }
+        }
+    }
+    offsets.push(num_kmers as u32);
+    Ok(offsets)
 }
 
 fn copy_file_contents(path: &Path, out: &mut File) -> Result<(), IndexIoError> {
@@ -1346,6 +1816,12 @@ fn nonzero_or(value: u32, fallback: u32) -> u32 {
 
 fn saturating_u16(value: u32) -> u16 {
     value.min(u16::MAX as u32) as u16
+}
+
+fn kmer_prefix_sidecar_path(index_path: &Path, prefix_bits: u8) -> std::path::PathBuf {
+    let mut path = index_path.as_os_str().to_owned();
+    path.push(format!(".kprefix{prefix_bits}"));
+    path.into()
 }
 
 #[cfg(test)]
@@ -1404,6 +1880,79 @@ mod tests {
     }
 
     #[test]
+    fn compact_v4_partitions_seed_postings_by_target_class() {
+        let index = TranscriptIndex {
+            format_version: 1,
+            k: 3,
+            max_kmer_frequency: 256,
+            genes: vec!["GENE".to_owned()],
+            transcripts: vec![
+                TranscriptMeta {
+                    transcript_id: 0,
+                    gene_id: 0,
+                    name: "tx0|gene:GENE|target:gene_body".to_owned(),
+                    len: 6,
+                },
+                TranscriptMeta {
+                    transcript_id: 1,
+                    gene_id: 0,
+                    name: "tx1|gene:GENE|target:exon_transcript".to_owned(),
+                    len: 6,
+                },
+                TranscriptMeta {
+                    transcript_id: 2,
+                    gene_id: 0,
+                    name: "tx2|gene:GENE|target:intron".to_owned(),
+                    len: 6,
+                },
+            ],
+            transcript_sequences: vec!["ACGTAC".to_owned(); 3],
+            kmers: vec![KmerEntry {
+                kmer_code: 6,
+                postings_start: 0,
+                postings_len: 3,
+                freq_class: 0,
+                transcript_df: 3,
+                gene_df: 1,
+            }],
+            postings: vec![
+                Posting {
+                    transcript_id: 0,
+                    gene_id: 0,
+                    pos: 1,
+                    strand: 0,
+                },
+                Posting {
+                    transcript_id: 2,
+                    gene_id: 0,
+                    pos: 2,
+                    strand: 0,
+                },
+                Posting {
+                    transcript_id: 1,
+                    gene_id: 0,
+                    pos: 3,
+                    strand: 0,
+                },
+            ],
+        };
+        let tmp = tempfile::NamedTempFile::new().unwrap();
+        index.save_auto(tmp.path()).unwrap();
+        let loaded = LoadedIndex::load(tmp.path()).unwrap();
+
+        let all_transcripts = loaded
+            .seed_postings(6)
+            .map(|posting| posting.transcript_id)
+            .collect::<Vec<_>>();
+        assert_eq!(all_transcripts, vec![1, 2, 0]);
+        let exon_transcripts = loaded
+            .seed_postings_for_target_class(6, TargetClass::ExonTranscript)
+            .map(|posting| posting.transcript_id)
+            .collect::<Vec<_>>();
+        assert_eq!(exon_transcripts, vec![1]);
+    }
+
+    #[test]
     fn legacy_binary_mmap_roundtrip_to_owned() {
         let index = tiny_index();
         let tmp = tempfile::NamedTempFile::new().unwrap();
@@ -1414,5 +1963,25 @@ mod tests {
             .unwrap();
         file.write_all(&payload).unwrap();
         assert_eq!(TranscriptIndex::load_owned_auto(tmp.path()).unwrap(), index);
+    }
+
+    #[test]
+    fn parses_target_class_from_transcript_name() {
+        assert_eq!(
+            transcript_target_class_from_name("ENST1|gene:GENE|target:exon_transcript|strand:+"),
+            TargetClass::ExonTranscript
+        );
+        assert_eq!(
+            transcript_target_class_from_name("GENE1|gene:GENE1|target:intron|strand:-"),
+            TargetClass::Intron
+        );
+        assert_eq!(
+            transcript_target_class_from_name("GENE1|gene:GENE1|target:gene_body|strand:-"),
+            TargetClass::GeneBody
+        );
+        assert_eq!(
+            transcript_target_class_from_name("ENST1"),
+            TargetClass::Unknown
+        );
     }
 }

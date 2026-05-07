@@ -1,7 +1,7 @@
 use crate::dna::{encode_acgt, iter_kmers_2bit};
 use crate::index::{
-    CompactIndexTempFiles, CompactTranscriptBuildRecord, KmerEntry, Posting, TranscriptIndex,
-    TranscriptMeta,
+    target_class_posting_rank, transcript_target_class_from_name, CompactIndexTempFiles,
+    CompactTranscriptBuildRecord, KmerEntry, Posting, TargetClass, TranscriptIndex, TranscriptMeta,
 };
 use crate::{GeneId, TranscriptId};
 use rayon::prelude::*;
@@ -9,7 +9,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use std::cmp::{Ordering, Reverse};
 use std::collections::{BTreeMap, BinaryHeap};
 use std::fs::{self, File};
-use std::io::{self, BufReader, BufWriter, Read, Write};
+use std::io::{self, BufReader, BufWriter, Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
@@ -87,7 +87,7 @@ pub fn build_transcript_index_with_gene_map(
 
     for (idx, record) in records.iter().enumerate() {
         let gene_name = transcript_gene_map
-            .and_then(|map| map.get(&record.name))
+            .and_then(|map| transcript_gene_lookup(record, map))
             .cloned()
             .unwrap_or_else(|| record.gene.clone());
         let gene_id = match gene_ids.get(&gene_name) {
@@ -124,9 +124,23 @@ pub fn build_transcript_index_with_gene_map(
 
     let mut kmers = Vec::with_capacity(postings_by_kmer.len());
     let mut postings = Vec::new();
+    let transcript_target_classes = transcripts
+        .iter()
+        .map(|meta| transcript_target_class_from_name(&meta.name))
+        .collect::<Vec<_>>();
     for (code, mut kmer_postings) in postings_by_kmer {
-        kmer_postings
-            .par_sort_by_key(|posting| (posting.transcript_id, posting.pos, posting.strand));
+        kmer_postings.par_sort_by_key(|posting| {
+            (
+                transcript_target_classes
+                    .get(posting.transcript_id as usize)
+                    .copied()
+                    .map(target_class_posting_rank)
+                    .unwrap_or_else(|| target_class_posting_rank(TargetClass::Unknown)),
+                posting.transcript_id,
+                posting.pos,
+                posting.strand,
+            )
+        });
         let start = postings.len() as u64;
         let len = kmer_postings.len() as u32;
         let (transcript_df, gene_df) = kmer_document_frequencies(&kmer_postings);
@@ -201,7 +215,7 @@ fn build_compact_transcript_index_streaming_inner(
     let mut genes = Vec::new();
     let mut transcripts = Vec::new();
     let mut run_records = Vec::with_capacity(RUN_RECORD_LIMIT);
-    let mut run_paths = Vec::new();
+    let mut run_files = Vec::new();
     let mut sequences_len = 0_u64;
 
     while let Some(record) = reader.next() {
@@ -242,7 +256,7 @@ fn build_compact_transcript_index_streaming_inner(
                 pos_strand: kmer.pos << 1,
             });
             if run_records.len() >= RUN_RECORD_LIMIT {
-                flush_run(temp_dir, &mut run_paths, &mut run_records)?;
+                flush_run(temp_dir, &mut run_files, &mut run_records, k)?;
             }
         }
     }
@@ -250,15 +264,21 @@ fn build_compact_transcript_index_streaming_inner(
     if transcripts.is_empty() {
         return Err(BuildIndexError::Malformed("no records found".to_owned()));
     }
-    flush_run(temp_dir, &mut run_paths, &mut run_records)?;
+    flush_run(temp_dir, &mut run_files, &mut run_records, k)?;
 
     let transcript_gene_ids: Vec<_> = transcripts.iter().map(|record| record.gene_id).collect();
-    let (num_kmers, num_postings) = merge_runs(
-        &run_paths,
+    let transcript_target_classes: Vec<_> = transcripts
+        .iter()
+        .map(|record| transcript_target_class_from_name(&record.name))
+        .collect();
+    let (num_kmers, num_postings) = merge_runs_sharded(
+        &run_files,
         &kmers_path,
         &gene_df_path,
         &postings_path,
         &transcript_gene_ids,
+        &transcript_target_classes,
+        k,
     )?;
     TranscriptIndex::save_compact_from_temp_files(
         out_path,
@@ -304,36 +324,87 @@ fn kmer_document_frequencies(postings: &[Posting]) -> (u32, u32) {
 
 fn flush_run(
     temp_dir: &Path,
-    run_paths: &mut Vec<PathBuf>,
+    run_files: &mut Vec<RunFile>,
     records: &mut Vec<RunPosting>,
+    k: u8,
 ) -> Result<(), BuildIndexError> {
     if records.is_empty() {
         return Ok(());
     }
     records.par_sort_unstable();
-    let path = temp_dir.join(format!("run_{:05}.bin", run_paths.len()));
+    let shard_bits = shard_bits(k);
+    let mut shard_slices = vec![RunShardSlice::default(); 1_usize << shard_bits];
+    let mut start_idx = 0_usize;
+    while start_idx < records.len() {
+        let shard = kmer_shard(records[start_idx].kmer_code, k, shard_bits);
+        let end_idx = start_idx
+            + records[start_idx..]
+                .partition_point(|record| kmer_shard(record.kmer_code, k, shard_bits) == shard);
+        shard_slices[shard] = RunShardSlice {
+            start_record: start_idx as u64,
+            len: (end_idx - start_idx) as u64,
+        };
+        start_idx = end_idx;
+    }
+
+    let path = temp_dir.join(format!("run_{:05}.bin", run_files.len()));
     let mut out = BufWriter::new(File::create(&path)?);
     for record in records.iter().copied() {
         write_run_posting(&mut out, record)?;
     }
     out.flush()?;
     records.clear();
-    run_paths.push(path);
+    run_files.push(RunFile { path, shard_slices });
     Ok(())
 }
 
-fn merge_runs(
-    run_paths: &[PathBuf],
+fn merge_runs_sharded(
+    run_files: &[RunFile],
     kmers_path: &Path,
     gene_df_path: &Path,
     postings_path: &Path,
     transcript_gene_ids: &[GeneId],
+    transcript_target_classes: &[TargetClass],
+    k: u8,
 ) -> Result<(u64, u64), BuildIndexError> {
-    let mut readers = Vec::with_capacity(run_paths.len());
+    let shard_count = 1_usize << shard_bits(k);
+    let temp_dir = kmers_path.parent().unwrap_or_else(|| Path::new("."));
+    let outputs = (0..shard_count)
+        .into_par_iter()
+        .map(|shard_id| {
+            merge_run_shard(
+                shard_id,
+                run_files,
+                transcript_gene_ids,
+                transcript_target_classes,
+                temp_dir,
+            )
+        })
+        .collect::<Result<Vec<_>, BuildIndexError>>()?;
+    concatenate_shard_outputs(outputs, kmers_path, gene_df_path, postings_path)
+}
+
+fn merge_run_shard(
+    shard_id: usize,
+    run_files: &[RunFile],
+    transcript_gene_ids: &[GeneId],
+    transcript_target_classes: &[TargetClass],
+    temp_dir: &Path,
+) -> Result<ShardMergeOutput, BuildIndexError> {
+    let kmers_path = temp_dir.join(format!("shard_{shard_id:03}.kmers.bin"));
+    let gene_df_path = temp_dir.join(format!("shard_{shard_id:03}.gene_df.bin"));
+    let postings_path = temp_dir.join(format!("shard_{shard_id:03}.postings.bin"));
+    let mut readers = Vec::with_capacity(run_files.len());
     let mut heap = BinaryHeap::new();
-    for path in run_paths {
-        let mut reader = BufReader::new(File::open(path)?);
-        if let Some(record) = read_run_posting(&mut reader)? {
+    for run_file in run_files {
+        let Some(slice) = run_file.shard_slices.get(shard_id).copied() else {
+            continue;
+        };
+        if slice.len == 0 {
+            continue;
+        }
+        let mut reader = RunSliceReader::open(&run_file.path, slice)?;
+        if let Some(record) = reader.read_next()? {
             heap.push(Reverse(HeapRecord {
                 record,
                 run_idx: readers.len(),
@@ -342,13 +413,12 @@ fn merge_runs(
         readers.push(reader);
     }
 
-    let mut kmers = BufWriter::new(File::create(kmers_path)?);
-    let mut gene_dfs = BufWriter::new(File::create(gene_df_path)?);
-    let mut postings = BufWriter::new(File::create(postings_path)?);
+    let mut kmers = BufWriter::new(File::create(&kmers_path)?);
+    let mut gene_dfs = BufWriter::new(File::create(&gene_df_path)?);
+    let mut postings = BufWriter::new(File::create(&postings_path)?);
     let mut current_kmer = None::<u64>;
     let mut current_start = 0_u64;
-    let mut current_len = 0_u32;
-    let mut current_last_transcript = None::<TranscriptId>;
+    let mut current_postings = Vec::new();
     let mut current_genes: FxHashSet<GeneId> = FxHashSet::default();
     let mut num_kmers = 0_u64;
     let mut num_postings = 0_u64;
@@ -356,35 +426,29 @@ fn merge_runs(
     while let Some(Reverse(item)) = heap.pop() {
         if current_kmer != Some(item.record.kmer_code) {
             if let Some(kmer_code) = current_kmer {
-                write_compact_kmer_entry(
+                flush_merged_kmer(
                     &mut kmers,
                     &mut gene_dfs,
+                    &mut postings,
                     kmer_code,
                     current_start,
-                    current_len,
-                    current_genes.len().min(u32::MAX as usize) as u32,
+                    &mut current_postings,
+                    &current_genes,
+                    transcript_target_classes,
+                    &mut num_postings,
                 )?;
                 num_kmers += 1;
             }
             current_kmer = Some(item.record.kmer_code);
             current_start = num_postings;
-            current_len = 0;
-            current_last_transcript = None;
             current_genes.clear();
-        }
-        if current_last_transcript != Some(item.record.transcript_id) {
-            current_last_transcript = Some(item.record.transcript_id);
         }
         if let Some(&gene_id) = transcript_gene_ids.get(item.record.transcript_id as usize) {
             current_genes.insert(gene_id);
         }
-        write_compact_posting(&mut postings, item.record)?;
-        num_postings += 1;
-        current_len = current_len
-            .checked_add(1)
-            .ok_or(BuildIndexError::TooManyPostings)?;
+        current_postings.push(item.record);
 
-        if let Some(next) = read_run_posting(&mut readers[item.run_idx])? {
+        if let Some(next) = readers[item.run_idx].read_next()? {
             heap.push(Reverse(HeapRecord {
                 record: next,
                 run_idx: item.run_idx,
@@ -392,28 +456,197 @@ fn merge_runs(
         }
     }
     if let Some(kmer_code) = current_kmer {
-        write_compact_kmer_entry(
+        flush_merged_kmer(
             &mut kmers,
             &mut gene_dfs,
+            &mut postings,
             kmer_code,
             current_start,
-            current_len,
-            current_genes.len().min(u32::MAX as usize) as u32,
+            &mut current_postings,
+            &current_genes,
+            transcript_target_classes,
+            &mut num_postings,
         )?;
         num_kmers += 1;
     }
     kmers.flush()?;
     gene_dfs.flush()?;
     postings.flush()?;
-    Ok((num_kmers, num_postings))
+    Ok(ShardMergeOutput {
+        shard_id,
+        kmers_path,
+        gene_df_path,
+        postings_path,
+        num_kmers,
+        num_postings,
+    })
+}
+
+fn flush_merged_kmer(
+    kmers: &mut impl Write,
+    gene_dfs: &mut impl Write,
+    postings: &mut impl Write,
+    kmer_code: u64,
+    postings_start: u64,
+    current_postings: &mut Vec<RunPosting>,
+    current_genes: &FxHashSet<GeneId>,
+    transcript_target_classes: &[TargetClass],
+    num_postings: &mut u64,
+) -> Result<(), BuildIndexError> {
+    current_postings.par_sort_unstable_by_key(|posting| {
+        (
+            transcript_target_classes
+                .get(posting.transcript_id as usize)
+                .copied()
+                .map(target_class_posting_rank)
+                .unwrap_or_else(|| target_class_posting_rank(TargetClass::Unknown)),
+            posting.transcript_id,
+            posting.pos_strand,
+        )
+    });
+    let postings_len: u32 = current_postings
+        .len()
+        .try_into()
+        .map_err(|_| BuildIndexError::TooManyPostings)?;
+    write_compact_kmer_entry(
+        kmers,
+        gene_dfs,
+        kmer_code,
+        postings_start,
+        postings_len,
+        current_genes.len().min(u32::MAX as usize) as u32,
+    )?;
+    for posting in current_postings.drain(..) {
+        write_compact_posting(postings, posting)?;
+    }
+    *num_postings = num_postings
+        .checked_add(u64::from(postings_len))
+        .ok_or(BuildIndexError::TooManyPostings)?;
+    Ok(())
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ShardMergeOutput {
+    shard_id: usize,
+    kmers_path: PathBuf,
+    gene_df_path: PathBuf,
+    postings_path: PathBuf,
+    num_kmers: u64,
+    num_postings: u64,
+}
+
+struct RunSliceReader {
+    reader: BufReader<File>,
+    remaining: u64,
+}
+
+impl RunSliceReader {
+    fn open(path: &Path, slice: RunShardSlice) -> Result<Self, BuildIndexError> {
+        let mut file = File::open(path)?;
+        file.seek(SeekFrom::Start(slice.start_record * RUN_POSTING_BYTES))?;
+        Ok(Self {
+            reader: BufReader::new(file),
+            remaining: slice.len,
+        })
+    }
+
+    fn read_next(&mut self) -> io::Result<Option<RunPosting>> {
+        if self.remaining == 0 {
+            return Ok(None);
+        }
+        self.remaining -= 1;
+        read_run_posting(&mut self.reader)
+    }
+}
+
+fn concatenate_shard_outputs(
+    mut shard_outputs: Vec<ShardMergeOutput>,
+    kmers_path: &Path,
+    gene_df_path: &Path,
+    postings_path: &Path,
+) -> Result<(u64, u64), BuildIndexError> {
+    shard_outputs.par_sort_unstable_by_key(|output| output.shard_id);
+    let mut kmers = BufWriter::new(File::create(kmers_path)?);
+    let mut gene_dfs = BufWriter::new(File::create(gene_df_path)?);
+    let mut postings = BufWriter::new(File::create(postings_path)?);
+    let mut posting_offset = 0_u64;
+    let mut total_kmers = 0_u64;
+    let mut total_postings = 0_u64;
+
+    for output in &shard_outputs {
+        append_adjusted_kmers(&output.kmers_path, &mut kmers, posting_offset)?;
+        append_file_contents(&output.gene_df_path, &mut gene_dfs)?;
+        append_file_contents(&output.postings_path, &mut postings)?;
+        posting_offset = posting_offset
+            .checked_add(output.num_postings)
+            .ok_or(BuildIndexError::TooManyPostings)?;
+        total_kmers += output.num_kmers;
+        total_postings += output.num_postings;
+    }
+
+    kmers.flush()?;
+    gene_dfs.flush()?;
+    postings.flush()?;
+    Ok((total_kmers, total_postings))
+}
+
+fn append_adjusted_kmers(
+    path: &Path,
+    out: &mut impl Write,
+    posting_offset: u64,
+) -> Result<(), BuildIndexError> {
+    let mut input = BufReader::new(File::open(path)?);
+    let mut bytes = [0_u8; 16];
+    loop {
+        match input.read_exact(&mut bytes) {
+            Ok(()) => {
+                let mut kmer = [0_u8; 8];
+                kmer.copy_from_slice(&bytes[..8]);
+                let mut start = [0_u8; 4];
+                start.copy_from_slice(&bytes[8..12]);
+                let mut len = [0_u8; 4];
+                len.copy_from_slice(&bytes[12..16]);
+                let adjusted_start = u64::from(u32::from_ne_bytes(start))
+                    .checked_add(posting_offset)
+                    .ok_or(BuildIndexError::TooManyPostings)?;
+                let adjusted_start: u32 = adjusted_start
+                    .try_into()
+                    .map_err(|_| BuildIndexError::TooManyPostings)?;
+                out.write_all(&kmer)?;
+                out.write_all(&adjusted_start.to_ne_bytes())?;
+                out.write_all(&len)?;
+            }
+            Err(err) if err.kind() == io::ErrorKind::UnexpectedEof => break,
+            Err(err) => return Err(BuildIndexError::Io(err)),
+        }
+    }
+    Ok(())
+}
+
+fn append_file_contents(path: &Path, out: &mut impl Write) -> Result<(), BuildIndexError> {
+    let mut input = BufReader::new(File::open(path)?);
+    io::copy(&mut input, out)?;
+    Ok(())
+}
+
+const RUN_POSTING_BYTES: u64 = 16;
+
+fn shard_bits(k: u8) -> u8 {
+    (k.saturating_mul(2)).min(8)
+}
+
+fn kmer_shard(kmer_code: u64, k: u8, shard_bits: u8) -> usize {
+    if shard_bits == 0 {
+        return 0;
+    }
+    let used_bits = k.saturating_mul(2);
+    let shift = used_bits.saturating_sub(shard_bits);
+    ((kmer_code >> shift) & ((1_u64 << shard_bits) - 1)) as usize
 }
 
 fn make_record(header: String, seq: Vec<u8>) -> FastaRecord {
     let name = header
         .split_whitespace()
-        .next()
-        .unwrap_or(&header)
-        .split('|')
         .next()
         .unwrap_or(&header)
         .to_owned();
@@ -434,6 +667,19 @@ fn make_record(header: String, seq: Vec<u8>) -> FastaRecord {
         gene,
         seq,
     }
+}
+
+fn transcript_gene_lookup<'a>(
+    record: &FastaRecord,
+    transcript_gene_map: &'a FxHashMap<String, String>,
+) -> Option<&'a String> {
+    transcript_gene_map.get(&record.name).or_else(|| {
+        record
+            .name
+            .split('|')
+            .next()
+            .and_then(|id| transcript_gene_map.get(id))
+    })
 }
 
 fn clean_gene_token(gene: &str) -> String {
@@ -464,6 +710,18 @@ struct RunPosting {
     kmer_code: u64,
     transcript_id: u32,
     pos_strand: u32,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+struct RunShardSlice {
+    start_record: u64,
+    len: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct RunFile {
+    path: PathBuf,
+    shard_slices: Vec<RunShardSlice>,
 }
 
 impl Ord for RunPosting {
@@ -610,6 +868,89 @@ mod tests {
     }
 
     #[test]
+    fn gtf_gene_map_can_match_target_header_base_id() {
+        let mut fasta = tempfile::NamedTempFile::new().unwrap();
+        writeln!(
+            fasta,
+            ">tx1|gene:FASTA_GENE|target:exon_transcript\nACGTACGT"
+        )
+        .unwrap();
+        let mut map = FxHashMap::default();
+        map.insert("tx1".to_owned(), "GENE_FROM_GTF".to_owned());
+        let index = build_transcript_index_with_gene_map(fasta.path(), 3, 256, Some(&map)).unwrap();
+        assert_eq!(index.genes, vec!["GENE_FROM_GTF"]);
+        assert_eq!(
+            index.transcripts[0].name,
+            "tx1|gene:FASTA_GENE|target:exon_transcript"
+        );
+    }
+
+    #[test]
+    fn sharded_merge_concatenates_kmer_ranges_with_adjusted_offsets() {
+        let temp = tempfile::tempdir().unwrap();
+        let mut run_files = Vec::new();
+        let mut first = vec![
+            RunPosting {
+                kmer_code: 63,
+                transcript_id: 1,
+                pos_strand: 2,
+            },
+            RunPosting {
+                kmer_code: 1,
+                transcript_id: 0,
+                pos_strand: 0,
+            },
+        ];
+        flush_run(temp.path(), &mut run_files, &mut first, 3).unwrap();
+        let mut second = vec![
+            RunPosting {
+                kmer_code: 32,
+                transcript_id: 2,
+                pos_strand: 4,
+            },
+            RunPosting {
+                kmer_code: 1,
+                transcript_id: 1,
+                pos_strand: 6,
+            },
+            RunPosting {
+                kmer_code: 63,
+                transcript_id: 2,
+                pos_strand: 8,
+            },
+        ];
+        flush_run(temp.path(), &mut run_files, &mut second, 3).unwrap();
+
+        let kmers = temp.path().join("kmers.bin");
+        let gene_df = temp.path().join("gene_df.bin");
+        let postings = temp.path().join("postings.bin");
+        let transcript_gene_ids = vec![10, 11, 12];
+        let transcript_target_classes = vec![TargetClass::Unknown; 3];
+        let (num_kmers, num_postings) = merge_runs_sharded(
+            &run_files,
+            &kmers,
+            &gene_df,
+            &postings,
+            &transcript_gene_ids,
+            &transcript_target_classes,
+            3,
+        )
+        .unwrap();
+
+        assert_eq!(num_kmers, 3);
+        assert_eq!(num_postings, 5);
+        assert_eq!(
+            read_compact_kmers(&kmers),
+            vec![(1, 0, 2), (32, 2, 1), (63, 3, 2)]
+        );
+        assert_eq!(read_gene_dfs(&gene_df), vec![2, 1, 2]);
+        assert_eq!(
+            read_compact_postings(&postings),
+            vec![(0, 0), (1, 6), (2, 4), (1, 2), (2, 8)]
+        );
+    }
+
+    #[test]
     fn parses_ensembl_cdna_gene_colon_header() {
         let record = make_record(
             "ENST1 cdna chromosome:GRCh38:1:1:10:1 gene:ENSG1 gene_symbol:ABC".to_owned(),
@@ -630,5 +971,52 @@ mod tests {
             let record = make_record(header.to_owned(), b"ACGT".to_vec());
             assert_eq!(record.gene, gene);
         }
+    }
+
+    fn read_compact_kmers(path: &Path) -> Vec<(u64, u32, u32)> {
+        let mut file = File::open(path).unwrap();
+        let mut out = Vec::new();
+        let mut bytes = [0_u8; 16];
+        while file.read_exact(&mut bytes).is_ok() {
+            let mut kmer = [0_u8; 8];
+            kmer.copy_from_slice(&bytes[..8]);
+            let mut start = [0_u8; 4];
+            start.copy_from_slice(&bytes[8..12]);
+            let mut len = [0_u8; 4];
+            len.copy_from_slice(&bytes[12..16]);
+            out.push((
+                u64::from_ne_bytes(kmer),
+                u32::from_ne_bytes(start),
+                u32::from_ne_bytes(len),
+            ));
+        }
+        out
+    }
+
+    fn read_gene_dfs(path: &Path) -> Vec<u16> {
+        let mut file = File::open(path).unwrap();
+        let mut out = Vec::new();
+        let mut bytes = [0_u8; 2];
+        while file.read_exact(&mut bytes).is_ok() {
+            out.push(u16::from_ne_bytes(bytes));
+        }
+        out
+    }
+
+    fn read_compact_postings(path: &Path) -> Vec<(u32, u32)> {
+        let mut file = File::open(path).unwrap();
+        let mut out = Vec::new();
+        let mut bytes = [0_u8; 8];
+        while file.read_exact(&mut bytes).is_ok() {
+            let mut transcript = [0_u8; 4];
+            transcript.copy_from_slice(&bytes[..4]);
+            let mut pos_strand = [0_u8; 4];
+            pos_strand.copy_from_slice(&bytes[4..8]);
+            out.push((
+                u32::from_ne_bytes(transcript),
+                u32::from_ne_bytes(pos_strand),
+            ));
+        }
+        out
     }
 }

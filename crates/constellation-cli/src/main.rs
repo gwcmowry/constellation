@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{ArgAction, Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 
 mod cmd_bench_report;
@@ -20,6 +20,8 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     Index(IndexArgs),
+    IndexEc(IndexEcArgs),
+    ConvertEcIndex(ConvertEcIndexArgs),
     InspectIndex(InspectIndexArgs),
     Simulate(SimulateArgs),
     BuildTranscriptomeTarget(BuildTranscriptomeTargetArgs),
@@ -40,6 +42,34 @@ struct IndexArgs {
     max_kmer_frequency: u32,
     #[arg(long)]
     out: PathBuf,
+}
+
+#[derive(Debug, Parser)]
+struct IndexEcArgs {
+    #[arg(long)]
+    transcripts: PathBuf,
+    #[arg(long)]
+    t2g_map: Option<PathBuf>,
+    #[arg(long, default_value_t = 31)]
+    k: u8,
+    #[arg(long, value_enum, default_value_t = EcIndexFormatArg::Mmap)]
+    format: EcIndexFormatArg,
+    #[arg(long)]
+    out: PathBuf,
+}
+
+#[derive(Debug, Parser)]
+struct ConvertEcIndexArgs {
+    #[arg(long)]
+    index: PathBuf,
+    #[arg(long)]
+    out: PathBuf,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum EcIndexFormatArg {
+    Mmap,
+    Legacy,
 }
 
 #[derive(Debug, Parser)]
@@ -83,7 +113,9 @@ enum TargetKindArg {
     ExonTranscripts,
     GeneBodies,
     IntronsOnly,
+    IntronFlanks,
     ExonPlusGeneBody,
+    ExonPlusIntronsOnly,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
@@ -106,6 +138,7 @@ enum MapMode {
     ReadAtATime,
     SketchBucket,
     CandidateLocus,
+    GeneEc,
 }
 
 impl MapMode {
@@ -114,6 +147,7 @@ impl MapMode {
             Self::ReadAtATime => "read-at-a-time",
             Self::SketchBucket => "sketch-bucket",
             Self::CandidateLocus => "candidate-locus",
+            Self::GeneEc => "gene-ec",
         }
     }
 }
@@ -133,6 +167,7 @@ enum RetrievalModeArg {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 enum CandidateSearchArg {
     Full,
+    ExonFirst,
     SparseProbe,
 }
 
@@ -150,6 +185,18 @@ enum CandidatePruningArg {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum MapOutputFormatArg {
+    Tsv,
+    GeneEcRad,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum OutputCompressionArg {
+    None,
+    Zstd,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 enum LibraryStrandArg {
     Unstranded,
     Forward,
@@ -161,6 +208,8 @@ struct MapArgs {
     #[arg(long)]
     index: PathBuf,
     #[arg(long)]
+    hot_index: Option<PathBuf>,
+    #[arg(long)]
     r1: PathBuf,
     #[arg(long)]
     r2: PathBuf,
@@ -168,6 +217,18 @@ struct MapArgs {
     chemistry: String,
     #[arg(long, default_value_t = 1024)]
     batch_size: usize,
+    #[arg(long)]
+    cold_batch_size: Option<usize>,
+    #[arg(long, default_value_t = 1)]
+    cold_max_seeds_per_read: usize,
+    #[arg(long, default_value_t = 10)]
+    cold_shard_prefix_bits: u8,
+    #[arg(long, default_value_t = 32)]
+    cold_evict_interval: u64,
+    #[arg(long = "no-cold-shard-scheduling", action = ArgAction::SetFalse, default_value_t = true)]
+    cold_shard_scheduling: bool,
+    #[arg(long, default_value_t = false)]
+    preload_cold_index: bool,
     #[arg(long, value_enum, default_value_t = ScoreMode::Scalar)]
     score_mode: ScoreMode,
     #[arg(long, value_enum, default_value_t = MapMode::CandidateLocus)]
@@ -230,6 +291,14 @@ struct MapArgs {
     min_tail_phred: u8,
     #[arg(long, default_value_t = false)]
     search_reverse_complement: bool,
+    #[arg(long, default_value_t = false)]
+    rescue_failed_reads: bool,
+    #[arg(long, default_value_t = false)]
+    rescue_score_failed_reads: bool,
+    #[arg(long, default_value_t = true)]
+    rescue_antisense_reads: bool,
+    #[arg(long, default_value_t = true)]
+    rescue_reverse_complement: bool,
     #[arg(long, default_value_t = 1.0)]
     early_stop_posterior: f64,
     #[arg(long, default_value_t = 0.25)]
@@ -242,6 +311,14 @@ struct MapArgs {
     emit_metrics: Option<PathBuf>,
     #[arg(long)]
     emit_unmapped_diagnostics: Option<PathBuf>,
+    #[arg(long, default_value_t = false)]
+    skip_assignments: bool,
+    #[arg(long, value_enum, default_value_t = MapOutputFormatArg::Tsv)]
+    output_format: MapOutputFormatArg,
+    #[arg(long, value_enum, default_value_t = OutputCompressionArg::None)]
+    output_compression: OutputCompressionArg,
+    #[arg(long, default_value_t = 3)]
+    zstd_level: i32,
     #[arg(long)]
     out: PathBuf,
 }
@@ -267,6 +344,22 @@ struct CountArgs {
     #[arg(long)]
     index: PathBuf,
     #[arg(long)]
+    barcode_whitelist: Option<PathBuf>,
+    #[arg(long = "no-correct-barcodes", action = ArgAction::SetFalse, default_value_t = true)]
+    correct_barcodes: bool,
+    #[arg(long = "no-correct-umis", action = ArgAction::SetFalse, default_value_t = true)]
+    correct_umis: bool,
+    #[arg(long, default_value_t = 1)]
+    umi_edit_distance: u8,
+    #[arg(long = "no-resolve-molecule-genes", action = ArgAction::SetFalse, default_value_t = true)]
+    resolve_molecule_genes: bool,
+    #[arg(long, default_value_t = 2)]
+    molecule_gene_ratio: u32,
+    #[arg(long)]
+    feature_whitelist: Option<PathBuf>,
+    #[arg(long)]
+    emit_metrics: Option<PathBuf>,
+    #[arg(long)]
     out_prefix: PathBuf,
 }
 
@@ -274,6 +367,8 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Commands::Index(args) => cmd_index::run_index(args),
+        Commands::IndexEc(args) => cmd_index::run_index_ec(args),
+        Commands::ConvertEcIndex(args) => cmd_index::run_convert_ec_index(args),
         Commands::InspectIndex(args) => cmd_index::run_inspect_index(args),
         Commands::Simulate(args) => cmd_simulate::run_simulate(args),
         Commands::BuildTranscriptomeTarget(args) => {

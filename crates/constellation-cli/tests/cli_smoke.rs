@@ -292,6 +292,49 @@ fn cli_golden_assignment_types() {
     );
     let matrix = fs::read_to_string(tmp.path().join("manual_counts_matrix.mtx")).unwrap();
     assert!(matrix.contains("\n1 1 2\n"));
+
+    let corrected_assignments = tmp.path().join("corrected_assignments.tsv");
+    fs::write(
+        &corrected_assignments,
+        concat!(
+            "read_id\tcell_barcode\tumi\tassignment_type\tgene_id\ttranscript_id\tcandidate_count\tscore\tflags\n",
+            "0\tAAAAAAAAAAAAAAAA\tAAAAAAAAAAAA\tunique_gene\t0\t0\t1\t12\t0\n",
+            "1\tAAAAAAAAAAAAAAAA\tAAAAAAAAAAAA\tunique_gene\t0\t0\t1\t12\t0\n",
+            "2\tCAAAAAAAAAAAAAAA\tAAAAAAAAAAAT\tunique_gene\t0\t0\t1\t12\t0\n",
+            "3\tAAAAAAAAAAAAAAAA\tCCCCCCCCCCCC\tunique_gene\t0\t0\t1\t12\t0\n",
+        ),
+    )
+    .unwrap();
+    let whitelist = tmp.path().join("barcodes.tsv");
+    fs::write(&whitelist, "AAAAAAAAAAAAAAAA\n").unwrap();
+    let corrected_prefix = tmp.path().join("corrected_counts");
+    let corrected_metrics = tmp.path().join("corrected_counts.metrics.json");
+    assert_success(
+        constellation()
+            .args([
+                "count",
+                "--assignments",
+                path(&corrected_assignments),
+                "--index",
+                path(&index),
+                "--barcode-whitelist",
+                path(&whitelist),
+                "--emit-metrics",
+                path(&corrected_metrics),
+                "--out-prefix",
+                path(&corrected_prefix),
+            ])
+            .output()
+            .unwrap(),
+    );
+    let corrected_matrix =
+        fs::read_to_string(tmp.path().join("corrected_counts_matrix.mtx")).unwrap();
+    assert!(corrected_matrix.contains("\n1 1 2\n"));
+    let corrected_barcodes =
+        fs::read_to_string(tmp.path().join("corrected_counts_barcodes.tsv")).unwrap();
+    assert_eq!(corrected_barcodes, "AAAAAAAAAAAAAAAA\n");
+    let corrected_metrics = fs::read_to_string(corrected_metrics).unwrap();
+    assert!(corrected_metrics.contains("\"barcode_corrected\": 1"));
 }
 
 #[test]
@@ -314,6 +357,7 @@ fn cli_build_transcriptome_target_kinds() {
         ("exon-transcripts", "target:exon_transcript"),
         ("gene-bodies", "target:gene_body"),
         ("introns-only", "target:intron"),
+        ("intron-flanks", "target:intron"),
         ("exon-plus-gene-body", "target:gene_body"),
     ] {
         let out = tmp.path().join(format!("{kind}.fa"));

@@ -1,10 +1,11 @@
 use crate::candidate::CandidateLocusBucket;
-use crate::index::IndexAccess;
+use crate::index::{IndexAccess, TargetClass};
 use crate::score::{
     hamming_ascii, hamming_revcomp_ascii, qual_by_read_id, read_seq_by_id, tso_prefix_trim_len,
     CandidateScorer, LibraryStrand, ScoreConfig, ScoreFailureStats, ScoredCandidate,
     SCORE_FLAG_ANTISENSE, SCORE_FLAG_FULL_LENGTH, SCORE_FLAG_LEFT_SOFTCLIP,
-    SCORE_FLAG_RIGHT_SOFTCLIP, SCORE_FLAG_TRIMMED_LOW_QUALITY, SCORE_FLAG_TRIMMED_POLY_A,
+    SCORE_FLAG_RIGHT_SOFTCLIP, SCORE_FLAG_TARGET_EXON, SCORE_FLAG_TARGET_GENE_BODY,
+    SCORE_FLAG_TARGET_INTRON, SCORE_FLAG_TRIMMED_LOW_QUALITY, SCORE_FLAG_TRIMMED_POLY_A,
     SCORE_FLAG_TRIMMED_POLY_T, SCORE_FLAG_TRIMMED_TSO,
 };
 use crate::ReadId;
@@ -12,12 +13,14 @@ use crate::ReadId;
 #[derive(Debug, Clone, Copy)]
 pub struct ScalarScorer {
     pub config: ScoreConfig,
+    pub target_class_flags: &'static [u16],
 }
 
 impl Default for ScalarScorer {
     fn default() -> Self {
         Self {
             config: ScoreConfig::default(),
+            target_class_flags: &[],
         }
     }
 }
@@ -76,6 +79,7 @@ impl CandidateScorer for ScalarScorer {
             if is_antisense_candidate(self.config, hit) {
                 candidate.flags |= SCORE_FLAG_ANTISENSE;
             }
+            candidate.flags |= self.target_class_flag(index, hit.transcript_id);
             if candidate.flags & SCORE_FLAG_FULL_LENGTH != 0 {
                 hit_stats.candidates_passed_full_length += 1;
             } else {
@@ -86,6 +90,28 @@ impl CandidateScorer for ScalarScorer {
             add_read_stats(read_score_stats.as_deref_mut(), hit.read_id, hit_stats);
         }
         stats
+    }
+}
+
+impl ScalarScorer {
+    fn target_class_flag(
+        &self,
+        index: &dyn IndexAccess,
+        transcript_id: crate::TranscriptId,
+    ) -> u16 {
+        self.target_class_flags
+            .get(transcript_id as usize)
+            .copied()
+            .unwrap_or_else(|| target_class_flag(index.transcript_target_class(transcript_id)))
+    }
+}
+
+pub fn target_class_flag(target_class: TargetClass) -> u16 {
+    match target_class {
+        TargetClass::ExonTranscript => SCORE_FLAG_TARGET_EXON,
+        TargetClass::Intron => SCORE_FLAG_TARGET_INTRON,
+        TargetClass::GeneBody => SCORE_FLAG_TARGET_GENE_BODY,
+        TargetClass::Unknown => 0,
     }
 }
 
@@ -356,12 +382,12 @@ fn trimmed_end(read: &[u8], qual: Option<&[u8]>, config: ScoreConfig) -> (usize,
         }
     }
     while end > 0 {
-        match read[end - 1].to_ascii_uppercase() {
-            b'A' if config.trim_poly_a => {
+        match read[end - 1] {
+            b'A' | b'a' if config.trim_poly_a => {
                 end -= 1;
                 flags |= SCORE_FLAG_TRIMMED_POLY_A;
             }
-            b'T' if config.trim_poly_t => {
+            b'T' | b't' if config.trim_poly_t => {
                 end -= 1;
                 flags |= SCORE_FLAG_TRIMMED_POLY_T;
             }
@@ -371,12 +397,13 @@ fn trimmed_end(read: &[u8], qual: Option<&[u8]>, config: ScoreConfig) -> (usize,
     (end, flags)
 }
 
+#[inline(always)]
 fn complement_ascii(base: u8) -> u8 {
-    match base.to_ascii_uppercase() {
-        b'A' => b'T',
-        b'C' => b'G',
-        b'G' => b'C',
-        b'T' | b'U' => b'A',
+    match base {
+        b'A' | b'a' => b'T',
+        b'C' | b'c' => b'G',
+        b'G' | b'g' => b'C',
+        b'T' | b't' | b'U' | b'u' => b'A',
         _ => b'N',
     }
 }
@@ -425,6 +452,7 @@ mod tests {
                 min_scored_len: 8,
                 ..ScoreConfig::default()
             },
+            ..ScalarScorer::default()
         };
         scorer.score_bucket(&reads, &quals, &index, &bucket, &mut scored, None);
         assert_eq!(scored.len(), 1);
@@ -445,6 +473,7 @@ mod tests {
                 min_scored_len: 8,
                 ..ScoreConfig::default()
             },
+            ..ScalarScorer::default()
         };
         scorer.score_bucket(&reads, &quals, &index, &bucket, &mut scored, None);
         assert_eq!(scored.len(), 1);
@@ -464,6 +493,7 @@ mod tests {
                 min_scored_len: 8,
                 ..ScoreConfig::default()
             },
+            ..ScalarScorer::default()
         };
         scorer.score_bucket(&reads, &quals, &index, &bucket, &mut scored, None);
         assert_eq!(scored.len(), 1);
@@ -484,6 +514,7 @@ mod tests {
                 min_scored_len: 4,
                 ..ScoreConfig::default()
             },
+            ..ScalarScorer::default()
         };
         scorer.score_bucket(&reads, &quals, &index, &bucket, &mut scored, None);
         assert_eq!(scored.len(), 1);

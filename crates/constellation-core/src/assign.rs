@@ -1,5 +1,8 @@
 use crate::score::ScoredCandidate;
-use crate::score::SCORE_FLAG_ANTISENSE;
+use crate::score::{
+    SCORE_FLAG_ANTISENSE, SCORE_FLAG_TARGET_EXON, SCORE_FLAG_TARGET_GENE_BODY,
+    SCORE_FLAG_TARGET_INTRON,
+};
 use crate::{GeneId, ReadId, TranscriptId};
 use std::collections::BTreeSet;
 
@@ -99,6 +102,7 @@ pub fn assign_read(
         .filter(|candidate| candidate.flags & SCORE_FLAG_ANTISENSE == 0)
         .collect();
     if !sense_best.is_empty() {
+        let sense_best = target_class_priority_best(&sense_best);
         return assign_from_best(
             read_id,
             cell_barcode,
@@ -122,8 +126,36 @@ pub fn assign_read(
         transcript_id: None,
         candidate_count: candidates.len() as u32,
         score: best_score,
-        flags: 0,
+        flags: best_flags(&best),
     };
+}
+
+fn target_class_priority_best<'a>(best: &[&'a ScoredCandidate]) -> Vec<&'a ScoredCandidate> {
+    let genes: BTreeSet<_> = best.iter().map(|candidate| candidate.gene_id).collect();
+    if genes.len() != 1 {
+        return best.to_vec();
+    }
+    let best_rank = best
+        .iter()
+        .map(|candidate| target_class_rank(candidate.flags))
+        .max()
+        .unwrap_or(0);
+    best.iter()
+        .copied()
+        .filter(|candidate| target_class_rank(candidate.flags) == best_rank)
+        .collect()
+}
+
+fn target_class_rank(flags: u16) -> u8 {
+    if flags & SCORE_FLAG_TARGET_EXON != 0 {
+        3
+    } else if flags & SCORE_FLAG_TARGET_INTRON != 0 {
+        2
+    } else if flags & SCORE_FLAG_TARGET_GENE_BODY != 0 {
+        1
+    } else {
+        0
+    }
 }
 
 fn assign_from_best(
@@ -165,8 +197,13 @@ fn assign_from_best(
         transcript_id,
         candidate_count,
         score: best_score,
-        flags: 0,
+        flags: best_flags(best),
     }
+}
+
+fn best_flags(best: &[&ScoredCandidate]) -> u16 {
+    best.iter()
+        .fold(0_u16, |flags, candidate| flags | candidate.flags)
 }
 
 pub fn flagged_assignment(
@@ -203,6 +240,18 @@ mod tests {
             mismatches: 0,
             score: 10,
             flags: 0,
+        }
+    }
+
+    fn candidate_with_flags(
+        read_id: ReadId,
+        gene_id: GeneId,
+        transcript_id: TranscriptId,
+        flags: u16,
+    ) -> ScoredCandidate {
+        ScoredCandidate {
+            flags,
+            ..candidate(read_id, gene_id, transcript_id)
         }
     }
 
@@ -249,5 +298,23 @@ mod tests {
         let assignment = assign_read(0, "CB".to_owned(), "UMI".to_owned(), &[antisense]);
         assert_eq!(assignment.assignment_type, AssignmentType::AntisenseGene);
         assert_eq!(assignment.gene_id, Some(1));
+    }
+
+    #[test]
+    fn exonic_same_gene_tie_beats_gene_body_tie() {
+        let exon = candidate_with_flags(0, 1, 2, SCORE_FLAG_TARGET_EXON);
+        let gene_body = candidate_with_flags(0, 1, 3, SCORE_FLAG_TARGET_GENE_BODY);
+        let assignment = assign_read(0, "CB".to_owned(), "UMI".to_owned(), &[gene_body, exon]);
+        assert_eq!(assignment.assignment_type, AssignmentType::UniqueGene);
+        assert_eq!(assignment.transcript_id, Some(2));
+        assert_ne!(assignment.flags & SCORE_FLAG_TARGET_EXON, 0);
+    }
+
+    #[test]
+    fn target_priority_does_not_resolve_multi_gene_tie() {
+        let exon = candidate_with_flags(0, 1, 2, SCORE_FLAG_TARGET_EXON);
+        let gene_body = candidate_with_flags(0, 2, 3, SCORE_FLAG_TARGET_GENE_BODY);
+        let assignment = assign_read(0, "CB".to_owned(), "UMI".to_owned(), &[gene_body, exon]);
+        assert_eq!(assignment.assignment_type, AssignmentType::AmbiguousGene);
     }
 }

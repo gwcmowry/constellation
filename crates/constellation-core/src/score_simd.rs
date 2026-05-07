@@ -1,18 +1,20 @@
 use crate::candidate::CandidateLocusBucket;
 use crate::index::IndexAccess;
 use crate::score::{CandidateScorer, ScoreBlock, ScoreConfig, ScoreFailureStats, ScoredCandidate};
-use crate::score_scalar::ScalarScorer;
+use crate::score_scalar::{target_class_flag, ScalarScorer};
 use crate::ReadId;
 
 #[derive(Debug, Clone, Copy)]
 pub struct PulpScorer {
     pub config: ScoreConfig,
+    pub target_class_flags: &'static [u16],
 }
 
 impl Default for PulpScorer {
     fn default() -> Self {
         Self {
             config: ScoreConfig::default(),
+            target_class_flags: &[],
         }
     }
 }
@@ -30,12 +32,14 @@ impl CandidateScorer for PulpScorer {
         if !self.config.uses_default_window() {
             return ScalarScorer {
                 config: self.config,
+                target_class_flags: self.target_class_flags,
             }
             .score_bucket(reads, quals, index, bucket, out, read_score_stats);
         }
         if self.config.library_strand != crate::score::LibraryStrand::Unstranded {
             return ScalarScorer {
                 config: self.config,
+                target_class_flags: self.target_class_flags,
             }
             .score_bucket(reads, quals, index, bucket, out, read_score_stats);
         }
@@ -50,6 +54,8 @@ impl CandidateScorer for PulpScorer {
         for (idx, (read_seq, ref_seq)) in block.pairs().enumerate() {
             let mismatches = hamming_ascii_pulp(read_seq, ref_seq);
             if mismatches <= self.config.max_mismatches {
+                let mut flags = crate::score::SCORE_FLAG_FULL_LENGTH;
+                flags |= self.target_class_flag(index, block.transcript_ids[idx]);
                 out.push(ScoredCandidate {
                     read_id: block.read_ids[idx],
                     transcript_id: block.transcript_ids[idx],
@@ -58,7 +64,7 @@ impl CandidateScorer for PulpScorer {
                     strand: 0,
                     mismatches,
                     score: read_seq.len().saturating_sub(mismatches as usize) as u16,
-                    flags: crate::score::SCORE_FLAG_FULL_LENGTH,
+                    flags,
                 });
             } else {
                 stats.candidates_failed_mismatch += 1;
@@ -72,6 +78,19 @@ impl CandidateScorer for PulpScorer {
         }
         stats.candidates_passed_full_length = out.len().saturating_sub(before) as u64;
         stats
+    }
+}
+
+impl PulpScorer {
+    fn target_class_flag(
+        &self,
+        index: &dyn IndexAccess,
+        transcript_id: crate::TranscriptId,
+    ) -> u16 {
+        self.target_class_flags
+            .get(transcript_id as usize)
+            .copied()
+            .unwrap_or_else(|| target_class_flag(index.transcript_target_class(transcript_id)))
     }
 }
 

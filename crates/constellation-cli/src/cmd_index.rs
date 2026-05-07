@@ -1,5 +1,6 @@
-use crate::{IndexArgs, InspectIndexArgs};
+use crate::{ConvertEcIndexArgs, EcIndexFormatArg, IndexArgs, IndexEcArgs, InspectIndexArgs};
 use anyhow::Result;
+use constellation_core::ec_index::{EcIndex, LoadedEcIndex};
 use constellation_core::gtf::transcript_gene_map;
 use constellation_core::index::{IndexAccess, LoadedIndex};
 use constellation_core::index_build::{
@@ -38,6 +39,22 @@ pub fn run_index(args: IndexArgs) -> Result<()> {
         build_transcript_index(args.transcripts, args.k, args.max_kmer_frequency)?
     };
     index.save_auto(args.out)?;
+    Ok(())
+}
+
+pub fn run_index_ec(args: IndexEcArgs) -> Result<()> {
+    let index =
+        EcIndex::build_from_fasta_with_t2g(args.transcripts, args.t2g_map.as_ref(), args.k)?;
+    match args.format {
+        EcIndexFormatArg::Mmap => index.save_mmap(args.out)?,
+        EcIndexFormatArg::Legacy => index.save(args.out)?,
+    }
+    Ok(())
+}
+
+pub fn run_convert_ec_index(args: ConvertEcIndexArgs) -> Result<()> {
+    let index = LoadedEcIndex::load(args.index)?;
+    index.save_mmap(args.out)?;
     Ok(())
 }
 

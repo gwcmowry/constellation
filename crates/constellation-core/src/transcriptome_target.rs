@@ -13,8 +13,12 @@ pub enum TranscriptomeTargetKind {
     ExonTranscripts,
     GeneBodies,
     IntronsOnly,
+    IntronFlanks,
     ExonPlusGeneBody,
+    ExonPlusIntronsOnly,
 }
+
+const DEFAULT_INTRON_FLANK_LEN: u32 = 86;
 
 #[derive(Debug, Error)]
 pub enum TranscriptomeTargetError {
@@ -131,6 +135,15 @@ pub fn build_transcriptome_target(
         TranscriptomeTargetKind::IntronsOnly => {
             write_intron_targets(&genome, &mut writer, &models.genes, &mut stats)?;
         }
+        TranscriptomeTargetKind::IntronFlanks => {
+            write_intron_flank_targets(
+                &genome,
+                &mut writer,
+                &models.genes,
+                &mut stats,
+                DEFAULT_INTRON_FLANK_LEN,
+            )?;
+        }
         TranscriptomeTargetKind::ExonPlusGeneBody => {
             write_exon_transcript_targets(
                 &genome,
@@ -139,6 +152,15 @@ pub fn build_transcriptome_target(
                 &mut stats,
             )?;
             write_gene_body_targets(&genome, &mut writer, &models.genes, &mut stats)?;
+        }
+        TranscriptomeTargetKind::ExonPlusIntronsOnly => {
+            write_exon_transcript_targets(
+                &genome,
+                &mut writer,
+                &mut models.transcripts,
+                &mut stats,
+            )?;
+            write_intron_targets(&genome, &mut writer, &models.genes, &mut stats)?;
         }
     }
     writer.flush()?;
@@ -274,6 +296,90 @@ fn write_intron_targets(
         stats.total_bases += seq.len();
     }
     Ok(())
+}
+
+fn write_intron_flank_targets(
+    genome: &FxHashMap<String, Vec<u8>>,
+    writer: &mut impl Write,
+    genes: &[GeneModel],
+    stats: &mut TranscriptomeTargetStats,
+    flank_len: u32,
+) -> Result<(), TranscriptomeTargetError> {
+    for gene in genes {
+        let Some(body) = gene.body_interval() else {
+            continue;
+        };
+        let introns = intron_intervals(&body, &gene.exons);
+        if introns.is_empty() {
+            continue;
+        }
+        let contig = genome
+            .get(&gene.seqname)
+            .ok_or_else(|| TranscriptomeTargetError::MissingContig(gene.seqname.clone()))?;
+        let mut flanks = Vec::new();
+        for intron in introns {
+            flanks.extend(intron_flank_intervals(&intron, flank_len));
+        }
+        flanks.sort_by_key(|flank| flank.start);
+        let mut merged = Vec::<Exon>::new();
+        for flank in flanks {
+            match merged.last_mut() {
+                Some(last) if flank.start <= last.end.saturating_add(1) => {
+                    last.end = last.end.max(flank.end);
+                }
+                _ => merged.push(flank),
+            }
+        }
+        if gene.strand == b'-' {
+            merged.sort_by_key(|flank| Reverse(flank.start));
+        }
+
+        let mut seq = Vec::new();
+        for flank in &merged {
+            append_interval_sequence(contig, &gene.seqname, gene.strand, flank, &mut seq)?;
+        }
+        if seq.is_empty() {
+            continue;
+        }
+        writeln!(
+            writer,
+            ">{}|gene:{}|target:intron|contig:{}|strand:{}|start:{}|end:{}|flank:{}",
+            gene.gene_id,
+            gene.gene_id,
+            gene.seqname,
+            gene.strand as char,
+            body.start,
+            body.end,
+            flank_len
+        )?;
+        write_wrapped_fasta(writer, &seq, 80)?;
+        stats.num_transcripts += 1;
+        stats.num_exons += merged.len();
+        stats.total_bases += seq.len();
+    }
+    Ok(())
+}
+
+fn intron_flank_intervals(intron: &Exon, flank_len: u32) -> Vec<Exon> {
+    if flank_len == 0 {
+        return Vec::new();
+    }
+    let left = Exon {
+        start: intron.start,
+        end: intron.end.min(intron.start.saturating_add(flank_len - 1)),
+    };
+    let right = Exon {
+        start: intron.start.max(intron.end.saturating_sub(flank_len - 1)),
+        end: intron.end,
+    };
+    if left.end.saturating_add(1) >= right.start {
+        vec![Exon {
+            start: left.start,
+            end: right.end,
+        }]
+    } else {
+        vec![left, right]
+    }
 }
 
 fn read_genome_fasta(
@@ -618,6 +724,19 @@ mod tests {
         assert_eq!(intron_stats.num_exons, 2);
         assert!(intron_text
             .contains(">GENE1|gene:GENE1|target:intron|contig:1|strand:+|start:2|end:15\nGGTTGGT"));
+
+        let flank_out = tempfile::NamedTempFile::new().unwrap();
+        let flank_stats = build_transcriptome_target(
+            genome.path(),
+            gtf.path(),
+            flank_out.path(),
+            TranscriptomeTargetKind::IntronFlanks,
+        )
+        .unwrap();
+        let flank_text = std::fs::read_to_string(flank_out.path()).unwrap();
+        assert_eq!(flank_stats.num_transcripts, 1);
+        assert!(flank_text.contains("|target:intron|"));
+        assert!(flank_text.contains("|flank:86"));
     }
 
     #[test]
