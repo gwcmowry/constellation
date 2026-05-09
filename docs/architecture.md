@@ -1,54 +1,39 @@
 # Architecture
 
-Constellation follows the dataflow described in the project brief:
+The current architecture is the gene-EC mapper. Older positional compact-index modes remain only as historical code paths and should not be used for current performance comparisons.
+
+## Mapper Flow
 
 ```text
-FASTQ reads
-  -> compact/sketched reads
-  -> sketch-sorted read buckets
-  -> seed lookup
-  -> candidate-locus buckets
-  -> scalar/SIMD scoring
-  -> gene/transcript assignments
+paired FASTQ streams
+  -> bounded R1/R2 decode batches
+  -> 10x barcode/UMI parse and R2 quality checks
+  -> sparse k-mer probes
+  -> prefix24 mmap EC-index lookup
+  -> per-gene score accumulation
+  -> gene assignment
+  -> Constellation RAD-like binary or TSV output
+  -> optional streaming zstd compression
 ```
 
-The current implementation is correctness-first. The scalar scorer is the oracle, and `PulpScorer` currently shares the same trait boundary while SIMD kernels are added behind it.
+The important runtime property is that FASTQ decoding is pipelined ahead of mapping, so the mapper mostly waits on EC lookup and assignment work rather than gzip input.
 
-Implemented mapping modes:
+## Index
+
+The active index format is the mmap EC index built by `constellation index-ec`. The current best human reference used in benchmarks is:
 
 ```text
-read-at-a-time
-sketch-bucket
-candidate-locus
+/tmp/human_ensembl93_splici_r91.k31.t2g.prefix24.mmap.ecidx
 ```
 
-`candidate-locus` is the default because it directly exercises the central cache-locality hypothesis: seed lookups are generated from sketch-sorted reads, candidate hits are regrouped by transcript/locus bins, and scoring then works over locus-local buckets.
+The prefix24 table reduces lookup work but the index still has a high RSS footprint because postings are explicit and are accessed through large mmap-backed arrays. Current perf profiles show `LoadedEcIndex::lookup` dominates dTLB misses, so future index work should prioritize locality and translation pressure.
 
-Current filtering before seed lookup:
+## Output
 
-```text
-low_quality      mean Phred quality below --min-mean-quality
-low_complexity   insufficient valid kmers or homopolymer-dominated sequence
-```
+The preferred mapper output is `--output-format gene-ec-rad`. It is a Constellation-specific compact per-read format, not alevin-fry-compatible RAD. Streaming zstd is available with `--output-compression zstd`; it is cheap enough for normal benchmark runs but does not remove the need for molecule-level aggregation.
 
-FASTQ input supports plain text and `.gz` files.
+## Current Constraints
 
-Indexing currently supports:
-
-```text
-FASTA transcript sequences through needletail
-optional GTF transcript_id -> gene_id mapping
-mmap-backed index loading for the prototype .cbidx format
-```
-
-Candidate seed selection considers valid k-mers, filters low-quality seeds when qualities are available, and probes lower-frequency k-mers first. This is the first implementation step toward rare-anchor/IDF seed scheduling.
-
-Counting currently emits:
-
-```text
-<prefix>_matrix.mtx
-<prefix>_barcodes.tsv
-<prefix>_features.tsv
-```
-
-Counts are exact UMI-deduplicated over `unique_gene` assignments.
+- Memory is the main gap versus simpleaf/alevin-fry: about `25.3G` RSS for Constellation versus about `3.93G` RSS for simpleaf on the 100M PBMC benchmark.
+- Per-read output is still larger than ideal even after zstd.
+- The output semantics are not yet identical to alevin-fry because Constellation emits per-read gene/EC assignments rather than a full molecule-resolution RAD/counting pipeline.

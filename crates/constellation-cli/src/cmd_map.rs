@@ -39,6 +39,12 @@ use std::time::{Duration, Instant};
 
 pub fn run_map(args: MapArgs) -> Result<()> {
     let _chemistry = Chemistry::parse(&args.chemistry)?;
+    if args.mode != MapMode::GeneEc {
+        return Err(anyhow!(
+            "legacy positional map mode '{}' is no longer supported by the default CLI; use --mode gene-ec with an EC index",
+            args.mode.as_str()
+        ));
+    }
     if args.mode == MapMode::GeneEc {
         return run_map_gene_ec(args);
     }

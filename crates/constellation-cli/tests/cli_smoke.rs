@@ -7,7 +7,7 @@ fn constellation() -> Command {
 }
 
 #[test]
-fn cli_index_simulate_map_modes_and_report() {
+fn cli_index_simulate_gene_ec_map_and_report() {
     let tmp = tempfile::tempdir().unwrap();
     let fasta = tmp.path().join("tiny.fa");
     fs::write(
@@ -21,6 +21,7 @@ fn cli_index_simulate_map_modes_and_report() {
     )
     .unwrap();
     let index = tmp.path().join("tiny.cbidx");
+    let ec_index = tmp.path().join("tiny.ecidx");
 
     assert_success(
         constellation()
@@ -43,6 +44,21 @@ fn cli_index_simulate_map_modes_and_report() {
         .unwrap();
     assert_success(inspect);
 
+    assert_success(
+        constellation()
+            .args([
+                "index-ec",
+                "--transcripts",
+                path(&fasta),
+                "--k",
+                "11",
+                "--out",
+                path(&ec_index),
+            ])
+            .output()
+            .unwrap(),
+    );
+
     let prefix = tmp.path().join("sim");
     assert_success(
         constellation()
@@ -63,82 +79,53 @@ fn cli_index_simulate_map_modes_and_report() {
             .unwrap(),
     );
 
-    for mode in ["read-at-a-time", "sketch-bucket", "candidate-locus"] {
-        let assignments = tmp.path().join(format!("{mode}.assignments.tsv"));
-        let metrics = tmp.path().join(format!("{mode}.metrics.json"));
-        let diagnostics = tmp.path().join(format!("{mode}.unmapped.tsv"));
-        assert_success(
-            constellation()
-                .args([
-                    "map",
-                    "--index",
-                    path(&index),
-                    "--r1",
-                    path(&tmp.path().join("sim_R1.fastq")),
-                    "--r2",
-                    path(&tmp.path().join("sim_R2.fastq")),
-                    "--mode",
-                    mode,
-                    "--out",
-                    path(&assignments),
-                    "--emit-metrics",
-                    path(&metrics),
-                    "--emit-unmapped-diagnostics",
-                    path(&diagnostics),
-                ])
-                .output()
-                .unwrap(),
-        );
-        let metrics_text = fs::read_to_string(&metrics).unwrap();
-        assert!(metrics_text.contains(&format!("\"mode\": \"{mode}\"")));
-        assert!(metrics_text.contains("\"same_gene_multitranscript_rate\""));
-        assert!(metrics_text.contains("\"gene_countable_rate\""));
-        let diagnostics_text = fs::read_to_string(&diagnostics).unwrap();
-        assert!(diagnostics_text.starts_with("read_id\treason\tseq_len\t"));
-
-        let report = constellation()
-            .args([
-                "bench-report",
-                "--assignments",
-                path(&assignments),
-                "--truth",
-                path(&tmp.path().join("sim_truth.tsv")),
-                "--index",
-                path(&index),
-                "--metrics",
-                path(&metrics),
-            ])
-            .output()
-            .unwrap();
-        assert_success(report);
-    }
-
-    let pulp_assignments = tmp.path().join("candidate-locus-pulp.assignments.tsv");
-    let pulp_metrics = tmp.path().join("candidate-locus-pulp.metrics.json");
+    let assignments = tmp.path().join("gene-ec.assignments.tsv");
+    let metrics = tmp.path().join("gene-ec.metrics.json");
+    let diagnostics = tmp.path().join("gene-ec.unmapped.tsv");
     assert_success(
         constellation()
             .args([
                 "map",
                 "--index",
-                path(&index),
+                path(&ec_index),
                 "--r1",
                 path(&tmp.path().join("sim_R1.fastq")),
                 "--r2",
                 path(&tmp.path().join("sim_R2.fastq")),
                 "--mode",
-                "candidate-locus",
-                "--score-mode",
-                "pulp",
-                "--out",
-                path(&pulp_assignments),
+                "gene-ec",
+                "--output-format",
+                "tsv",
                 "--emit-metrics",
-                path(&pulp_metrics),
+                path(&metrics),
+                "--emit-unmapped-diagnostics",
+                path(&diagnostics),
+                "--out",
+                path(&assignments),
             ])
             .output()
             .unwrap(),
     );
-    let pulp_metrics_text = fs::read_to_string(&pulp_metrics).unwrap();
-    assert!(pulp_metrics_text.contains("\"score_mode\": \"pulp\""));
+    let metrics_text = fs::read_to_string(&metrics).unwrap();
+    assert!(metrics_text.contains("\"mode\": \"gene-ec\""));
+    assert!(metrics_text.contains("\"same_gene_multitranscript_rate\""));
+    assert!(metrics_text.contains("\"gene_countable_rate\""));
+    let diagnostics_text = fs::read_to_string(&diagnostics).unwrap();
+    assert!(diagnostics_text.starts_with("read_id\treason\tseq_len\t"));
+
+    let report = constellation()
+        .args([
+            "bench-report",
+            "--assignments",
+            path(&assignments),
+            "--truth",
+            path(&tmp.path().join("sim_truth.tsv")),
+            "--metrics",
+            path(&metrics),
+        ])
+        .output()
+        .unwrap();
+    assert_success(report);
 
     let count_prefix = tmp.path().join("counts");
     assert_success(
@@ -146,7 +133,7 @@ fn cli_index_simulate_map_modes_and_report() {
             .args([
                 "count",
                 "--assignments",
-                path(&pulp_assignments),
+                path(&assignments),
                 "--index",
                 path(&index),
                 "--out-prefix",
@@ -191,6 +178,7 @@ fn cli_golden_assignment_types() {
     )
     .unwrap();
     let index = tmp.path().join("golden.cbidx");
+    let ec_index = tmp.path().join("golden.ecidx");
     assert_success(
         constellation()
             .args([
@@ -201,6 +189,20 @@ fn cli_golden_assignment_types() {
                 "5",
                 "--out",
                 path(&index),
+            ])
+            .output()
+            .unwrap(),
+    );
+    assert_success(
+        constellation()
+            .args([
+                "index-ec",
+                "--transcripts",
+                path(&fasta),
+                "--k",
+                "5",
+                "--out",
+                path(&ec_index),
             ])
             .output()
             .unwrap(),
@@ -244,13 +246,15 @@ fn cli_golden_assignment_types() {
             .args([
                 "map",
                 "--index",
-                path(&index),
+                path(&ec_index),
                 "--r1",
                 path(&r1),
                 "--r2",
                 path(&r2),
                 "--max-postings-per-seed",
                 "256",
+                "--output-format",
+                "tsv",
                 "--out",
                 path(&assignments),
             ])

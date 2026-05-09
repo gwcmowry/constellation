@@ -1,68 +1,53 @@
 # Benchmark Plan
 
-Initial benchmark modes:
+Use the gene-EC mapper for current performance work. The older positional compact-index modes are legacy and should not be used for headline numbers.
 
-```text
-read-at-a-time baseline
-sketch-bucketed reads
-sketch-bucketed + candidate-locus regrouping
-candidate-locus regrouping + SIMD scoring
-```
-
-Metrics to track:
-
-```text
-mode
-score_mode
-reads/sec
-bases/sec
-seed lookups/read
-seed candidates considered/read
-candidate hits/read
-candidate buckets/read
-postings skipped due to frequency
-scored candidates/read
-mean/median/max candidate bucket size
-unique_gene rate
-ambiguous_gene rate
-low_complexity rate
-low_quality rate
-unmapped rate
-L1 miss rate if perf stat input is supplied
-LLC miss rate if perf stat input is supplied
-```
-
-Current smoke benchmark flow:
+## Baseline Run
 
 ```bash
-cargo run -p constellation-cli -- index \
-  --transcripts tests/tiny_transcriptome.fa \
-  --k 15 \
-  --out /tmp/tiny.cbidx
+cargo run --release -p constellation-cli -- index-ec \
+  --transcripts /path/to/reference.fa \
+  --t2g-map /path/to/t2g.tsv \
+  --k 31 \
+  --format mmap \
+  --out /tmp/reference.prefix24.mmap.ecidx
 
-cargo run -p constellation-cli -- simulate \
-  --transcripts tests/tiny_transcriptome.fa \
-  --num-reads 1000 \
-  --read-len 40 \
-  --out-prefix /tmp/sim
-
-cargo run -p constellation-cli -- map \
-  --index /tmp/tiny.cbidx \
-  --r1 /tmp/sim_R1.fastq \
-  --r2 /tmp/sim_R2.fastq \
-  --mode candidate-locus \
-  --score-mode scalar \
-  --emit-metrics /tmp/metrics.json \
-  --out /tmp/assignments.tsv
-
-cargo run -p constellation-cli -- bench-report \
-  --assignments /tmp/assignments.tsv \
-  --truth /tmp/sim_truth.tsv \
-  --index /tmp/tiny.cbidx \
-  --metrics /tmp/metrics.json
-
-cargo run -p constellation-cli -- count \
-  --assignments /tmp/assignments.tsv \
-  --index /tmp/tiny.cbidx \
-  --out-prefix /tmp/counts
+cargo run --release -p constellation-cli -- map \
+  --index /tmp/reference.prefix24.mmap.ecidx \
+  --r1 /path/to/R1.fastq.gz \
+  --r2 /path/to/R2.fastq.gz \
+  --batch-size 65536 \
+  --output-format gene-ec-rad \
+  --output-compression zstd \
+  --zstd-level 3 \
+  --emit-metrics /tmp/constellation.metrics.json \
+  --out /tmp/constellation.cstrad.zst
 ```
+
+## Metrics
+
+Report these for every benchmark:
+
+```text
+wall time
+internal wall time
+reads/sec
+max RSS
+mapping_seconds
+assignment_seconds
+write_seconds
+unique_gene_rate
+ambiguous_gene_rate
+unmapped_rate
+output size
+```
+
+For profiling runs, also capture:
+
+```bash
+perf stat -d -d -d -- target/release/constellation map ...
+perf record -F 999 -g -- target/release/constellation map ...
+perf report --stdio --no-children --sort comm,dso,symbol
+```
+
+The current bottleneck to watch is `LoadedEcIndex::lookup`, especially dTLB-load-miss concentration. Zstd compression is currently below 1% of cycle samples and should not be treated as the primary optimization target.

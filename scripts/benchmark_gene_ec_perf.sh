@@ -9,7 +9,7 @@ usage:
 Runs the current gene-EC mapper with internal metrics and perf stat counters.
 The output directory receives:
   LABEL.metrics.json
-  LABEL.assignments.tsv
+  LABEL.assignments.cstrad.zst
   LABEL.perf.txt
 USAGE
   exit 2
@@ -25,7 +25,7 @@ bin=${6:-target/release/constellation}
 mkdir -p "$out_dir"
 
 metrics="$out_dir/$label.metrics.json"
-assignments="$out_dir/$label.assignments.tsv"
+assignments="$out_dir/$label.assignments.cstrad.zst"
 perf_out="$out_dir/$label.perf.txt"
 skip_args=()
 if [[ "${SKIP_ASSIGNMENTS:-0}" == "1" ]]; then
@@ -34,14 +34,14 @@ fi
 
 perf stat -d -d -d -o "$perf_out" \
   "$bin" map \
-    --mode gene-ec \
     --index "$index" \
     --r1 "$r1" \
     --r2 "$r2" \
     --chemistry tenx-3p-v3 \
-    --search-reverse-complement \
-    --trim-tso \
-    --min-mean-quality 10 \
+    --batch-size 65536 \
+    --output-format gene-ec-rad \
+    --output-compression zstd \
+    --zstd-level 3 \
     "${skip_args[@]}" \
     --emit-metrics "$metrics" \
     --out "$assignments"

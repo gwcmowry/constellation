@@ -207,7 +207,7 @@ enum LibraryStrandArg {
 struct MapArgs {
     #[arg(long)]
     index: PathBuf,
-    #[arg(long)]
+    #[arg(long, hide = true)]
     hot_index: Option<PathBuf>,
     #[arg(long)]
     r1: PathBuf,
@@ -215,67 +215,67 @@ struct MapArgs {
     r2: PathBuf,
     #[arg(long, default_value = "tenx-3p-v3")]
     chemistry: String,
-    #[arg(long, default_value_t = 1024)]
+    #[arg(long, default_value_t = 65_536)]
     batch_size: usize,
-    #[arg(long)]
+    #[arg(long, hide = true)]
     cold_batch_size: Option<usize>,
-    #[arg(long, default_value_t = 1)]
+    #[arg(long, default_value_t = 1, hide = true)]
     cold_max_seeds_per_read: usize,
-    #[arg(long, default_value_t = 10)]
+    #[arg(long, default_value_t = 10, hide = true)]
     cold_shard_prefix_bits: u8,
-    #[arg(long, default_value_t = 32)]
+    #[arg(long, default_value_t = 32, hide = true)]
     cold_evict_interval: u64,
-    #[arg(long = "no-cold-shard-scheduling", action = ArgAction::SetFalse, default_value_t = true)]
+    #[arg(long = "no-cold-shard-scheduling", action = ArgAction::SetFalse, default_value_t = true, hide = true)]
     cold_shard_scheduling: bool,
-    #[arg(long, default_value_t = false)]
+    #[arg(long, default_value_t = false, hide = true)]
     preload_cold_index: bool,
-    #[arg(long, value_enum, default_value_t = ScoreMode::Scalar)]
+    #[arg(long, value_enum, default_value_t = ScoreMode::Scalar, hide = true)]
     score_mode: ScoreMode,
-    #[arg(long, value_enum, default_value_t = MapMode::CandidateLocus)]
+    #[arg(long, value_enum, default_value_t = MapMode::GeneEc, hide = true)]
     mode: MapMode,
-    #[arg(long, default_value_t = 8)]
+    #[arg(long, default_value_t = 8, hide = true)]
     max_seeds_per_read: usize,
-    #[arg(long, value_enum, default_value_t = SeedPlannerArg::RawFrequency)]
+    #[arg(long, value_enum, default_value_t = SeedPlannerArg::RawFrequency, hide = true)]
     seed_planner: SeedPlannerArg,
-    #[arg(long, value_enum, default_value_t = RetrievalModeArg::PerRead)]
+    #[arg(long, value_enum, default_value_t = RetrievalModeArg::PerRead, hide = true)]
     retrieval_mode: RetrievalModeArg,
-    #[arg(long, value_enum, default_value_t = CandidateSearchArg::Full)]
+    #[arg(long, value_enum, default_value_t = CandidateSearchArg::Full, hide = true)]
     candidate_search: CandidateSearchArg,
-    #[arg(long, value_enum, default_value_t = CandidatePruningArg::GeneWandLite)]
+    #[arg(long, value_enum, default_value_t = CandidatePruningArg::GeneWandLite, hide = true)]
     candidate_pruning: CandidatePruningArg,
-    #[arg(long, default_value_t = 2)]
+    #[arg(long, default_value_t = 2, hide = true)]
     wand_min_top_seed_count: u16,
-    #[arg(long, default_value_t = 20)]
+    #[arg(long, default_value_t = 20, hide = true)]
     wand_score_ratio_percent: u16,
-    #[arg(long, default_value_t = 4)]
+    #[arg(long, default_value_t = 4, hide = true)]
     wand_max_loci_per_gene: usize,
-    #[arg(long, value_enum, default_value_t = ReadChunkingArg::Sketch)]
+    #[arg(long, value_enum, default_value_t = ReadChunkingArg::Sketch, hide = true)]
     read_chunking: ReadChunkingArg,
     #[arg(long, default_value_t = 12)]
     sparse_probe_stride: u32,
-    #[arg(long, default_value_t = 3)]
+    #[arg(long, default_value_t = 3, hide = true)]
     sparse_probe_max_seeds: usize,
-    #[arg(long, default_value_t = 2)]
+    #[arg(long, default_value_t = 2, hide = true)]
     sparse_probe_min_seed_hits: u16,
     #[arg(long, default_value_t = 256)]
     max_postings_per_seed: usize,
-    #[arg(long, default_value_t = 64)]
+    #[arg(long, default_value_t = 64, hide = true)]
     candidate_bin_size: u32,
     #[arg(long, default_value_t = 10.0)]
     min_mean_quality: f64,
-    #[arg(long, default_value_t = 10)]
+    #[arg(long, default_value_t = 10, hide = true)]
     min_seed_quality: u8,
-    #[arg(long, default_value_t = 6)]
+    #[arg(long, default_value_t = 6, hide = true)]
     max_mismatches: u32,
-    #[arg(long, default_value_t = 0)]
+    #[arg(long, default_value_t = 0, hide = true)]
     max_right_softclip: u16,
-    #[arg(long, default_value_t = 0)]
+    #[arg(long, default_value_t = 0, hide = true)]
     max_left_softclip: u16,
-    #[arg(long, default_value_t = false)]
+    #[arg(long, default_value_t = false, hide = true)]
     trim_poly_a: bool,
-    #[arg(long, default_value_t = false)]
+    #[arg(long, default_value_t = false, hide = true)]
     trim_poly_t: bool,
-    #[arg(long, default_value_t = false)]
+    #[arg(long, default_value_t = false, hide = true)]
     trim_low_quality_tail: bool,
     #[arg(long, default_value_t = false)]
     trim_tso: bool,
@@ -283,29 +283,29 @@ struct MapArgs {
     max_tso_mismatches: u8,
     #[arg(long, default_value_t = 10)]
     min_tso_match_len: u8,
-    #[arg(long, value_enum, default_value_t = LibraryStrandArg::Unstranded)]
+    #[arg(long, value_enum, default_value_t = LibraryStrandArg::Unstranded, hide = true)]
     library_strand: LibraryStrandArg,
-    #[arg(long, default_value_t = 35)]
+    #[arg(long, default_value_t = 35, hide = true)]
     min_scored_length: u16,
-    #[arg(long, default_value_t = 10)]
+    #[arg(long, default_value_t = 10, hide = true)]
     min_tail_phred: u8,
     #[arg(long, default_value_t = false)]
     search_reverse_complement: bool,
-    #[arg(long, default_value_t = false)]
+    #[arg(long, default_value_t = false, hide = true)]
     rescue_failed_reads: bool,
-    #[arg(long, default_value_t = false)]
+    #[arg(long, default_value_t = false, hide = true)]
     rescue_score_failed_reads: bool,
-    #[arg(long, default_value_t = true)]
+    #[arg(long, default_value_t = true, hide = true)]
     rescue_antisense_reads: bool,
-    #[arg(long, default_value_t = true)]
+    #[arg(long, default_value_t = true, hide = true)]
     rescue_reverse_complement: bool,
-    #[arg(long, default_value_t = 1.0)]
+    #[arg(long, default_value_t = 1.0, hide = true)]
     early_stop_posterior: f64,
-    #[arg(long, default_value_t = 0.25)]
+    #[arg(long, default_value_t = 0.25, hide = true)]
     early_stop_prior_alpha: f64,
-    #[arg(long, default_value_t = 4)]
+    #[arg(long, default_value_t = 4, hide = true)]
     early_stop_min_seed_lookups: usize,
-    #[arg(long, default_value_t = 4)]
+    #[arg(long, default_value_t = 4, hide = true)]
     early_stop_min_top_seed_count: u16,
     #[arg(long)]
     emit_metrics: Option<PathBuf>,
@@ -313,7 +313,7 @@ struct MapArgs {
     emit_unmapped_diagnostics: Option<PathBuf>,
     #[arg(long, default_value_t = false)]
     skip_assignments: bool,
-    #[arg(long, value_enum, default_value_t = MapOutputFormatArg::Tsv)]
+    #[arg(long, value_enum, default_value_t = MapOutputFormatArg::GeneEcRad)]
     output_format: MapOutputFormatArg,
     #[arg(long, value_enum, default_value_t = OutputCompressionArg::None)]
     output_compression: OutputCompressionArg,
