@@ -1,0 +1,23 @@
+	Command being timed: "env RAYON_NUM_THREADS=12 taskset -c 0-11 target/release/constellation map --index /tmp/constellation_syncmer_hashed_s20_p27.ecidx --r1 /tmp/constellation_audit_pbmc10m_R1.fastq.gz --r2 /tmp/constellation_audit_pbmc10m_R2.fastq.gz --batch-size 65536 --output-format gene-ec-rad --output-compression none --emit-metrics experiments/archive/2026-08-02-syncmer-index/raw/current_p27_rad_breakdown.metrics.json --out /tmp/current_p27_rad_breakdown.cstrad"
+	User time (seconds): 77.30
+	System time (seconds): 0.74
+	Percent of CPU this job got: 782%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:09.97
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 4163652
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 235170
+	Voluntary context switches: 7942
+	Involuntary context switches: 41225
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 721616
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

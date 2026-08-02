@@ -21,6 +21,32 @@ is 1.82% faster by median throughput. Countable changes by -0.03149 percentage
 points; ambiguity changes by +0.22683 points and unmapped by -0.19534 points.
 Its human-reference build took 2:06.07 and 4.90GiB peak RSS.
 
+## Current runtime breakdown with real output
+
+One retained-p27 run wrote 10M uncompressed gene-EC RAD records (369,461,060
+bytes) in 9.9035s internal wall time, or 1.0097M reads/s. This is a single
+diagnostic run, not a replacement for the three-run no-output comparison.
+
+| Instrumented stage | Seconds | Wall share |
+|---|---:|---:|
+| Read preparation and mapping | 6.9287 | 69.96% |
+| Residual/overlapped pipeline | 2.4396 | 24.63% |
+| Index load | 0.2251 | 2.27% |
+| Assignment/top-gene record construction | 0.2008 | 2.03% |
+| Output write | 0.0740 | 0.75% |
+| Time blocked waiting for FASTQ batches | 0.0353 | 0.36% |
+
+The residual is wall time not owned by an explicit timer. It includes background
+FASTQ decompression, synchronization, and orchestration; `fastq_load_seconds`
+measures only foreground blocking because decompression is pipelined. External
+`/usr/bin/time` reported 77.30s user CPU, 0.74s system CPU, 782% mean CPU, and
+3.970GiB max RSS.
+
+Compared with the three-run no-output p27 median, real output added 0.541s wall
+and 0.124s to the mapping stage (top-gene collection); actual file writing was
+only 0.074s. Molecule-first integration may improve downstream count runtime and
+intermediate size, but it is not expected to be a large mapper-only speed lever.
+
 ## Selector and format
 
 The retained selector mixes canonical rolling s-mer encodings and selects a
@@ -87,3 +113,5 @@ RAYON_NUM_THREADS=12 taskset -c 0-11 \
   three-repeat sudo `perf stat -d -d -d` reports for dense and pre-resolver p24.
 - `syncmer_hashed_s20.perf.data` is zero bytes because `perf record` was blocked
   by `perf_event_paranoid=4`; it is retained only as a clearly labeled failure.
+- `current_p27_rad_breakdown.*` is the single uncompressed-output stage-timing
+  run described above; its 369MB output remains in `/tmp` and is not archived.
