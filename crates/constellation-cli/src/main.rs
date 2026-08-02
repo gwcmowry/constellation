@@ -52,6 +52,9 @@ struct IndexEcArgs {
     t2g_map: Option<PathBuf>,
     #[arg(long, default_value_t = 31)]
     k: u8,
+    /// Build a closed-syncmer sampled v4 index using this s-mer length.
+    #[arg(long)]
+    syncmer_s: Option<u8>,
     #[arg(long, value_enum, default_value_t = EcIndexFormatArg::Mmap)]
     format: EcIndexFormatArg,
     #[arg(long)]

@@ -1,6 +1,6 @@
 # Constellation
 
-`constellation` is a Rust scRNA-seq mapper/counting prototype focused on high-throughput 10x-style gene assignment. The current best path is the gene-EC mapper backed by a prefix24 mmap EC index. Superseded plans are archived under `docs/archive/`; rejected approaches and their revisit gates are recorded in `docs/failed_performance_experiments.md`.
+`constellation` is a Rust scRNA-seq mapper/counting prototype focused on high-throughput 10x-style gene assignment. The current best path is the gene-EC mapper backed by a hashed closed-syncmer mmap EC index. Superseded plans are archived under `docs/archive/`; rejected approaches and their revisit gates are recorded in `docs/failed_performance_experiments.md`.
 
 ## Current Path
 
@@ -11,15 +11,16 @@ cargo run --release -p constellation-cli -- index-ec \
   --transcripts /path/to/splici_or_gene_ec_reference.fa \
   --t2g-map /path/to/t2g.tsv \
   --k 31 \
+  --syncmer-s 20 \
   --format mmap \
-  --out /tmp/reference.prefix24.mmap.ecidx
+  --out /tmp/reference.k31.syncmer-s20.mmap.ecidx
 ```
 
 Map paired 10x FASTQs:
 
 ```bash
 cargo run --release -p constellation-cli -- map \
-  --index /tmp/reference.prefix24.mmap.ecidx \
+  --index /tmp/reference.k31.syncmer-s20.mmap.ecidx \
   --r1 /path/to/R1.fastq.gz \
   --r2 /path/to/R2.fastq.gz \
   --batch-size 65536 \
@@ -34,37 +35,40 @@ The RAD-like output is Constellation-specific, not currently alevin-fry-compatib
 
 ## Current Performance
 
-Latest controlled configuration (2026-08-02):
+Latest controlled no-output comparison (2026-08-02, three serial runs):
 
 ```text
-index                 17GB human splici v4 prefix24 mmap EC index
-input                 10M PBMC 10k v3 read pairs
-mapper                gene-EC prefix24 mmap path
-output                Constellation RAD-like binary, optionally zstd level 3
-host                  Ryzen 9 7900X; release build; hard cap of 12 threads/cores
+path             index       median throughput   countable   ambiguous   unmapped   max RSS
+dense v4 p24     17.892 GB   1.048994M reads/s   78.53896%   9.26827%    11.46418%  16.823 GiB
+syncmer s20 p27   3.538 GB   1.068055M reads/s   78.50747%   9.49510%    11.26884%   3.964 GiB
 ```
 
-10M read-pair warm-cache profile:
+The retained sampled index is 5.06x smaller, uses 4.24x less mapping RSS, and was
+1.82% faster by median throughput. Its countable rate differs by -0.03149
+percentage points; unmapped improves by 0.19534 points while multi-gene ambiguity
+increases by 0.22683 points. The workload is 10M PBMC 10k v3 read pairs on a
+Ryzen 9 7900X, release build, warm cache, and a hard cap of 12 threads/cores.
+
+The direct resolver scans reusable epoch-tagged scores without allocating and
+sorting an owned score vector for every read. Differential tests cover the old
+and new resolution paths; aggregate dense assignments are unchanged. The
+sampled index is self-describing, uses a canonical mixed-hash closed-syncmer
+selector, and ignores the old absolute query stride so sampling is not compounded.
+
+The latest controlled zstd-output result still comes from the dense index:
 
 ```text
-no-output internal wall           9.50-9.57 s
-no-output throughput              1.044-1.052M reads/s
 zstd-output internal wall         10.13 s
 zstd-output throughput            0.987M reads/s
 zstd-output mapping               7.09 s
 assignment/record construction    0.21 s
 zstd/file write                   0.15 s
-unique gene rate                  78.54%
-ambiguous gene rate               9.27%
-unmapped rate                     11.46%
 compressed output size            160M
-max RSS                           16.8 GiB
 ```
 
-The accepted dense epoch-score accumulator and cheaper direct preprocessing are
-byte-identical to the previous compressed output and improve the controlled
-no-output path by roughly 1–2%. Raw runs are archived in
-`experiments/archive/2026-08-02-memory-locality-audit/`.
+Raw sampled-index runs are archived in
+`experiments/archive/2026-08-02-syncmer-index/`; the preceding locality audit is
+in `experiments/archive/2026-08-02-memory-locality-audit/`.
 
 Historical hardware-counter profile from the same v4 lookup family:
 

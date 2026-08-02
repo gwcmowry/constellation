@@ -1,6 +1,6 @@
 use crate::{ConvertEcIndexArgs, EcIndexFormatArg, IndexArgs, IndexEcArgs, InspectIndexArgs};
-use anyhow::Result;
-use constellation_core::ec_index::{EcIndex, LoadedEcIndex};
+use anyhow::{bail, Result};
+use constellation_core::ec_index::{EcIndex, EcSampling, LoadedEcIndex};
 use constellation_core::gtf::transcript_gene_map;
 use constellation_core::index::{IndexAccess, LoadedIndex};
 use constellation_core::index_build::{
@@ -43,8 +43,18 @@ pub fn run_index(args: IndexArgs) -> Result<()> {
 }
 
 pub fn run_index_ec(args: IndexEcArgs) -> Result<()> {
-    let index =
-        EcIndex::build_from_fasta_with_t2g(args.transcripts, args.t2g_map.as_ref(), args.k)?;
+    let sampling = args
+        .syncmer_s
+        .map_or(EcSampling::AllKmers, |s| EcSampling::ClosedSyncmer { s });
+    if sampling.is_sampled() && args.format == EcIndexFormatArg::Legacy {
+        bail!("--syncmer-s requires --format mmap");
+    }
+    let index = EcIndex::build_from_fasta_with_t2g_and_sampling(
+        args.transcripts,
+        args.t2g_map.as_ref(),
+        args.k,
+        sampling,
+    )?;
     match args.format {
         EcIndexFormatArg::Mmap => index.save_mmap(args.out)?,
         EcIndexFormatArg::Legacy => index.save(args.out)?,

@@ -130,6 +130,29 @@ pub fn iter_kmers_2bit(encoded: &EncodedSeq, k: u8) -> KmerIter<'_> {
     }
 }
 
+/// Iterates closed syncmers in one pass without allocating per sequence.
+///
+/// A k-mer is selected when the smallest mixed canonical s-mer order value
+/// within it occurs at either end of the k-mer. Ties at an endpoint are
+/// selected. The rule is sequence- and strand-intrinsic, so the same k-mer is
+/// selected in a reference and query regardless of its absolute position.
+pub fn iter_closed_syncmers_2bit(encoded: &EncodedSeq, k: u8, s: u8) -> ClosedSyncmerIter<'_> {
+    ClosedSyncmerIter {
+        encoded,
+        k,
+        s,
+        pos: 0,
+        kmer_code: 0,
+        smer_code: 0,
+        smer_rc_code: 0,
+        valid_run: 0,
+        deque_positions: [0; 33],
+        deque_orders: [0; 33],
+        deque_head: 0,
+        deque_len: 0,
+    }
+}
+
 pub fn hamming_2bit(a: &EncodedSeq, b: &EncodedSeq) -> u32 {
     let shared = a.len.min(b.len) as usize;
     let mut mismatches = a.len.abs_diff(b.len);
@@ -185,6 +208,110 @@ impl Iterator for KmerIter<'_> {
         }
         None
     }
+}
+
+pub struct ClosedSyncmerIter<'a> {
+    encoded: &'a EncodedSeq,
+    k: u8,
+    s: u8,
+    pos: usize,
+    kmer_code: u64,
+    smer_code: u64,
+    smer_rc_code: u64,
+    valid_run: u8,
+    deque_positions: [u32; 33],
+    deque_orders: [u64; 33],
+    deque_head: usize,
+    deque_len: usize,
+}
+
+impl Iterator for ClosedSyncmerIter<'_> {
+    type Item = Kmer;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.k == 0 || self.k > 32 || self.s == 0 || self.s > self.k {
+            return None;
+        }
+        let kmer_mask = low_2bit_mask(self.k);
+        let smer_mask = low_2bit_mask(self.s);
+
+        while self.pos < self.encoded.len as usize {
+            let pos = self.pos;
+            self.pos += 1;
+            let Some(base) = base_at(self.encoded, pos) else {
+                self.kmer_code = 0;
+                self.smer_code = 0;
+                self.smer_rc_code = 0;
+                self.valid_run = 0;
+                self.deque_head = 0;
+                self.deque_len = 0;
+                continue;
+            };
+
+            self.kmer_code = ((self.kmer_code << 2) | base as u64) & kmer_mask;
+            self.smer_code = ((self.smer_code << 2) | base as u64) & smer_mask;
+            self.smer_rc_code =
+                (self.smer_rc_code >> 2) | ((3 - base as u64) << (2 * (self.s as usize - 1)));
+            self.valid_run = self.valid_run.saturating_add(1).min(self.k);
+
+            let mut current_smer_order = 0;
+            if self.valid_run >= self.s {
+                let smer_pos = (pos + 1 - self.s as usize) as u32;
+                current_smer_order = syncmer_order(self.smer_code, self.smer_rc_code);
+                while self.deque_len > 0 {
+                    let back = (self.deque_head + self.deque_len - 1) % 33;
+                    if self.deque_orders[back] <= current_smer_order {
+                        break;
+                    }
+                    self.deque_len -= 1;
+                }
+                let tail = (self.deque_head + self.deque_len) % 33;
+                self.deque_positions[tail] = smer_pos;
+                self.deque_orders[tail] = current_smer_order;
+                self.deque_len += 1;
+            }
+
+            if self.valid_run < self.k {
+                continue;
+            }
+
+            let kmer_pos = (pos + 1 - self.k as usize) as u32;
+            while self.deque_len > 0 && self.deque_positions[self.deque_head] < kmer_pos {
+                self.deque_head = (self.deque_head + 1) % 33;
+                self.deque_len -= 1;
+            }
+            debug_assert!(self.deque_len > 0);
+            let min_order = self.deque_orders[self.deque_head];
+            let left_is_min = self.deque_positions[self.deque_head] == kmer_pos;
+            let right_is_min = current_smer_order == min_order;
+            if left_is_min || right_is_min {
+                return Some(Kmer {
+                    code: self.kmer_code,
+                    pos: kmer_pos,
+                    k: self.k,
+                });
+            }
+        }
+        None
+    }
+}
+
+#[inline]
+fn low_2bit_mask(len: u8) -> u64 {
+    if len == 32 {
+        u64::MAX
+    } else {
+        (1_u64 << (len * 2)) - 1
+    }
+}
+
+#[inline]
+fn syncmer_order(smer_code: u64, smer_rc_code: u64) -> u64 {
+    let canonical = smer_code.min(smer_rc_code);
+    let mut value = canonical.wrapping_add(0x9e37_79b9_7f4a_7c15);
+    value = (value ^ (value >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+    value = (value ^ (value >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+    value ^ (value >> 31)
 }
 
 pub fn kmer_code_from_ascii(seq: &[u8]) -> Option<u64> {
@@ -264,6 +391,39 @@ mod tests {
                 (6, b"CGT".to_vec()),
             ]
         );
+    }
+
+    #[test]
+    fn closed_syncmer_iterator_matches_naive_selection() {
+        let encoded = encode_acgt(b"ACGTTGCATGTCGCATGATGCATGAGAGCTNACGTACGTACGT");
+        for (k, s) in [(7, 3), (11, 7), (16, 9), (31, 21), (32, 32)] {
+            let expected = iter_kmers_2bit(&encoded, k)
+                .filter(|kmer| naive_closed_syncmer(kmer.code, k, s))
+                .collect::<Vec<_>>();
+            let actual = iter_closed_syncmers_2bit(&encoded, k, s).collect::<Vec<_>>();
+            assert_eq!(actual, expected, "k={k}, s={s}");
+        }
+    }
+
+    fn naive_closed_syncmer(kmer_code: u64, k: u8, s: u8) -> bool {
+        let smer_mask = low_2bit_mask(s);
+        let num_smers = k - s + 1;
+        let mut min_smer = u64::MAX;
+        let mut left = 0;
+        let mut right = 0;
+        for offset in 0..num_smers {
+            let shift = 2 * (num_smers - 1 - offset);
+            let smer = (kmer_code >> shift) & smer_mask;
+            let order = syncmer_order(smer, reverse_complement_kmer_code(smer, s));
+            min_smer = min_smer.min(order);
+            if offset == 0 {
+                left = order;
+            }
+            if offset + 1 == num_smers {
+                right = order;
+            }
+        }
+        left == min_smer || right == min_smer
     }
 
     #[test]

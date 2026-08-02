@@ -1,4 +1,6 @@
-use crate::dna::{encode_acgt, iter_kmers_2bit, reverse_complement, EncodedSeq};
+use crate::dna::{
+    encode_acgt, iter_closed_syncmers_2bit, iter_kmers_2bit, reverse_complement, EncodedSeq, Kmer,
+};
 use crate::GeneId;
 use bytemuck::{Pod, Zeroable};
 use memmap2::{Advice, Mmap};
@@ -19,11 +21,14 @@ const EC_MMAP_VERSION_V6: u32 = 6;
 const EC_MMAP_VERSION: u32 = 7;
 const EC_MMAP_VERSION_V8: u32 = 8;
 const EC_PREFIX_BITS: u8 = 24;
+const EC_SAMPLED_PREFIX_BITS: u8 = 27;
 const EC_V6_BLOCK_SIZE: usize = 32;
 const EC_MPH_GROUP_SIZE: usize = 4;
 const EC_MPH_LOAD_NUMERATOR: usize = 123;
 const EC_MPH_LOAD_DENOMINATOR: usize = 100;
 const EC_BUILD_BUFFER_RECORDS: usize = 8_000_000;
+const EC_V4_SAMPLING_MARKER: u32 = u32::from_le_bytes(*b"SYNH");
+const EC_V4_LEXICOGRAPHIC_SYNCMER_MARKER: u32 = u32::from_le_bytes(*b"SYNC");
 const EC_CLASS_UNKNOWN: u8 = 0;
 const EC_CLASS_EXON: u8 = 1;
 const EC_CLASS_INTRON: u8 = 2;
@@ -42,6 +47,7 @@ pub struct EcKmerRecord {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EcIndex {
     pub k: u8,
+    pub sampling: EcSampling,
     pub genes: Vec<String>,
     pub kmers: Vec<EcKmerRecord>,
     pub ec_offsets: Vec<u32>,
@@ -59,6 +65,7 @@ pub enum LoadedEcIndex {
 pub struct MmapEcIndex {
     mmap: Mmap,
     header: EcMmapHeader,
+    sampling: EcSampling,
     header_v4: Option<EcMmapHeaderV4>,
     header_v5: Option<EcMmapHeaderV5>,
     header_v6: Option<EcMmapHeaderV6>,
@@ -66,6 +73,30 @@ pub struct MmapEcIndex {
     header_v8: Option<EcMmapHeaderV8>,
     prefix_offsets: Vec<u32>,
     seed_scores: Vec<u16>,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum EcSampling {
+    #[default]
+    AllKmers,
+    ClosedSyncmer {
+        s: u8,
+    },
+}
+
+impl EcSampling {
+    fn validate(self, k: u8) -> Result<(), EcIndexError> {
+        if let Self::ClosedSyncmer { s } = self {
+            if s == 0 || s > k {
+                return Err(EcIndexError::InvalidSyncmer { k, s });
+            }
+        }
+        Ok(())
+    }
+
+    pub fn is_sampled(self) -> bool {
+        !matches!(self, Self::AllKmers)
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Zeroable, Pod)]
@@ -512,6 +543,18 @@ pub struct EcGeneScore {
     pub unknown_score: u16,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EcResolvedMapping {
+    pub gene_id: Option<GeneId>,
+    pub score: u16,
+    pub best_score: u16,
+    pub gene_candidate_count: u32,
+    pub has_exon_support: bool,
+    pub has_intron_support: bool,
+    pub has_antisense_support: bool,
+    pub top_gene_ids: Vec<GeneId>,
+}
+
 /// Reusable per-worker gene-score storage for the read-at-a-time mapper.
 ///
 /// Epoch tags make resetting proportional to the genes touched by a read
@@ -575,6 +618,101 @@ impl EcScoreScratch {
             stats,
         )
     }
+
+    fn scores(&self) -> impl Iterator<Item = EcGeneScore> + '_ {
+        self.touched_gene_ids
+            .iter()
+            .map(|&gene_id| self.scores[gene_id as usize])
+    }
+
+    fn unique_top_by(
+        &self,
+        required_total_score: u16,
+        value: impl Fn(&EcGeneScore) -> u16,
+    ) -> Option<EcGeneScore> {
+        let max_score = self
+            .scores()
+            .filter(|score| score.total_score == required_total_score)
+            .map(|score| value(&score))
+            .max()
+            .unwrap_or(0);
+        if max_score == 0 {
+            return None;
+        }
+        let mut top = self
+            .scores()
+            .filter(|score| score.total_score == required_total_score && value(score) == max_score);
+        let first = top.next()?;
+        top.next().is_none().then_some(first)
+    }
+
+    fn finish_resolved(&self, emit_top_gene_ids: bool) -> EcResolvedMapping {
+        let best_score = self
+            .scores()
+            .map(|score| score.total_score)
+            .max()
+            .unwrap_or(0);
+        let gene_candidate_count = self.touched_gene_ids.len().min(u32::MAX as usize) as u32;
+        let top_gene_ids = if emit_top_gene_ids && best_score > 0 {
+            let mut top_scores = self
+                .scores()
+                .filter(|score| score.total_score == best_score)
+                .collect::<Vec<_>>();
+            top_scores.sort_unstable_by_key(|score| {
+                (
+                    std::cmp::Reverse(score.exon_score),
+                    std::cmp::Reverse(score.intron_score),
+                    score.gene_id,
+                )
+            });
+            top_scores.into_iter().map(|score| score.gene_id).collect()
+        } else {
+            Vec::new()
+        };
+
+        let mut resolved = EcResolvedMapping {
+            gene_id: None,
+            score: best_score,
+            best_score,
+            gene_candidate_count,
+            has_exon_support: false,
+            has_intron_support: false,
+            has_antisense_support: false,
+            top_gene_ids,
+        };
+        if best_score == 0 {
+            return resolved;
+        }
+        if let Some(score) = self.unique_top_by(best_score, |score| score.exon_score) {
+            resolved.gene_id = Some(score.gene_id);
+            resolved.score = score.exon_score;
+            resolved.has_exon_support = true;
+            return resolved;
+        }
+        if let Some(score) = self.unique_top_by(best_score, |score| score.intron_score) {
+            resolved.gene_id = Some(score.gene_id);
+            resolved.score = score.intron_score;
+            resolved.has_intron_support = true;
+            return resolved;
+        }
+        if let Some(score) = self.unique_top_by(best_score, |score| score.unknown_score) {
+            resolved.gene_id = Some(score.gene_id);
+            resolved.score = score.unknown_score;
+            return resolved;
+        }
+        if let Some(score) = self.unique_top_by(best_score, |score| score.total_score) {
+            resolved.gene_id = Some(score.gene_id);
+            resolved.has_exon_support = score.exon_score > 0;
+            resolved.has_intron_support = score.intron_score > 0;
+            return resolved;
+        }
+        for score in self.scores() {
+            resolved.has_exon_support |= score.exon_score > 0;
+            resolved.has_intron_support |= score.intron_score > 0;
+            resolved.has_antisense_support |= score.antisense_score > 0;
+        }
+        resolved
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -612,6 +750,12 @@ pub enum EcIndexError {
     UnsupportedVersion(u32),
     #[error("k must be between 1 and 32, got {0}")]
     InvalidK(u8),
+    #[error("closed syncmer s must be between 1 and k ({k}), got {s}")]
+    InvalidSyncmer { k: u8, s: u8 },
+    #[error("lexicographic syncmer prototype indexes are no longer supported; rebuild the index")]
+    LexicographicSyncmerPrototype,
+    #[error("sampled EC indexes require the mmap format")]
+    SampledLegacyFormat,
     #[error("EC index field is too large: {0}")]
     TooLarge(&'static str),
 }
@@ -626,9 +770,19 @@ impl EcIndex {
         t2g_map: Option<impl AsRef<Path>>,
         k: u8,
     ) -> Result<Self, EcIndexError> {
+        Self::build_from_fasta_with_t2g_and_sampling(fasta, t2g_map, k, EcSampling::AllKmers)
+    }
+
+    pub fn build_from_fasta_with_t2g_and_sampling(
+        fasta: impl AsRef<Path>,
+        t2g_map: Option<impl AsRef<Path>>,
+        k: u8,
+        sampling: EcSampling,
+    ) -> Result<Self, EcIndexError> {
         if !(1..=32).contains(&k) {
             return Err(EcIndexError::InvalidK(k));
         }
+        sampling.validate(k)?;
         let target_info = match t2g_map {
             Some(path) => load_t2g_target_info(path)?,
             None => FxHashMap::default(),
@@ -673,7 +827,7 @@ impl EcIndex {
                 .collect::<Vec<_>>();
             let encoded = encode_acgt(&seq);
             let mut seen_in_gene_target = FxHashSet::default();
-            for kmer in iter_kmers_2bit(&encoded, k) {
+            let mut add_kmer = |kmer: Kmer| -> Result<(), EcIndexError> {
                 if seen_in_gene_target.insert(kmer.code) {
                     buffer.push(KmerGeneRecord {
                         kmer_code: kmer.code,
@@ -682,6 +836,19 @@ impl EcIndex {
                     });
                     if buffer.len() >= EC_BUILD_BUFFER_RECORDS {
                         runs.push(flush_kmer_gene_run(&mut buffer, &run_prefix, runs.len())?);
+                    }
+                }
+                Ok(())
+            };
+            match sampling {
+                EcSampling::AllKmers => {
+                    for kmer in iter_kmers_2bit(&encoded, k) {
+                        add_kmer(kmer)?;
+                    }
+                }
+                EcSampling::ClosedSyncmer { s } => {
+                    for kmer in iter_closed_syncmers_2bit(&encoded, k, s) {
+                        add_kmer(kmer)?;
                     }
                 }
             }
@@ -723,6 +890,7 @@ impl EcIndex {
 
         Ok(Self {
             k,
+            sampling,
             genes,
             kmers,
             ec_offsets,
@@ -769,6 +937,7 @@ impl EcIndex {
 
         Ok(Self {
             k,
+            sampling: EcSampling::AllKmers,
             genes,
             kmers,
             ec_offsets,
@@ -782,6 +951,9 @@ impl EcIndex {
     }
 
     pub fn save(&self, path: impl AsRef<Path>) -> Result<(), EcIndexError> {
+        if self.sampling.is_sampled() {
+            return Err(EcIndexError::SampledLegacyFormat);
+        }
         let mut writer = BufWriter::new(File::create(path)?);
         writer.write_all(EC_MAGIC)?;
         write_u32(&mut writer, self.k as u32)?;
@@ -807,7 +979,12 @@ impl EcIndex {
     }
 
     pub fn save_mmap(&self, path: impl AsRef<Path>) -> Result<(), EcIndexError> {
-        let prefix_bits = EC_PREFIX_BITS.min(self.k.saturating_mul(2));
+        let prefix_bits = if self.sampling.is_sampled() {
+            EC_SAMPLED_PREFIX_BITS
+        } else {
+            EC_PREFIX_BITS
+        }
+        .min(self.k.saturating_mul(2));
         let prefix_offsets = build_prefix_offsets(&self.kmers, self.k, prefix_bits)?;
         let mut gene_names = Vec::new();
         let mut gene_metas = Vec::with_capacity(self.genes.len());
@@ -826,6 +1003,7 @@ impl EcIndex {
         save_mmap_locality_from_slices(
             path,
             self.k,
+            self.sampling,
             &gene_metas,
             &gene_names,
             &self.kmers,
@@ -1022,17 +1200,14 @@ impl EcIndex {
         stats: &mut EcMappingStats,
     ) {
         let encoded = encode_acgt(seq);
-        for kmer in iter_kmers_2bit(&encoded, self.k) {
-            if kmer.pos % stride != 0 {
-                continue;
-            }
+        for_each_selected_kmer(&encoded, self.k, self.sampling, stride, |kmer| {
             stats.seed_lookups += 1;
             let Some(record) = self.lookup(kmer.code) else {
-                continue;
+                return;
             };
             if record.gene_df > max_gene_df {
                 stats.seeds_skipped_high_gene_df += 1;
-                continue;
+                return;
             }
             stats.seeds_found += 1;
             stats.ec_hits += 1;
@@ -1044,7 +1219,7 @@ impl EcIndex {
                 add_gene_score(gene_scores, gene_id, seed_score, class_bits);
                 stats.gene_votes += 1;
             }
-        }
+        });
     }
 }
 
@@ -1080,6 +1255,13 @@ impl LoadedEcIndex {
         match self {
             Self::Owned(index) => index.k,
             Self::Mmap(index) => index.k(),
+        }
+    }
+
+    pub fn sampling(&self) -> EcSampling {
+        match self {
+            Self::Owned(index) => index.sampling,
+            Self::Mmap(index) => index.sampling,
         }
     }
 
@@ -1337,6 +1519,49 @@ impl LoadedEcIndex {
         max_gene_df: u32,
         scratch: &mut EcScoreScratch,
     ) -> (EcReadMapping, EcMappingStats) {
+        let stats = self.accumulate_encoded_sparse_with_scratch(
+            encoded,
+            search_reverse_complement,
+            stride,
+            max_gene_df,
+            scratch,
+        );
+        scratch.finish(stats)
+    }
+
+    /// Maps an encoded read and resolves its best gene directly from reusable
+    /// scratch storage, avoiding an owned score vector and all-candidate sort.
+    pub fn map_encoded_sparse_resolved_with_scratch(
+        &self,
+        encoded: &EncodedSeq,
+        search_reverse_complement: bool,
+        stride: u32,
+        max_gene_df: u32,
+        emit_top_gene_ids: bool,
+        scratch: &mut EcScoreScratch,
+    ) -> (EcResolvedMapping, EcMappingStats) {
+        let mut stats = self.accumulate_encoded_sparse_with_scratch(
+            encoded,
+            search_reverse_complement,
+            stride,
+            max_gene_df,
+            scratch,
+        );
+        let mapping = scratch.finish_resolved(emit_top_gene_ids);
+        if mapping.best_score > 0 {
+            stats.reads_with_gene_support = 1;
+        }
+        (mapping, stats)
+    }
+
+    fn accumulate_encoded_sparse_with_scratch(
+        &self,
+        encoded: &EncodedSeq,
+        search_reverse_complement: bool,
+        stride: u32,
+        max_gene_df: u32,
+        scratch: &mut EcScoreScratch,
+    ) -> EcMappingStats {
         scratch.begin_read(self.num_genes());
         let mut stats = EcMappingStats::default();
         accumulate_ec_seq_dense(
@@ -1357,7 +1582,7 @@ impl LoadedEcIndex {
                 &mut stats,
             );
         }
-        scratch.finish(stats)
+        stats
     }
 }
 
@@ -1433,9 +1658,24 @@ impl MmapEcIndex {
         } else {
             return Err(EcIndexError::UnsupportedVersion(header_v1.version));
         };
+        let sampling = if let Some(v4) = header_v4 {
+            match v4._pad0 {
+                EC_V4_SAMPLING_MARKER => EcSampling::ClosedSyncmer {
+                    s: u8::try_from(v4._pad1).unwrap_or(0),
+                },
+                EC_V4_LEXICOGRAPHIC_SYNCMER_MARKER => {
+                    return Err(EcIndexError::LexicographicSyncmerPrototype);
+                }
+                _ => EcSampling::AllKmers,
+            }
+        } else {
+            EcSampling::AllKmers
+        };
+        sampling.validate(header.k as u8)?;
         let mut this = Self {
             mmap,
             header,
+            sampling,
             header_v4,
             header_v5,
             header_v6,
@@ -1453,6 +1693,11 @@ impl MmapEcIndex {
     }
 
     fn save_mmap(&self, path: impl AsRef<Path>) -> Result<(), EcIndexError> {
+        if self.sampling.is_sampled() {
+            let mut file = File::create(path)?;
+            file.write_all(&self.mmap)?;
+            return Ok(());
+        }
         if self.header_v6.is_some() {
             let mut file = File::create(path)?;
             file.write_all(&self.mmap)?;
@@ -1498,6 +1743,7 @@ impl MmapEcIndex {
         save_mmap_locality_from_slices(
             path,
             self.k(),
+            EcSampling::AllKmers,
             self.genes(),
             self.gene_names(),
             self.kmers(),
@@ -2468,6 +2714,29 @@ impl MmapEcIndex {
     }
 }
 
+fn for_each_selected_kmer(
+    encoded: &EncodedSeq,
+    k: u8,
+    sampling: EcSampling,
+    stride: u32,
+    mut visit: impl FnMut(Kmer),
+) {
+    match sampling {
+        EcSampling::AllKmers => {
+            for kmer in iter_kmers_2bit(encoded, k) {
+                if kmer.pos % stride.max(1) == 0 {
+                    visit(kmer);
+                }
+            }
+        }
+        EcSampling::ClosedSyncmer { s } => {
+            for kmer in iter_closed_syncmers_2bit(encoded, k, s) {
+                visit(kmer);
+            }
+        }
+    }
+}
+
 fn accumulate_ec_seq(
     index: &LoadedEcIndex,
     encoded: &EncodedSeq,
@@ -2484,23 +2753,20 @@ fn accumulate_ec_seq(
                 || mmap.header_v7.is_some()
                 || mmap.header_v8.is_some()
     );
-    for kmer in iter_kmers_2bit(encoded, index.k()) {
-        if kmer.pos % stride != 0 {
-            continue;
-        }
+    for_each_selected_kmer(encoded, index.k(), index.sampling(), stride, |kmer| {
         stats.seed_lookups += 1;
         if use_lookup_hit {
             let Some(hit) = index.lookup_hit(kmer.code) else {
-                continue;
+                return;
             };
             index.accumulate_lookup_hit(hit, max_gene_df, gene_scores, stats);
         } else {
             let Some(record) = index.lookup(kmer.code) else {
-                continue;
+                return;
             };
             index.accumulate_lookup_record(record, max_gene_df, gene_scores, stats);
         }
-    }
+    });
 }
 
 fn accumulate_ec_seq_dense(
@@ -2519,14 +2785,11 @@ fn accumulate_ec_seq_dense(
                 || mmap.header_v7.is_some()
                 || mmap.header_v8.is_some()
     );
-    for kmer in iter_kmers_2bit(encoded, index.k()) {
-        if kmer.pos % stride != 0 {
-            continue;
-        }
+    for_each_selected_kmer(encoded, index.k(), index.sampling(), stride, |kmer| {
         stats.seed_lookups += 1;
         if use_lookup_hit {
             let Some(hit) = index.lookup_hit(kmer.code) else {
-                continue;
+                return;
             };
             index.visit_lookup_hit(
                 hit,
@@ -2538,7 +2801,7 @@ fn accumulate_ec_seq_dense(
             );
         } else {
             let Some(record) = index.lookup(kmer.code) else {
-                continue;
+                return;
             };
             index.visit_lookup_record(
                 record,
@@ -2549,7 +2812,7 @@ fn accumulate_ec_seq_dense(
                 },
             );
         }
-    }
+    });
 }
 
 pub fn finish_ec_mapping(
@@ -2844,6 +3107,7 @@ fn build_prefix_offsets(
 fn save_mmap_locality_from_slices(
     path: impl AsRef<Path>,
     k: u8,
+    sampling: EcSampling,
     gene_metas: &[EcGeneMeta],
     gene_names: &[u8],
     kmers: &[EcKmerRecord],
@@ -2852,7 +3116,20 @@ fn save_mmap_locality_from_slices(
     ec_class_bits: &[u8],
     prefix_offsets: &[u32],
 ) -> Result<(), EcIndexError> {
-    if ec_mph_enabled() && can_save_mmap_v5_from_slices(k, kmers, ec_offsets) {
+    if sampling.is_sampled() {
+        save_mmap_v4_from_slices_with_sampling(
+            path,
+            k,
+            sampling,
+            gene_metas,
+            gene_names,
+            kmers,
+            ec_offsets,
+            ec_gene_ids,
+            ec_class_bits,
+            prefix_offsets,
+        )
+    } else if ec_mph_enabled() && can_save_mmap_v5_from_slices(k, kmers, ec_offsets) {
         save_mmap_v8_from_slices(
             path,
             k,
@@ -4698,7 +4975,44 @@ fn save_mmap_v4_from_slices(
     ec_class_bits: &[u8],
     prefix_offsets: &[u32],
 ) -> Result<(), EcIndexError> {
-    let prefix_bits = EC_PREFIX_BITS.min(k.saturating_mul(2));
+    save_mmap_v4_from_slices_with_sampling(
+        path,
+        k,
+        EcSampling::AllKmers,
+        gene_metas,
+        gene_names,
+        kmers,
+        ec_offsets,
+        ec_gene_ids,
+        ec_class_bits,
+        prefix_offsets,
+    )
+}
+
+fn save_mmap_v4_from_slices_with_sampling(
+    path: impl AsRef<Path>,
+    k: u8,
+    sampling: EcSampling,
+    gene_metas: &[EcGeneMeta],
+    gene_names: &[u8],
+    kmers: &[EcKmerRecord],
+    ec_offsets: &[u32],
+    ec_gene_ids: &[GeneId],
+    ec_class_bits: &[u8],
+    prefix_offsets: &[u32],
+) -> Result<(), EcIndexError> {
+    sampling.validate(k)?;
+    let num_prefixes = prefix_offsets
+        .len()
+        .checked_sub(1)
+        .ok_or(EcIndexError::Truncated)?;
+    if !num_prefixes.is_power_of_two() {
+        return Err(EcIndexError::TooLarge("EC prefix directory"));
+    }
+    let prefix_bits = num_prefixes.trailing_zeros() as u8;
+    if prefix_bits > k.saturating_mul(2) {
+        return Err(EcIndexError::TooLarge("EC prefix directory"));
+    }
     let suffix_bits = k.saturating_mul(2).saturating_sub(prefix_bits);
     let suffix_width = suffix_bits.div_ceil(8) as usize;
     let gene_df_width = if kmers.iter().all(|record| record.gene_df <= u16::MAX as u32) {
@@ -4732,6 +5046,10 @@ fn save_mmap_v4_from_slices(
     cursor += checked_mul_u64(num_targets, EC_V4_TARGET_WIDTH as u64, "EC v4 targets")?;
     cursor = align_up(cursor, 8);
     let gene_names_offset = cursor;
+    let (sampling_marker, sampling_value) = match sampling {
+        EcSampling::AllKmers => (0, 0),
+        EcSampling::ClosedSyncmer { s } => (EC_V4_SAMPLING_MARKER, s as u32),
+    };
 
     let header = EcMmapHeaderV4 {
         magic: EC_MMAP_MAGIC,
@@ -4741,8 +5059,8 @@ fn save_mmap_v4_from_slices(
         suffix_bits: suffix_bits as u32,
         suffix_width: suffix_width as u32,
         gene_df_width: gene_df_width as u32,
-        _pad0: 0,
-        _pad1: 0,
+        _pad0: sampling_marker,
+        _pad1: sampling_value,
         num_genes: gene_metas.len() as u64,
         num_kmers,
         num_ec_offsets: ec_offsets.len() as u64,
@@ -5246,6 +5564,7 @@ mod tests {
             .collect::<Vec<_>>();
         let index = EcIndex {
             k,
+            sampling: EcSampling::AllKmers,
             genes: vec!["GENE_A".to_owned()],
             kmers,
             ec_offsets: vec![0, 1],
@@ -5295,6 +5614,7 @@ mod tests {
             .collect::<Vec<_>>();
         let index = EcIndex {
             k,
+            sampling: EcSampling::AllKmers,
             genes: vec!["GENE_A".to_owned()],
             kmers,
             ec_offsets: vec![0, 1],
@@ -5338,6 +5658,7 @@ mod tests {
             .collect::<Vec<_>>();
         let index = EcIndex {
             k,
+            sampling: EcSampling::AllKmers,
             genes: vec!["GENE_A".to_owned()],
             kmers,
             ec_offsets: vec![0, 1],
@@ -5411,6 +5732,7 @@ mod tests {
             .collect::<Vec<_>>();
         let index = EcIndex {
             k,
+            sampling: EcSampling::AllKmers,
             genes: (0..20).map(|idx| format!("GENE_{idx}")).collect(),
             kmers,
             ec_offsets,
@@ -5599,6 +5921,8 @@ mod tests {
             (b"GGGGGGGG".as_slice(), true, 3, u32::MAX),
         ] {
             let encoded = encode_acgt(seq);
+            let expected =
+                loaded.map_encoded_sparse(&encoded, reverse_complement, stride, max_gene_df);
             assert_eq!(
                 loaded.map_encoded_sparse_with_scratch(
                     &encoded,
@@ -5607,11 +5931,156 @@ mod tests {
                     max_gene_df,
                     &mut scratch,
                 ),
-                loaded.map_encoded_sparse(&encoded, reverse_complement, stride, max_gene_df),
+                expected,
                 "sequence={:?}",
                 String::from_utf8_lossy(seq),
             );
+
+            let (resolved, resolved_stats) = loaded.map_encoded_sparse_resolved_with_scratch(
+                &encoded,
+                reverse_complement,
+                stride,
+                max_gene_df,
+                true,
+                &mut scratch,
+            );
+            assert_eq!(resolved_stats, expected.1);
+            assert_eq!(resolved.best_score, expected.0.best_score);
+            assert_eq!(
+                resolved.gene_candidate_count,
+                expected.0.gene_scores.len() as u32
+            );
+            assert_eq!(
+                resolved.top_gene_ids,
+                expected
+                    .0
+                    .gene_scores
+                    .iter()
+                    .filter(|score| score.total_score == expected.0.best_score)
+                    .map(|score| score.gene_id)
+                    .collect::<Vec<_>>()
+            );
+            assert_eq!(
+                (
+                    resolved.gene_id,
+                    resolved.score,
+                    resolved.has_exon_support,
+                    resolved.has_intron_support,
+                    resolved.has_antisense_support,
+                ),
+                reference_resolve_scores(&expected.0.gene_scores, expected.0.best_score)
+            );
         }
+    }
+
+    fn reference_resolve_scores(
+        scores: &[EcGeneScore],
+        best_score: u16,
+    ) -> (Option<GeneId>, u16, bool, bool, bool) {
+        fn unique_top(
+            scores: &[EcGeneScore],
+            best_score: u16,
+            value: impl Fn(&EcGeneScore) -> u16,
+        ) -> Option<EcGeneScore> {
+            let max_score = scores
+                .iter()
+                .filter(|score| score.total_score == best_score)
+                .map(&value)
+                .max()
+                .unwrap_or(0);
+            if max_score == 0 {
+                return None;
+            }
+            let mut top = scores
+                .iter()
+                .filter(|score| score.total_score == best_score && value(score) == max_score);
+            let first = *top.next()?;
+            top.next().is_none().then_some(first)
+        }
+
+        if best_score == 0 {
+            return (None, 0, false, false, false);
+        }
+        if let Some(score) = unique_top(scores, best_score, |score| score.exon_score) {
+            return (Some(score.gene_id), score.exon_score, true, false, false);
+        }
+        if let Some(score) = unique_top(scores, best_score, |score| score.intron_score) {
+            return (Some(score.gene_id), score.intron_score, false, true, false);
+        }
+        if let Some(score) = unique_top(scores, best_score, |score| score.unknown_score) {
+            return (
+                Some(score.gene_id),
+                score.unknown_score,
+                false,
+                false,
+                false,
+            );
+        }
+        if let Some(score) = unique_top(scores, best_score, |score| score.total_score) {
+            return (
+                Some(score.gene_id),
+                score.total_score,
+                score.exon_score > 0,
+                score.intron_score > 0,
+                false,
+            );
+        }
+        (
+            None,
+            best_score,
+            scores.iter().any(|score| score.exon_score > 0),
+            scores.iter().any(|score| score.intron_score > 0),
+            scores.iter().any(|score| score.antisense_score > 0),
+        )
+    }
+
+    #[test]
+    fn sampled_v4_index_round_trips_selection_and_mapping() {
+        let mut fasta = tempfile::NamedTempFile::new().unwrap();
+        writeln!(
+            fasta,
+            ">tx1|gene:GENE_A\nACGTTGCATGTCGCATGATGCATGAGAGCT\n>tx2|gene:GENE_B\nTTGACCGTACCGATGCTAGCTTACGGTACA"
+        )
+        .unwrap();
+        let all = EcIndex::build_from_fasta(fasta.path(), 11).unwrap();
+        let sampled = EcIndex::build_from_fasta_with_t2g_and_sampling(
+            fasta.path(),
+            None::<&Path>,
+            11,
+            EcSampling::ClosedSyncmer { s: 7 },
+        )
+        .unwrap();
+        assert_eq!(sampled.sampling, EcSampling::ClosedSyncmer { s: 7 });
+        assert!(sampled.kmers.len() < all.kmers.len());
+
+        let seq = b"ACGTTGCATGTCGCATGATGCATGAGAGCT";
+        let stride_one = sampled.map_read_sparse(seq, false, 1, u32::MAX);
+        let stride_twelve = sampled.map_read_sparse(seq, false, 12, u32::MAX);
+        assert_eq!(
+            stride_twelve, stride_one,
+            "syncmer indexes ignore absolute stride"
+        );
+        assert!(stride_one.0.best_score > 0);
+
+        let path = tempfile::NamedTempFile::new().unwrap();
+        sampled.save_mmap(path.path()).unwrap();
+        let loaded = LoadedEcIndex::load(path.path()).unwrap();
+        assert_eq!(loaded.sampling(), EcSampling::ClosedSyncmer { s: 7 });
+        assert!(matches!(
+            &loaded,
+            LoadedEcIndex::Mmap(index)
+                if index.header_v4.is_some()
+                    && index.header_v4.unwrap()._pad0 == EC_V4_SAMPLING_MARKER
+                    && index.header_v4.unwrap().prefix_bits
+                        == EC_SAMPLED_PREFIX_BITS.min(sampled.k * 2) as u32
+        ));
+        assert_eq!(loaded.map_read_sparse(seq, false, 12, u32::MAX), stride_one);
+
+        let legacy = tempfile::NamedTempFile::new().unwrap();
+        assert!(matches!(
+            sampled.save(legacy.path()),
+            Err(EcIndexError::SampledLegacyFormat)
+        ));
     }
 
     #[test]

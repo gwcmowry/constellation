@@ -2,9 +2,10 @@
 
 This is the authoritative negative-results ledger. Treat every row as **do not
 retry** unless the underlying premise changes and the new experiment states that
-change explicitly. Raw results from the 2026-08-02 audit are in
-`experiments/archive/2026-08-02-memory-locality-audit/raw/`; older large outputs
-remain in the git-ignored `benchdata/` corpus.
+change explicitly. Raw results from the 2026-08-02 audits are in
+`experiments/archive/2026-08-02-memory-locality-audit/raw/` and
+`experiments/archive/2026-08-02-syncmer-index/raw/`; older large outputs remain
+in the git-ignored `benchdata/` corpus.
 
 All CPU rates below used at most 12 cores unless marked otherwise. The comparison
 workload is 10 million PBMC 10k v3 read pairs, a warm v4 prefix24 EC index, batch
@@ -31,6 +32,30 @@ size 65,536, and no assignment output. Assignment rates are fractions of reads.
 The first unbounded/concurrent traversal files (`constellation_audit_v4_*` without
 `12t`/`serial`) are retained but invalid for comparison: some overlapped and the
 read-at-a-time run predates the 12-thread cap. Use the `12t_*_serial` files.
+
+## Sampled-index paths explored on 2026-08-02
+
+The retained result is hashed canonical closed-syncmer `k=31,s=20` with a
+prefix27 v4 directory: 1.068M reads/s median, 3.538GB index, 3.964GiB max RSS,
+78.50747% countable, 9.49510% ambiguous, and 11.26884% unmapped. Do not replace it
+with one of the following variants without a new premise.
+
+| Path | Result | Why it is closed |
+|---|---:|---|
+| Lexicographic closed syncmer `s=11` | 1.157M reads/s; 2.127GB index; 76.91349% countable | Faster/smaller but loses 1.625 points countable. Lexicographic s-mer order is composition-biased and its on-disk marker is now explicitly rejected. |
+| Lexicographic `s=15` | 1.020M reads/s; 2.578GB; 77.80861% countable | Slower than dense while losing 0.730 points countable. |
+| Lexicographic `s=21` | 0.844M reads/s; 3.858GB; 79.20886% countable | Better aggregate quality but 19% slower than the dense control. |
+| Hashed canonical `s=11` | 1.208M reads/s; 1.789GB; 76.02365% countable | Fastest sampled endpoint, but loses 2.515 points countable. |
+| Hashed canonical `s=21` | 0.912M reads/s; 3.340GB; 78.74331% countable | Clears baseline countable rate but is about 13% slower. |
+| `s=11` primary plus `s=21` rescue for unmapped reads | 0.996M reads/s; 77.91391% countable; 10.68219% ambiguous; 5.744GiB RSS | Rescue converted many reads to ambiguity, remained below baseline countable, and required two indexes. Code was removed. |
+| Hashed `s=20`, prefix24 | 0.995M reads/s median after direct resolution; 3.069GB | Same assignments as retained p27 but about 6.8% slower; short suffix searches still did avoidable comparisons. |
+| Hashed `s=20`, prefix26 | 1.042M reads/s median; 3.270GB; 3.460GiB RSS | Nearly matches dense but is dominated by prefix27's higher throughput at an acceptable 268MB additional index cost. |
+
+An allocation-free direct resolver was retained because it is exact and reduced
+mapping-stage time by about 4%; it is not a failed sampling variant. The empty
+`syncmer_hashed_s20.perf.data` file is also not a profile: `perf record` was
+blocked by host policy. The two `*_perf_stat.txt` files were collected manually
+with sudo and are valid counter summaries for dense versus pre-resolver p24.
 
 ## Older paths that are also closed
 

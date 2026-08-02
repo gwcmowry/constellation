@@ -10,12 +10,13 @@ CARGO_BUILD_JOBS=12 RAYON_NUM_THREADS=12 taskset -c 0-11 \
   --transcripts /path/to/reference.fa \
   --t2g-map /path/to/t2g.tsv \
   --k 31 \
+  --syncmer-s 20 \
   --format mmap \
-  --out /tmp/reference.prefix24.mmap.ecidx
+  --out /tmp/reference.k31.syncmer-s20.mmap.ecidx
 
 RAYON_NUM_THREADS=12 taskset -c 0-11 \
   target/release/constellation map \
-  --index /tmp/reference.prefix24.mmap.ecidx \
+  --index /tmp/reference.k31.syncmer-s20.mmap.ecidx \
   --r1 /path/to/R1.fastq.gz \
   --r2 /path/to/R2.fastq.gz \
   --batch-size 65536 \
@@ -60,7 +61,11 @@ perf record -F 999 -g -- target/release/constellation map ...
 perf report --stdio --no-children --sort comm,dso,symbol
 ```
 
-The current bottleneck to watch is `LoadedEcIndex::lookup`, especially dTLB-load-miss concentration. Zstd compression is currently below 1% of cycle samples and should not be treated as the primary optimization target.
+The current bottleneck to watch is the total cost of sampled EC lookup and gene
+vote accumulation. The smaller working set lowers page faults and dTLB miss rate,
+but sparse densities that require too many probes can still increase absolute
+dTLB misses and instruction count. Zstd compression is currently below 1% of
+cycle samples and should not be treated as the primary optimization target.
 
 The current host has `perf_event_paranoid=4`, so cargo-flamegraph and perf hardware
 counters are blocked until host policy changes. Preserve failed/empty profiler

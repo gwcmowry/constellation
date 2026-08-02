@@ -8,10 +8,10 @@ The current architecture is the gene-EC mapper. Older positional compact-index m
 paired FASTQ streams
   -> bounded R1/R2 decode batches
   -> 10x barcode/UMI parse and R2 quality checks
-  -> sparse k-mer probes
-  -> prefix24 mmap EC-index lookup
+  -> sequence-intrinsic closed-syncmer probes
+  -> prefix27 mmap EC-index lookup
   -> per-worker dense epoch-tagged gene score accumulation
-  -> gene assignment
+  -> allocation-free direct gene resolution
   -> Constellation RAD-like binary or TSV output
   -> optional streaming zstd compression
 ```
@@ -20,15 +20,30 @@ The important runtime property is that FASTQ decoding is pipelined ahead of mapp
 
 ## Index
 
-The active index format is the mmap EC index built by `constellation index-ec`. The current best human reference used in benchmarks is:
+The active index format is the mmap EC index built by `constellation index-ec --syncmer-s 20`. The current best human reference used in benchmarks is:
 
 ```text
-/tmp/human_ensembl93_splici_r91.k31.t2g.prefix24.mmap.ecidx
+/tmp/human_ensembl93_splici_r91.k31.syncmer-s20.prefix27.mmap.ecidx
 ```
 
-The prefix24 table reduces lookup work but the index still has a high RSS footprint because postings are explicit and are accessed through large mmap-backed arrays. The controlled 10M path uses about 16.8GiB max RSS for a 17GB index. Historical perf profiles show `LoadedEcIndex::lookup` dominates dTLB misses, so future index work must reduce the random-page working set rather than merely reorder the same probes. The failed larger-layout and batching families are recorded in `docs/failed_performance_experiments.md`.
+The hashed closed-syncmer rule is sequence- and strand-intrinsic: reference and
+query select the same exact k-mer independently of absolute transcript/read
+position. A rolling canonical s-mer code and fixed monotonic queue make selection
+linear and allocation-free. Sampling metadata is stored in the v4 reserved header
+fields; incompatible lexicographic prototype indexes are rejected rather than
+silently queried with different semantics.
 
-The direct mapper reuses one dense score/epoch array per Rayon worker. Reset cost is proportional to genes touched by the read, and score updates avoid a per-read hash table. This was exact but only a modest speedup, confirming that accumulator writes are secondary to index access.
+The 27-bit directory averages roughly two sampled keys per bucket on the current
+human index. The controlled 10M path uses a 3.538GB index and at most 3.964GiB
+mapping RSS, versus 17.892GB and 16.823GiB for dense prefix24. Three-run median
+throughput is 1.068M reads/s versus 1.049M for dense. Prefix24 and prefix26 sampled
+variants are superseded; the rejected densities and rescue cascade are recorded
+in `docs/failed_performance_experiments.md`.
+
+The direct mapper reuses one dense score/epoch array per Rayon worker. Reset cost
+is proportional to genes touched by the read, and score updates avoid a per-read
+hash table. Direct resolution scans touched scores in place; only output modes
+that actually need tied top-gene IDs allocate that vector.
 
 ## Output
 
@@ -36,7 +51,7 @@ The preferred mapper output is `--output-format gene-ec-rad`. It is a Constellat
 
 ## Current Constraints
 
-- Memory is the main gap versus simpleaf/alevin-fry: the current controlled 10M mapper uses about 16.8GiB, while the older 100M comparison reached about 25.3G versus about 3.93G for simpleaf.
+- Mapper memory is no longer the defining gap on the controlled workload, but a matched end-to-end comparison against simpleaf/alevin-fry still needs to be rerun with the sampled index.
 - Per-read output is still larger than ideal even after zstd.
 - The output semantics are not yet identical to alevin-fry because Constellation emits per-read gene/EC assignments rather than a full molecule-resolution RAD/counting pipeline.
 - The current `count` path does not directly consume the preferred gene-EC RAD-like output, so FASTQ-to-matrix is not yet one coherent frontier pipeline.

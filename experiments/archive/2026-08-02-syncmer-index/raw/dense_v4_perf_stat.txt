@@ -1,0 +1,25 @@
+
+ Performance counter stats for 'env RAYON_NUM_THREADS=12 taskset -c 0-11 target/release/constellation map --index /tmp/constellation_audit_splici_v4.ecidx --r1 /tmp/constellation_audit_pbmc10m_R1.fastq.gz --r2 /tmp/constellation_audit_pbmc10m_R2.fastq.gz --batch-size 65536 --skip-assignments --out /tmp/perf_dense_v4.cstrad' (3 runs):
+
+    79,130,512,864      task-clock                       #    7.604 CPUs utilized               ( +-  0.36% )
+            48,713      context-switches                 #  615.603 /sec                        ( +-  2.17% )
+             6,277      cpu-migrations                   #   79.325 /sec                        ( +-  3.96% )
+           345,493      page-faults                      #    4.366 K/sec                       ( +-  0.14% )
+   417,019,620,374      instructions                     #    0.99  insn per cycle            
+                                                  #    0.10  stalled cycles per insn     ( +-  0.23% )  (35.75%)
+   422,446,676,667      cycles                           #    5.339 GHz                         ( +-  0.34% )  (35.71%)
+    41,091,258,002      stalled-cycles-frontend          #    9.73% frontend cycles idle        ( +-  0.44% )  (35.70%)
+    66,005,948,401      branches                         #  834.140 M/sec                       ( +-  0.20% )  (35.71%)
+     2,939,885,178      branch-misses                    #    4.45% of all branches             ( +-  0.18% )  (35.71%)
+   150,041,033,226      L1-dcache-loads                  #    1.896 G/sec                       ( +-  0.46% )  (35.72%)
+     8,254,780,085      L1-dcache-load-misses            #    5.50% of all L1-dcache accesses   ( +-  1.50% )  (35.72%)
+     7,757,236,474      L1-icache-loads                  #   98.031 M/sec                       ( +-  0.46% )  (35.72%)
+        13,920,267      L1-icache-load-misses            #    0.18% of all L1-icache accesses   ( +-  2.76% )  (35.70%)
+       943,179,783      dTLB-loads                       #   11.919 M/sec                       ( +-  0.13% )  (35.71%)
+       352,462,794      dTLB-load-misses                 #   37.37% of all dTLB cache accesses  ( +-  0.21% )  (35.75%)
+         1,627,627      iTLB-loads                       #   20.569 K/sec                       ( +- 30.97% )  (35.76%)
+         2,512,278      iTLB-load-misses                 #  154.35% of all iTLB cache accesses  ( +-  0.91% )  (35.77%)
+     5,760,162,072      L1-dcache-prefetches             #   72.793 M/sec                       ( +-  0.95% )  (35.77%)
+
+           10.4070 +- 0.0632 seconds time elapsed  ( +-  0.61% )
+

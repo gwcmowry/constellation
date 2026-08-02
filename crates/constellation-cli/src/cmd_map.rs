@@ -418,6 +418,16 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
 
     let index_started = Instant::now();
     let index = LoadedEcIndex::load(&args.index)?;
+    if index.sampling().is_sampled() && args.gene_ec_traversal != GeneEcTraversalArg::ReadAtATime {
+        return Err(anyhow!(
+            "sampled EC indexes support only the read-at-a-time traversal"
+        ));
+    }
+    if index.sampling().is_sampled() && args.gene_ec_adaptive_rescue {
+        return Err(anyhow!(
+            "adaptive absolute-stride rescue is not applicable to a syncmer-sampled index"
+        ));
+    }
     function_timings.add_elapsed("LoadedEcIndex::load", index_started);
     let index_load_seconds = index_started.elapsed().as_secs_f64();
 
@@ -434,6 +444,8 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
             &args.out,
         )?)
     };
+    let emit_top_gene_ids =
+        assignment_writer.is_some() && matches!(args.output_format, MapOutputFormatArg::GeneEcRad);
     let collect_diagnostics = args.emit_unmapped_diagnostics.is_some();
     let mut diagnostic_assignments = Vec::new();
     let mut diagnostic_reads = Vec::new();
@@ -492,7 +504,7 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
                 args.sparse_probe_stride,
                 args.max_postings_per_seed as u32,
                 collect_diagnostics,
-                matches!(args.output_format, MapOutputFormatArg::GeneEcRad),
+                emit_top_gene_ids,
             );
             function_timings.add_all(result.function_timings);
             result.mapped
@@ -520,7 +532,7 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
                 args.sparse_probe_stride,
                 args.max_postings_per_seed as u32,
                 collect_diagnostics,
-                matches!(args.output_format, MapOutputFormatArg::GeneEcRad),
+                emit_top_gene_ids,
             )
         } else if sort_by_locality {
             let mut prepared_batch: Vec<_> = batch
@@ -550,7 +562,7 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
                         args.sparse_probe_stride,
                         args.max_postings_per_seed as u32,
                         collect_diagnostics,
-                        matches!(args.output_format, MapOutputFormatArg::GeneEcRad),
+                        emit_top_gene_ids,
                     )
                 })
                 .collect();
@@ -573,7 +585,7 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
                             args.sparse_probe_stride,
                             args.max_postings_per_seed as u32,
                             collect_diagnostics,
-                            matches!(args.output_format, MapOutputFormatArg::GeneEcRad),
+                            emit_top_gene_ids,
                             scratch,
                         )
                     },
@@ -594,7 +606,7 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
                 adaptive_rescue_stride,
                 args.max_postings_per_seed as u32,
                 collect_diagnostics,
-                matches!(args.output_format, MapOutputFormatArg::GeneEcRad),
+                emit_top_gene_ids,
             );
             let rescue_elapsed = rescue_started.elapsed();
             adaptive_rescue_seconds += rescue_elapsed.as_secs_f64();
@@ -953,14 +965,15 @@ fn map_gene_ec_borrowed_read(
         );
     }
 
-    let (mapping, stats) = index.map_encoded_sparse_with_scratch(
+    let (mapping, stats) = index.map_encoded_sparse_resolved_with_scratch(
         &prepared.encoded,
         search_reverse_complement,
         sparse_probe_stride,
         max_gene_df,
+        emit_top_gene_ids,
         scratch,
     );
-    let gene_candidate_count = mapping.gene_scores.len().min(u32::MAX as usize) as u32;
+    let gene_candidate_count = mapping.gene_candidate_count;
     if mapping.best_score == 0 {
         return (
             Assignment {
@@ -979,27 +992,35 @@ fn map_gene_ec_borrowed_read(
             Vec::new(),
         );
     }
-    let top_gene_ids = if emit_top_gene_ids {
-        top_gene_ids_for_ec(&mapping.gene_scores, mapping.best_score)
-    } else {
-        Vec::new()
-    };
-    let resolved = resolve_gene_ec_assignment(&mapping.gene_scores, mapping.best_score);
+    let mut flags = 0;
+    if mapping.has_exon_support {
+        flags |= SCORE_FLAG_TARGET_EXON;
+    }
+    if mapping.has_intron_support {
+        flags |= SCORE_FLAG_TARGET_INTRON;
+    }
+    if mapping.has_antisense_support {
+        flags |= SCORE_FLAG_ANTISENSE;
+    }
     (
         Assignment {
             read_id: prepared.read_id,
             cell_barcode,
             umi,
-            assignment_type: resolved.assignment_type,
-            gene_id: resolved.gene_id,
+            assignment_type: if mapping.gene_id.is_some() {
+                AssignmentType::UniqueGene
+            } else {
+                AssignmentType::AmbiguousGene
+            },
+            gene_id: mapping.gene_id,
             transcript_id: None,
             candidate_count: gene_candidate_count,
-            score: resolved.score,
-            flags: resolved.flags,
+            score: mapping.score,
+            flags,
         },
         stats,
         gene_candidate_count,
-        top_gene_ids,
+        mapping.top_gene_ids,
     )
 }
 
