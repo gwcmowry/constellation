@@ -1,7 +1,7 @@
 use crate::{
-    CandidatePruningArg, CandidateSearchArg, LibraryStrandArg, MapArgs, MapMode,
-    MapOutputFormatArg, OutputCompressionArg, ReadChunkingArg, RetrievalModeArg, ScoreMode,
-    SeedPlannerArg,
+    CandidatePruningArg, CandidateSearchArg, GeneEcTraversalArg, LibraryStrandArg, MapArgs,
+    MapMode, MapOutputFormatArg, OutputCompressionArg, ReadChunkingArg, RetrievalModeArg,
+    ScoreMode, SeedPlannerArg,
 };
 use anyhow::{anyhow, Context, Result};
 use constellation_core::assign::{assign_read, flagged_assignment, Assignment, AssignmentType};
@@ -13,8 +13,10 @@ use constellation_core::candidate::{
     SparseProbeConfig, WandLiteConfig,
 };
 use constellation_core::chemistry::{parse_tenx_3p_v3_r1, BarcodeUmi, Chemistry};
-use constellation_core::dna::{encode_acgt, iter_kmers_2bit, reverse_complement};
-use constellation_core::ec_index::{EcGeneScore, EcMappingStats, LoadedEcIndex};
+use constellation_core::dna::{encode_acgt, iter_kmers_2bit, reverse_complement, EncodedSeq};
+use constellation_core::ec_index::{
+    finish_ec_mapping, EcGeneScore, EcMappingStats, EcScoreScratch, LoadedEcIndex,
+};
 use constellation_core::fastq::read_fastq;
 use constellation_core::index::{IndexAccess, LoadedIndex};
 use constellation_core::metrics::MapMetrics;
@@ -25,9 +27,12 @@ use constellation_core::score::{
 };
 use constellation_core::score_scalar::{target_class_flag, ScalarScorer};
 use constellation_core::score_simd::PulpScorer;
-use constellation_core::sketch::{sketch_read, sort_sketch_records};
+use constellation_core::sketch::{
+    is_low_complexity_read, sketch_encoded_read, sketch_read, sort_sketch_records,
+};
 use flate2::read::MultiGzDecoder;
 use rayon::prelude::*;
+use rustc_hash::FxHashMap;
 use std::collections::{BTreeMap, HashMap};
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader, BufWriter, Write};
@@ -444,7 +449,16 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
     let mut mapping_seconds = 0.0;
     let mut assignment_seconds = 0.0;
     let mut write_seconds = 0.0;
+    let mut adaptive_rescue_seconds = 0.0;
+    let mut adaptive_rescue_reads = 0_u64;
+    let mut adaptive_rescue_replaced_reads = 0_u64;
     let sort_by_locality = matches!(args.read_chunking, ReadChunkingArg::BestSeed);
+    let adaptive_rescue_stride = args
+        .gene_ec_rescue_stride
+        .unwrap_or_else(|| (args.sparse_probe_stride / 2).max(1))
+        .max(1);
+    let adaptive_rescue_enabled =
+        args.gene_ec_adaptive_rescue && adaptive_rescue_stride < args.sparse_probe_stride.max(1);
 
     loop {
         let Some((batch, read_elapsed)) = fastq_pipeline.next_batch()? else {
@@ -454,7 +468,61 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
         function_timings.add_duration("stream_fastq_pair_batches", read_elapsed);
 
         let map_started = Instant::now();
-        let mapped: Vec<_> = if sort_by_locality {
+        let mut mapped: Vec<_> = if args.gene_ec_traversal == GeneEcTraversalArg::PrefixTiled {
+            let prepare_started = Instant::now();
+            let prepared_batch: Vec<_> = batch
+                .par_iter()
+                .map(|raw| {
+                    prepare_gene_ec_raw_prefix_tiled(
+                        &index,
+                        raw,
+                        args.trim_tso,
+                        args.min_tso_match_len,
+                        args.max_tso_mismatches,
+                        args.min_mean_quality,
+                    )
+                })
+                .collect();
+            function_timings.add_elapsed("prefix_tiled_prepare_reads", prepare_started);
+            let result = map_prepared_gene_ec_prefix_tiled(
+                &index,
+                &prepared_batch,
+                args.search_reverse_complement,
+                args.min_mean_quality,
+                args.sparse_probe_stride,
+                args.max_postings_per_seed as u32,
+                collect_diagnostics,
+                matches!(args.output_format, MapOutputFormatArg::GeneEcRad),
+            );
+            function_timings.add_all(result.function_timings);
+            result.mapped
+        } else if args.gene_ec_traversal == GeneEcTraversalArg::SeedBatched {
+            let prepared_batch: Vec<_> = batch
+                .par_iter()
+                .map(|raw| {
+                    prepare_gene_ec_raw(
+                        &index,
+                        raw,
+                        args.trim_tso,
+                        args.min_tso_match_len,
+                        args.max_tso_mismatches,
+                        args.min_mean_quality,
+                        args.sparse_probe_stride,
+                        false,
+                    )
+                })
+                .collect();
+            map_prepared_gene_ec_seed_batched(
+                &index,
+                &prepared_batch,
+                args.search_reverse_complement,
+                args.min_mean_quality,
+                args.sparse_probe_stride,
+                args.max_postings_per_seed as u32,
+                collect_diagnostics,
+                matches!(args.output_format, MapOutputFormatArg::GeneEcRad),
+            )
+        } else if sort_by_locality {
             let mut prepared_batch: Vec<_> = batch
                 .par_iter()
                 .map(|raw| {
@@ -491,56 +559,84 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
         } else {
             batch
                 .par_iter()
-                .map(|raw| {
-                    prepare_and_map_gene_ec_raw(
-                        &index,
-                        raw,
-                        args.trim_tso,
-                        args.min_tso_match_len,
-                        args.max_tso_mismatches,
-                        args.min_mean_quality,
-                        args.search_reverse_complement,
-                        args.sparse_probe_stride,
-                        args.max_postings_per_seed as u32,
-                        collect_diagnostics,
-                        matches!(args.output_format, MapOutputFormatArg::GeneEcRad),
-                    )
-                })
+                .map_init(
+                    || EcScoreScratch::new(index.num_genes()),
+                    |scratch, raw| {
+                        prepare_and_map_gene_ec_raw(
+                            &index,
+                            raw,
+                            args.trim_tso,
+                            args.min_tso_match_len,
+                            args.max_tso_mismatches,
+                            args.min_mean_quality,
+                            args.search_reverse_complement,
+                            args.sparse_probe_stride,
+                            args.max_postings_per_seed as u32,
+                            collect_diagnostics,
+                            matches!(args.output_format, MapOutputFormatArg::GeneEcRad),
+                            scratch,
+                        )
+                    },
+                )
                 .collect()
         };
+        if adaptive_rescue_enabled {
+            let rescue_started = Instant::now();
+            let rescue_counts = rescue_unmapped_gene_ec_reads(
+                &index,
+                &batch,
+                &mut mapped,
+                args.trim_tso,
+                args.min_tso_match_len,
+                args.max_tso_mismatches,
+                args.min_mean_quality,
+                args.search_reverse_complement,
+                adaptive_rescue_stride,
+                args.max_postings_per_seed as u32,
+                collect_diagnostics,
+                matches!(args.output_format, MapOutputFormatArg::GeneEcRad),
+            );
+            let rescue_elapsed = rescue_started.elapsed();
+            adaptive_rescue_seconds += rescue_elapsed.as_secs_f64();
+            adaptive_rescue_reads += rescue_counts.attempted;
+            adaptive_rescue_replaced_reads += rescue_counts.replaced;
+            function_timings.add_duration("adaptive_gene_ec_rescue", rescue_elapsed);
+        }
         let map_elapsed = map_started.elapsed();
         mapping_seconds += map_elapsed.as_secs_f64();
         function_timings.add_duration("prepare_and_map_gene_ec_batches", map_elapsed);
 
         let assignment_started = Instant::now();
-        let mut batch_tsv = if assignment_writer.is_some() {
-            Some(Vec::with_capacity(output_batch_capacity(
+        let drained = if collect_diagnostics {
+            drain_mapped_gene_ec_reads_serial(
+                mapped,
                 args.output_format,
-                mapped.len(),
-            )))
+                assignment_writer.is_some(),
+                &mut diagnostic_assignments,
+                &mut diagnostic_reads,
+                &mut diagnostic_candidate_stats,
+                &mut diagnostic_score_stats,
+            )?
         } else {
-            None
+            drain_mapped_gene_ec_reads_parallel(
+                &mapped,
+                args.output_format,
+                assignment_writer.is_some(),
+            )?
         };
-        for mapped_read in mapped {
-            add_ec_stats(&mut ec_stats, mapped_read.stats);
-            total_gene_candidates += mapped_read.gene_candidate_count as u64;
-            total_bases += mapped_read.seq_len as u64;
-            num_reads += 1;
-            assignment_counts.add(&mapped_read.assignment);
-            write_gene_ec_record_to_buffer(&mut batch_tsv, args.output_format, &mapped_read)?;
-            if collect_diagnostics {
-                diagnostic_reads.push((mapped_read.assignment.read_id, mapped_read.seq));
-                diagnostic_candidate_stats.push(mapped_read.candidate_stats);
-                diagnostic_score_stats.push(ScoreFailureStats::default());
-                diagnostic_assignments.push(mapped_read.assignment);
-            }
-        }
+        add_ec_stats(&mut ec_stats, drained.ec_stats);
+        total_gene_candidates += drained.total_gene_candidates;
+        total_bases += drained.total_bases;
+        num_reads += drained.num_reads;
+        assignment_counts.add_all(drained.assignment_counts);
         let assignment_elapsed = assignment_started.elapsed();
         assignment_seconds += assignment_elapsed.as_secs_f64();
         function_timings.add_duration("assign_gene_ec_reads", assignment_elapsed);
-        if let (Some(writer), Some(tsv)) = (assignment_writer.as_mut(), batch_tsv) {
+        if let Some(writer) = assignment_writer.as_mut() {
             let write_started = Instant::now();
-            writer.write_all(&tsv)?;
+            for chunk in drained.output_chunks {
+                writer.write_all(&chunk)?;
+            }
             write_seconds += write_started.elapsed().as_secs_f64();
         }
     }
@@ -570,6 +666,18 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
             assignment_counts.rate(num_reads, AssignmentType::AmbiguousTranscriptSameGene);
         let multi_gene_ambiguous_rate =
             assignment_counts.rate(num_reads, AssignmentType::AmbiguousGene);
+        let measured_distinct_seed_lookups = ec_stats.distinct_seed_lookups > 0;
+        let distinct_seed_lists_loaded = if measured_distinct_seed_lookups {
+            ec_stats.distinct_seed_lookups
+        } else {
+            ec_stats.seeds_found
+        };
+        let posting_list_reuse_factor =
+            if measured_distinct_seed_lookups && distinct_seed_lists_loaded > 0 {
+                ec_stats.seed_lookups as f64 / distinct_seed_lists_loaded as f64
+            } else {
+                1.0
+            };
         let mut metrics = MapMetrics {
             mode: args.mode.as_str().to_owned(),
             score_mode: "gene-ec".to_owned(),
@@ -581,6 +689,14 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
             candidate_generation_seconds: mapping_seconds,
             assignment_seconds,
             write_seconds,
+            adaptive_rescue_seconds,
+            adaptive_rescue_reads,
+            adaptive_rescue_replaced_reads,
+            adaptive_rescue_stride: if adaptive_rescue_enabled {
+                adaptive_rescue_stride
+            } else {
+                0
+            },
             seed_lookups_per_read: per_read_u64(ec_stats.seed_lookups, num_reads),
             seed_candidates_considered_per_read: ec_stats.seed_lookups as f64
                 / num_reads.max(1) as f64,
@@ -593,8 +709,8 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
             selected_seeds_over_frequency_cap: ec_stats.seeds_skipped_high_gene_df,
             selected_seeds_with_postings: ec_stats.seeds_found,
             query_seed_occurrences_per_read: ec_stats.seed_lookups as f64 / num_reads.max(1) as f64,
-            distinct_seed_lists_loaded: ec_stats.seeds_found,
-            posting_list_reuse_factor: 1.0,
+            distinct_seed_lists_loaded,
+            posting_list_reuse_factor,
             candidate_votes_per_read: per_read_u64(ec_stats.gene_votes, num_reads),
             scored_candidates_per_read: per_read_u64(total_gene_candidates, num_reads),
             unique_gene_rate,
@@ -610,6 +726,7 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
             unknown_target_assignment_rate: assignment_counts.unknown_target_rate(num_reads),
             low_complexity_rate: assignment_counts.rate(num_reads, AssignmentType::LowComplexity),
             low_quality_rate: assignment_counts.rate(num_reads, AssignmentType::LowQuality),
+            rescued_assignment_rate: assignment_counts.flag_rate(num_reads, SCORE_FLAG_RESCUED),
             unmapped_rate: assignment_counts.rate(num_reads, AssignmentType::Unmapped),
             function_seconds: function_timings.into_seconds(),
             ..MapMetrics::default()
@@ -619,6 +736,78 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
     }
 
     Ok(())
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+struct GeneEcRescueCounts {
+    attempted: u64,
+    replaced: u64,
+}
+
+#[allow(clippy::too_many_arguments)]
+fn rescue_unmapped_gene_ec_reads(
+    index: &LoadedEcIndex,
+    batch: &[RawReadPair],
+    mapped: &mut [MappedGeneEcRead],
+    trim_tso: bool,
+    min_tso_match_len: u8,
+    max_tso_mismatches: u8,
+    min_mean_quality: f64,
+    search_reverse_complement: bool,
+    sparse_probe_stride: u32,
+    max_gene_df: u32,
+    collect_diagnostics: bool,
+    emit_top_gene_ids: bool,
+) -> GeneEcRescueCounts {
+    mapped
+        .par_iter_mut()
+        .zip(batch.par_iter())
+        .map_init(
+            || EcScoreScratch::new(index.num_genes()),
+            |scratch, (mapped_read, raw)| {
+                if mapped_read.assignment.read_id != raw.read_id
+                    || mapped_read.assignment.assignment_type != AssignmentType::Unmapped
+                {
+                    return GeneEcRescueCounts::default();
+                }
+
+                let first_pass_stats = mapped_read.stats;
+                let mut rescued = prepare_and_map_gene_ec_raw(
+                    index,
+                    raw,
+                    trim_tso,
+                    min_tso_match_len,
+                    max_tso_mismatches,
+                    min_mean_quality,
+                    search_reverse_complement,
+                    sparse_probe_stride,
+                    max_gene_df,
+                    collect_diagnostics,
+                    emit_top_gene_ids,
+                    scratch,
+                );
+                add_ec_stats(&mut rescued.stats, first_pass_stats);
+                if rescued.assignment.assignment_type == AssignmentType::Unmapped {
+                    mapped_read.stats = rescued.stats;
+                    GeneEcRescueCounts {
+                        attempted: 1,
+                        replaced: 0,
+                    }
+                } else {
+                    rescued.assignment.flags |= SCORE_FLAG_RESCUED;
+                    *mapped_read = rescued;
+                    GeneEcRescueCounts {
+                        attempted: 1,
+                        replaced: 1,
+                    }
+                }
+            },
+        )
+        .reduce(GeneEcRescueCounts::default, |mut total, next| {
+            total.attempted += next.attempted;
+            total.replaced += next.replaced;
+            total
+        })
 }
 
 fn map_gene_ec_read(
@@ -680,6 +869,96 @@ fn map_gene_ec_read(
         search_reverse_complement,
         sparse_probe_stride,
         max_gene_df,
+    );
+    let gene_candidate_count = mapping.gene_scores.len().min(u32::MAX as usize) as u32;
+    if mapping.best_score == 0 {
+        return (
+            Assignment {
+                read_id: prepared.read_id,
+                cell_barcode,
+                umi,
+                assignment_type: AssignmentType::Unmapped,
+                gene_id: None,
+                transcript_id: None,
+                candidate_count: 0,
+                score: 0,
+                flags: 0,
+            },
+            stats,
+            gene_candidate_count,
+            Vec::new(),
+        );
+    }
+    let top_gene_ids = if emit_top_gene_ids {
+        top_gene_ids_for_ec(&mapping.gene_scores, mapping.best_score)
+    } else {
+        Vec::new()
+    };
+    let resolved = resolve_gene_ec_assignment(&mapping.gene_scores, mapping.best_score);
+    (
+        Assignment {
+            read_id: prepared.read_id,
+            cell_barcode,
+            umi,
+            assignment_type: resolved.assignment_type,
+            gene_id: resolved.gene_id,
+            transcript_id: None,
+            candidate_count: gene_candidate_count,
+            score: resolved.score,
+            flags: resolved.flags,
+        },
+        stats,
+        gene_candidate_count,
+        top_gene_ids,
+    )
+}
+
+fn map_gene_ec_borrowed_read(
+    index: &LoadedEcIndex,
+    prepared: &BorrowedPreparedRead,
+    search_reverse_complement: bool,
+    sparse_probe_stride: u32,
+    max_gene_df: u32,
+    emit_top_gene_ids: bool,
+    scratch: &mut EcScoreScratch,
+) -> (Assignment, EcMappingStats, u32, Vec<u32>) {
+    let cell_barcode = prepared.cell_barcode.clone();
+    let umi = prepared.umi.clone();
+    if prepared.low_quality || prepared.invalid_barcode_umi {
+        return (
+            flagged_assignment(
+                prepared.read_id,
+                cell_barcode,
+                umi,
+                AssignmentType::LowQuality,
+                if prepared.invalid_barcode_umi { 4 } else { 2 },
+            ),
+            EcMappingStats::default(),
+            0,
+            Vec::new(),
+        );
+    }
+    if prepared.low_complexity {
+        return (
+            flagged_assignment(
+                prepared.read_id,
+                cell_barcode,
+                umi,
+                AssignmentType::LowComplexity,
+                1,
+            ),
+            EcMappingStats::default(),
+            0,
+            Vec::new(),
+        );
+    }
+
+    let (mapping, stats) = index.map_encoded_sparse_with_scratch(
+        &prepared.encoded,
+        search_reverse_complement,
+        sparse_probe_stride,
+        max_gene_df,
+        scratch,
     );
     let gene_candidate_count = mapping.gene_scores.len().min(u32::MAX as usize) as u32;
     if mapping.best_score == 0 {
@@ -833,11 +1112,118 @@ fn aggregate_gene_ec_flags(scores: &[EcGeneScore]) -> u16 {
 
 fn add_ec_stats(total: &mut EcMappingStats, next: EcMappingStats) {
     total.seed_lookups += next.seed_lookups;
+    total.distinct_seed_lookups += next.distinct_seed_lookups;
     total.seeds_found += next.seeds_found;
     total.seeds_skipped_high_gene_df += next.seeds_skipped_high_gene_df;
     total.reads_with_gene_support += next.reads_with_gene_support;
     total.ec_hits += next.ec_hits;
     total.gene_votes += next.gene_votes;
+}
+
+#[derive(Debug, Default)]
+struct GeneEcDrainResult {
+    ec_stats: EcMappingStats,
+    assignment_counts: AssignmentCounts,
+    total_gene_candidates: u64,
+    total_bases: u64,
+    num_reads: u64,
+    output_chunks: Vec<Vec<u8>>,
+}
+
+fn drain_mapped_gene_ec_reads_parallel(
+    mapped: &[MappedGeneEcRead],
+    output_format: MapOutputFormatArg,
+    write_output: bool,
+) -> Result<GeneEcDrainResult> {
+    let chunk_size = mapped
+        .len()
+        .div_ceil((rayon::current_num_threads() * 4).max(1))
+        .max(1024);
+    let chunks = mapped
+        .par_chunks(chunk_size)
+        .map(|chunk| drain_mapped_gene_ec_read_chunk(chunk, output_format, write_output))
+        .collect::<Result<Vec<_>>>()?;
+
+    let mut drained = GeneEcDrainResult::default();
+    drained.output_chunks.reserve(chunks.len());
+    for chunk in chunks {
+        add_ec_stats(&mut drained.ec_stats, chunk.ec_stats);
+        drained.assignment_counts.add_all(chunk.assignment_counts);
+        drained.total_gene_candidates += chunk.total_gene_candidates;
+        drained.total_bases += chunk.total_bases;
+        drained.num_reads += chunk.num_reads;
+        if let Some(buffer) = chunk.output_buffer {
+            drained.output_chunks.push(buffer);
+        }
+    }
+    Ok(drained)
+}
+
+fn drain_mapped_gene_ec_read_chunk(
+    chunk: &[MappedGeneEcRead],
+    output_format: MapOutputFormatArg,
+    write_output: bool,
+) -> Result<GeneEcDrainChunk> {
+    let mut drained = GeneEcDrainChunk {
+        output_buffer: write_output
+            .then(|| Vec::with_capacity(output_batch_capacity(output_format, chunk.len()))),
+        ..GeneEcDrainChunk::default()
+    };
+    for mapped_read in chunk {
+        add_ec_stats(&mut drained.ec_stats, mapped_read.stats);
+        drained.total_gene_candidates += mapped_read.gene_candidate_count as u64;
+        drained.total_bases += mapped_read.seq_len as u64;
+        drained.num_reads += 1;
+        drained.assignment_counts.add(&mapped_read.assignment);
+        write_gene_ec_record_to_buffer(&mut drained.output_buffer, output_format, mapped_read)?;
+    }
+    Ok(drained)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn drain_mapped_gene_ec_reads_serial(
+    mapped: Vec<MappedGeneEcRead>,
+    output_format: MapOutputFormatArg,
+    write_output: bool,
+    diagnostic_assignments: &mut Vec<Assignment>,
+    diagnostic_reads: &mut Vec<(u64, Vec<u8>)>,
+    diagnostic_candidate_stats: &mut Vec<CandidateGenerationStats>,
+    diagnostic_score_stats: &mut Vec<ScoreFailureStats>,
+) -> Result<GeneEcDrainResult> {
+    let mut drained = GeneEcDrainResult {
+        output_chunks: write_output
+            .then(|| Vec::with_capacity(1))
+            .unwrap_or_default(),
+        ..GeneEcDrainResult::default()
+    };
+    let mut output_buffer = write_output
+        .then(|| Vec::with_capacity(output_batch_capacity(output_format, mapped.len())));
+    for mapped_read in mapped {
+        add_ec_stats(&mut drained.ec_stats, mapped_read.stats);
+        drained.total_gene_candidates += mapped_read.gene_candidate_count as u64;
+        drained.total_bases += mapped_read.seq_len as u64;
+        drained.num_reads += 1;
+        drained.assignment_counts.add(&mapped_read.assignment);
+        write_gene_ec_record_to_buffer(&mut output_buffer, output_format, &mapped_read)?;
+        diagnostic_reads.push((mapped_read.assignment.read_id, mapped_read.seq));
+        diagnostic_candidate_stats.push(mapped_read.candidate_stats);
+        diagnostic_score_stats.push(ScoreFailureStats::default());
+        diagnostic_assignments.push(mapped_read.assignment);
+    }
+    if let Some(buffer) = output_buffer {
+        drained.output_chunks.push(buffer);
+    }
+    Ok(drained)
+}
+
+#[derive(Debug, Default)]
+struct GeneEcDrainChunk {
+    ec_stats: EcMappingStats,
+    assignment_counts: AssignmentCounts,
+    total_gene_candidates: u64,
+    total_bases: u64,
+    num_reads: u64,
+    output_buffer: Option<Vec<u8>>,
 }
 
 #[derive(Debug, Default)]
@@ -1077,6 +1463,16 @@ struct PreparedRead {
     sketch: constellation_core::sketch::SketchRecord,
 }
 
+struct BorrowedPreparedRead {
+    read_id: u64,
+    encoded: EncodedSeq,
+    cell_barcode: String,
+    umi: String,
+    invalid_barcode_umi: bool,
+    low_quality: bool,
+    low_complexity: bool,
+}
+
 struct RawReadPair {
     read_id: u64,
     r1_seq: Vec<u8>,
@@ -1098,6 +1494,19 @@ struct PreparedGeneEcRead {
     prepared: PreparedRead,
     seq_len: usize,
     locality_key: u32,
+}
+
+struct PrefixTiledPreparedRead {
+    prepared: PreparedRead,
+    encoded: EncodedSeq,
+    seq_len: usize,
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+struct PrefixTiledProbe {
+    kmer_code: u64,
+    read_idx: usize,
+    tile: u16,
 }
 
 struct StreamFastqRecord {
@@ -1356,6 +1765,7 @@ fn prepare_and_map_gene_ec_raw(
     max_gene_df: u32,
     collect_diagnostics: bool,
     emit_top_gene_ids: bool,
+    scratch: &mut EcScoreScratch,
 ) -> MappedGeneEcRead {
     let (barcode_umi, invalid_bc_umi) = parse_tenx_3p_v3_r1(&raw.r1_seq)
         .map(|parsed| (parsed, false))
@@ -1365,34 +1775,34 @@ fn prepare_and_map_gene_ec_raw(
     } else {
         0
     };
-    let seq = raw.r2_seq[tso_trim..].to_vec();
-    let qual = raw.r2_qual[tso_trim..].to_vec();
-    let low_quality = mean_phred_quality(&qual) < min_mean_quality;
-    let sketch = sketch_read(raw.read_id, &seq, index.k());
+    let seq = &raw.r2_seq[tso_trim..];
+    let qual = &raw.r2_qual[tso_trim..];
+    let encoded = encode_acgt(seq);
+    let low_quality = mean_phred_quality(qual) < min_mean_quality;
+    let low_complexity = is_low_complexity_read(seq, index.k());
     let seq_len = seq.len();
     let seq_for_diagnostics = if collect_diagnostics {
-        seq.clone()
+        seq.to_vec()
     } else {
         Vec::new()
     };
-    let prepared = PreparedRead {
+    let prepared = BorrowedPreparedRead {
         read_id: raw.read_id,
-        seq,
-        qual,
+        encoded,
         cell_barcode: barcode_umi.cell_barcode_seq,
         umi: barcode_umi.umi_seq,
         invalid_barcode_umi: invalid_bc_umi,
         low_quality,
-        sketch,
+        low_complexity,
     };
-    let (assignment, stats, gene_candidate_count, top_gene_ids) = map_gene_ec_read(
+    let (assignment, stats, gene_candidate_count, top_gene_ids) = map_gene_ec_borrowed_read(
         index,
         &prepared,
         search_reverse_complement,
-        min_mean_quality,
         sparse_probe_stride,
         max_gene_df,
         emit_top_gene_ids,
+        scratch,
     );
     let candidate_stats = ec_candidate_stats(stats, gene_candidate_count);
     MappedGeneEcRead {
@@ -1452,6 +1862,45 @@ fn prepare_gene_ec_raw(
     }
 }
 
+fn prepare_gene_ec_raw_prefix_tiled(
+    index: &LoadedEcIndex,
+    raw: &RawReadPair,
+    trim_tso: bool,
+    min_tso_match_len: u8,
+    max_tso_mismatches: u8,
+    min_mean_quality: f64,
+) -> PrefixTiledPreparedRead {
+    let (barcode_umi, invalid_bc_umi) = parse_tenx_3p_v3_r1(&raw.r1_seq)
+        .map(|parsed| (parsed, false))
+        .unwrap_or_else(|_| (lossy_barcode_umi(&raw.r1_seq), true));
+    let tso_trim = if trim_tso {
+        tso_prefix_trim_len(&raw.r2_seq, min_tso_match_len, max_tso_mismatches)
+    } else {
+        0
+    };
+    let seq = raw.r2_seq[tso_trim..].to_vec();
+    let qual = raw.r2_qual[tso_trim..].to_vec();
+    let encoded = encode_acgt(&seq);
+    let low_quality = mean_phred_quality(&qual) < min_mean_quality;
+    let sketch = sketch_encoded_read(raw.read_id, &seq, &encoded, index.k());
+    let seq_len = seq.len();
+    let prepared = PreparedRead {
+        read_id: raw.read_id,
+        seq,
+        qual,
+        cell_barcode: barcode_umi.cell_barcode_seq,
+        umi: barcode_umi.umi_seq,
+        invalid_barcode_umi: invalid_bc_umi,
+        low_quality,
+        sketch,
+    };
+    PrefixTiledPreparedRead {
+        prepared,
+        encoded,
+        seq_len,
+    }
+}
+
 fn map_prepared_gene_ec(
     index: &LoadedEcIndex,
     prepared_read: &PreparedGeneEcRead,
@@ -1484,6 +1933,606 @@ fn map_prepared_gene_ec(
             Vec::new()
         },
         seq_len: prepared_read.seq_len,
+    }
+}
+
+#[derive(Default)]
+struct PrefixTiledMapResult {
+    mapped: Vec<MappedGeneEcRead>,
+    function_timings: FunctionTimings,
+}
+
+#[derive(Default)]
+struct PrefixTiledChunkResult {
+    mapped: Vec<MappedGeneEcRead>,
+    function_timings: FunctionTimings,
+}
+
+#[allow(clippy::too_many_arguments)]
+fn map_prepared_gene_ec_prefix_tiled(
+    index: &LoadedEcIndex,
+    prepared_reads: &[PrefixTiledPreparedRead],
+    search_reverse_complement: bool,
+    min_mean_quality: f64,
+    sparse_probe_stride: u32,
+    max_gene_df: u32,
+    collect_diagnostics: bool,
+    emit_top_gene_ids: bool,
+) -> PrefixTiledMapResult {
+    let chunk_size = prepared_reads
+        .len()
+        .div_ceil((rayon::current_num_threads() * 2).max(1))
+        .max(2048)
+        .min(8192);
+    let chunks: Vec<_> = prepared_reads
+        .par_chunks(chunk_size)
+        .map(|chunk| {
+            map_prepared_gene_ec_prefix_tiled_chunk(
+                index,
+                chunk,
+                search_reverse_complement,
+                min_mean_quality,
+                sparse_probe_stride,
+                max_gene_df,
+                collect_diagnostics,
+                emit_top_gene_ids,
+            )
+        })
+        .collect();
+
+    let mut result = PrefixTiledMapResult::default();
+    result
+        .mapped
+        .reserve(chunks.iter().map(|chunk| chunk.mapped.len()).sum());
+    for chunk in chunks {
+        result.function_timings.add_all(chunk.function_timings);
+        result.mapped.extend(chunk.mapped);
+    }
+    result
+}
+
+#[allow(clippy::too_many_arguments)]
+fn map_prepared_gene_ec_prefix_tiled_chunk(
+    index: &LoadedEcIndex,
+    prepared_reads: &[PrefixTiledPreparedRead],
+    search_reverse_complement: bool,
+    min_mean_quality: f64,
+    sparse_probe_stride: u32,
+    max_gene_df: u32,
+    collect_diagnostics: bool,
+    emit_top_gene_ids: bool,
+) -> PrefixTiledChunkResult {
+    const TILE_COUNT: usize = 4096;
+    const DIRECT_LOOKUP_THRESHOLD: usize = 16;
+
+    let mut timings = FunctionTimings::default();
+    let collect_started = Instant::now();
+    let mut mapped: Vec<Option<MappedGeneEcRead>> = Vec::with_capacity(prepared_reads.len());
+    mapped.resize_with(prepared_reads.len(), || None);
+    let mut per_read_stats = vec![EcMappingStats::default(); prepared_reads.len()];
+    let mut per_read_scores: Vec<FxHashMap<u32, EcGeneScore>> = (0..prepared_reads.len())
+        .map(|_| FxHashMap::default())
+        .collect();
+    let mut probes = Vec::with_capacity(prepared_reads.len() * 6);
+    let mut tile_counts = [0_usize; TILE_COUNT];
+
+    for (read_idx, prepared_read) in prepared_reads.iter().enumerate() {
+        if let Some(prefiltered) = prefiltered_gene_ec_prefix_tiled_read(
+            prepared_read,
+            min_mean_quality,
+            collect_diagnostics,
+        ) {
+            mapped[read_idx] = Some(prefiltered);
+            continue;
+        }
+        collect_gene_ec_encoded_probes(
+            index,
+            &prepared_read.encoded,
+            sparse_probe_stride,
+            read_idx,
+            &mut per_read_stats[read_idx],
+            &mut probes,
+            &mut tile_counts,
+        );
+        if search_reverse_complement {
+            let rc = reverse_complement(&prepared_read.encoded);
+            collect_gene_ec_encoded_probes(
+                index,
+                &rc,
+                sparse_probe_stride,
+                read_idx,
+                &mut per_read_stats[read_idx],
+                &mut probes,
+                &mut tile_counts,
+            );
+        }
+    }
+    timings.add_elapsed("prefix_tiled_collect_probes", collect_started);
+
+    let partition_started = Instant::now();
+    let mut tile_starts = [0_usize; TILE_COUNT + 1];
+    for tile in 0..TILE_COUNT {
+        tile_starts[tile + 1] = tile_starts[tile] + tile_counts[tile];
+    }
+    let mut tile_positions = tile_starts;
+    let mut partitioned = vec![PrefixTiledProbe::default(); probes.len()];
+    for probe in probes {
+        let position = &mut tile_positions[probe.tile as usize];
+        partitioned[*position] = probe;
+        *position += 1;
+    }
+    timings.add_elapsed("prefix_tiled_partition_probes", partition_started);
+
+    let lookup_started = Instant::now();
+    for tile in 0..TILE_COUNT {
+        let start = tile_starts[tile];
+        let end = tile_starts[tile + 1];
+        if start == end {
+            continue;
+        }
+        let tile_probes = &mut partitioned[start..end];
+        if tile_probes.len() < DIRECT_LOOKUP_THRESHOLD {
+            for probe in tile_probes {
+                per_read_stats[probe.read_idx].distinct_seed_lookups += 1;
+                if let Some(hit) = index.lookup_hit(probe.kmer_code) {
+                    index.accumulate_lookup_hit(
+                        hit,
+                        max_gene_df,
+                        &mut per_read_scores[probe.read_idx],
+                        &mut per_read_stats[probe.read_idx],
+                    );
+                }
+            }
+            continue;
+        }
+
+        tile_probes.sort_unstable_by_key(|probe| probe.kmer_code);
+        let mut group_start = 0;
+        while group_start < tile_probes.len() {
+            let kmer_code = tile_probes[group_start].kmer_code;
+            let mut group_end = group_start + 1;
+            while group_end < tile_probes.len() && tile_probes[group_end].kmer_code == kmer_code {
+                group_end += 1;
+            }
+            let hit = index.lookup_hit(kmer_code);
+            per_read_stats[tile_probes[group_start].read_idx].distinct_seed_lookups += 1;
+            for probe in &tile_probes[group_start..group_end] {
+                if let Some(hit) = hit {
+                    index.accumulate_lookup_hit(
+                        hit,
+                        max_gene_df,
+                        &mut per_read_scores[probe.read_idx],
+                        &mut per_read_stats[probe.read_idx],
+                    );
+                }
+            }
+            group_start = group_end;
+        }
+    }
+    timings.add_elapsed("prefix_tiled_lookup_accumulate", lookup_started);
+
+    let finalize_started = Instant::now();
+    for (read_idx, prepared_read) in prepared_reads.iter().enumerate() {
+        if mapped[read_idx].is_some() {
+            continue;
+        }
+        let stats = per_read_stats[read_idx];
+        let (mapping, stats) =
+            finish_ec_mapping(std::mem::take(&mut per_read_scores[read_idx]), stats);
+        mapped[read_idx] = Some(mapped_gene_ec_read_from_mapping(
+            prepared_read,
+            mapping.gene_scores,
+            mapping.best_score,
+            stats,
+            collect_diagnostics,
+            emit_top_gene_ids,
+        ));
+    }
+    timings.add_elapsed("prefix_tiled_finalize_reads", finalize_started);
+
+    PrefixTiledChunkResult {
+        mapped: mapped
+            .into_iter()
+            .map(|mapped_read| mapped_read.expect("every prefix-tiled read mapped"))
+            .collect(),
+        function_timings: timings,
+    }
+}
+
+fn mapped_gene_ec_read_from_mapping(
+    prepared_read: &PrefixTiledPreparedRead,
+    gene_scores: Vec<EcGeneScore>,
+    best_score: u16,
+    stats: EcMappingStats,
+    collect_diagnostics: bool,
+    emit_top_gene_ids: bool,
+) -> MappedGeneEcRead {
+    let gene_candidate_count = gene_scores.len().min(u32::MAX as usize) as u32;
+    let candidate_stats = ec_candidate_stats(stats, gene_candidate_count);
+    let cell_barcode = prepared_read.prepared.cell_barcode.clone();
+    let umi = prepared_read.prepared.umi.clone();
+    let (assignment, top_gene_ids) = if best_score == 0 {
+        (
+            Assignment {
+                read_id: prepared_read.prepared.read_id,
+                cell_barcode,
+                umi,
+                assignment_type: AssignmentType::Unmapped,
+                gene_id: None,
+                transcript_id: None,
+                candidate_count: 0,
+                score: 0,
+                flags: 0,
+            },
+            Vec::new(),
+        )
+    } else {
+        let top_gene_ids = if emit_top_gene_ids {
+            top_gene_ids_for_ec(&gene_scores, best_score)
+        } else {
+            Vec::new()
+        };
+        let resolved = resolve_gene_ec_assignment(&gene_scores, best_score);
+        (
+            Assignment {
+                read_id: prepared_read.prepared.read_id,
+                cell_barcode,
+                umi,
+                assignment_type: resolved.assignment_type,
+                gene_id: resolved.gene_id,
+                transcript_id: None,
+                candidate_count: gene_candidate_count,
+                score: resolved.score,
+                flags: resolved.flags,
+            },
+            top_gene_ids,
+        )
+    };
+    MappedGeneEcRead {
+        assignment,
+        stats,
+        gene_candidate_count,
+        top_gene_ids,
+        candidate_stats,
+        seq: if collect_diagnostics {
+            prepared_read.prepared.seq.clone()
+        } else {
+            Vec::new()
+        },
+        seq_len: prepared_read.seq_len,
+    }
+}
+
+fn prefiltered_gene_ec_prefix_tiled_read(
+    prepared_read: &PrefixTiledPreparedRead,
+    min_mean_quality: f64,
+    collect_diagnostics: bool,
+) -> Option<MappedGeneEcRead> {
+    let prepared = &prepared_read.prepared;
+    let assignment = if prepared.low_quality || prepared.invalid_barcode_umi {
+        flagged_assignment(
+            prepared.read_id,
+            prepared.cell_barcode.clone(),
+            prepared.umi.clone(),
+            AssignmentType::LowQuality,
+            if prepared.invalid_barcode_umi { 4 } else { 2 },
+        )
+    } else if prepared.sketch.flags & 1 != 0 {
+        flagged_assignment(
+            prepared.read_id,
+            prepared.cell_barcode.clone(),
+            prepared.umi.clone(),
+            AssignmentType::LowComplexity,
+            prepared.sketch.flags,
+        )
+    } else if mean_phred_quality(&prepared.qual) < min_mean_quality {
+        flagged_assignment(
+            prepared.read_id,
+            prepared.cell_barcode.clone(),
+            prepared.umi.clone(),
+            AssignmentType::LowQuality,
+            2,
+        )
+    } else {
+        return None;
+    };
+    Some(MappedGeneEcRead {
+        assignment,
+        stats: EcMappingStats::default(),
+        gene_candidate_count: 0,
+        top_gene_ids: Vec::new(),
+        candidate_stats: CandidateGenerationStats::default(),
+        seq: if collect_diagnostics {
+            prepared.seq.clone()
+        } else {
+            Vec::new()
+        },
+        seq_len: prepared_read.seq_len,
+    })
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+struct GeneEcProbe {
+    kmer_code: u64,
+    read_idx: usize,
+}
+
+#[allow(clippy::too_many_arguments)]
+fn map_prepared_gene_ec_seed_batched(
+    index: &LoadedEcIndex,
+    prepared_reads: &[PreparedGeneEcRead],
+    search_reverse_complement: bool,
+    min_mean_quality: f64,
+    sparse_probe_stride: u32,
+    max_gene_df: u32,
+    collect_diagnostics: bool,
+    emit_top_gene_ids: bool,
+) -> Vec<MappedGeneEcRead> {
+    let chunk_size = prepared_reads
+        .len()
+        .div_ceil((rayon::current_num_threads() * 4).max(1))
+        .max(1024);
+    prepared_reads
+        .par_chunks(chunk_size)
+        .map(|chunk| {
+            map_prepared_gene_ec_seed_batched_chunk(
+                index,
+                chunk,
+                search_reverse_complement,
+                min_mean_quality,
+                sparse_probe_stride,
+                max_gene_df,
+                collect_diagnostics,
+                emit_top_gene_ids,
+            )
+        })
+        .collect::<Vec<_>>()
+        .into_iter()
+        .flatten()
+        .collect()
+}
+
+#[allow(clippy::too_many_arguments)]
+fn map_prepared_gene_ec_seed_batched_chunk(
+    index: &LoadedEcIndex,
+    prepared_reads: &[PreparedGeneEcRead],
+    search_reverse_complement: bool,
+    min_mean_quality: f64,
+    sparse_probe_stride: u32,
+    max_gene_df: u32,
+    collect_diagnostics: bool,
+    emit_top_gene_ids: bool,
+) -> Vec<MappedGeneEcRead> {
+    let mut mapped: Vec<Option<MappedGeneEcRead>> = Vec::with_capacity(prepared_reads.len());
+    mapped.resize_with(prepared_reads.len(), || None);
+    let mut per_read_stats = vec![EcMappingStats::default(); prepared_reads.len()];
+    let mut per_read_scores: Vec<FxHashMap<u32, EcGeneScore>> = (0..prepared_reads.len())
+        .map(|_| FxHashMap::default())
+        .collect();
+    let mut probes = Vec::with_capacity(prepared_reads.len() * 6);
+
+    for (read_idx, prepared_read) in prepared_reads.iter().enumerate() {
+        if let Some(prefiltered) =
+            prefiltered_gene_ec_mapped_read(prepared_read, min_mean_quality, collect_diagnostics)
+        {
+            mapped[read_idx] = Some(prefiltered);
+            continue;
+        }
+        collect_gene_ec_probes(
+            index,
+            &prepared_read.prepared.seq,
+            sparse_probe_stride,
+            read_idx,
+            &mut per_read_stats[read_idx],
+            &mut probes,
+        );
+        if search_reverse_complement {
+            let rc = reverse_complement(&encode_acgt(&prepared_read.prepared.seq));
+            let rc = constellation_core::dna::decode_to_vec(&rc);
+            collect_gene_ec_probes(
+                index,
+                &rc,
+                sparse_probe_stride,
+                read_idx,
+                &mut per_read_stats[read_idx],
+                &mut probes,
+            );
+        }
+    }
+
+    probes.par_sort_unstable();
+    let mut start = 0;
+    while start < probes.len() {
+        let kmer_code = probes[start].kmer_code;
+        let mut end = start + 1;
+        while end < probes.len() && probes[end].kmer_code == kmer_code {
+            end += 1;
+        }
+        if let Some(hit) = index.lookup_hit(kmer_code) {
+            for probe in &probes[start..end] {
+                index.accumulate_lookup_hit(
+                    hit,
+                    max_gene_df,
+                    &mut per_read_scores[probe.read_idx],
+                    &mut per_read_stats[probe.read_idx],
+                );
+            }
+        }
+        start = end;
+    }
+
+    for (read_idx, prepared_read) in prepared_reads.iter().enumerate() {
+        if mapped[read_idx].is_some() {
+            continue;
+        }
+        let stats = per_read_stats[read_idx];
+        let (mapping, stats) =
+            finish_ec_mapping(std::mem::take(&mut per_read_scores[read_idx]), stats);
+        let gene_candidate_count = mapping.gene_scores.len().min(u32::MAX as usize) as u32;
+        let candidate_stats = ec_candidate_stats(stats, gene_candidate_count);
+        let cell_barcode = prepared_read.prepared.cell_barcode.clone();
+        let umi = prepared_read.prepared.umi.clone();
+        let (assignment, top_gene_ids) = if mapping.best_score == 0 {
+            (
+                Assignment {
+                    read_id: prepared_read.prepared.read_id,
+                    cell_barcode,
+                    umi,
+                    assignment_type: AssignmentType::Unmapped,
+                    gene_id: None,
+                    transcript_id: None,
+                    candidate_count: 0,
+                    score: 0,
+                    flags: 0,
+                },
+                Vec::new(),
+            )
+        } else {
+            let top_gene_ids = if emit_top_gene_ids {
+                top_gene_ids_for_ec(&mapping.gene_scores, mapping.best_score)
+            } else {
+                Vec::new()
+            };
+            let resolved = resolve_gene_ec_assignment(&mapping.gene_scores, mapping.best_score);
+            (
+                Assignment {
+                    read_id: prepared_read.prepared.read_id,
+                    cell_barcode,
+                    umi,
+                    assignment_type: resolved.assignment_type,
+                    gene_id: resolved.gene_id,
+                    transcript_id: None,
+                    candidate_count: gene_candidate_count,
+                    score: resolved.score,
+                    flags: resolved.flags,
+                },
+                top_gene_ids,
+            )
+        };
+        mapped[read_idx] = Some(MappedGeneEcRead {
+            assignment,
+            stats,
+            gene_candidate_count,
+            top_gene_ids,
+            candidate_stats,
+            seq: if collect_diagnostics {
+                prepared_read.prepared.seq.clone()
+            } else {
+                Vec::new()
+            },
+            seq_len: prepared_read.seq_len,
+        });
+    }
+
+    mapped
+        .into_iter()
+        .map(|mapped_read| mapped_read.expect("every prepared read mapped"))
+        .collect()
+}
+
+fn prefiltered_gene_ec_mapped_read(
+    prepared_read: &PreparedGeneEcRead,
+    min_mean_quality: f64,
+    collect_diagnostics: bool,
+) -> Option<MappedGeneEcRead> {
+    let prepared = &prepared_read.prepared;
+    let assignment = if prepared.low_quality || prepared.invalid_barcode_umi {
+        flagged_assignment(
+            prepared.read_id,
+            prepared.cell_barcode.clone(),
+            prepared.umi.clone(),
+            AssignmentType::LowQuality,
+            if prepared.invalid_barcode_umi { 4 } else { 2 },
+        )
+    } else if prepared.sketch.flags & 1 != 0 {
+        flagged_assignment(
+            prepared.read_id,
+            prepared.cell_barcode.clone(),
+            prepared.umi.clone(),
+            AssignmentType::LowComplexity,
+            prepared.sketch.flags,
+        )
+    } else if mean_phred_quality(&prepared.qual) < min_mean_quality {
+        flagged_assignment(
+            prepared.read_id,
+            prepared.cell_barcode.clone(),
+            prepared.umi.clone(),
+            AssignmentType::LowQuality,
+            2,
+        )
+    } else {
+        return None;
+    };
+    Some(MappedGeneEcRead {
+        assignment,
+        stats: EcMappingStats::default(),
+        gene_candidate_count: 0,
+        top_gene_ids: Vec::new(),
+        candidate_stats: CandidateGenerationStats::default(),
+        seq: if collect_diagnostics {
+            prepared.seq.clone()
+        } else {
+            Vec::new()
+        },
+        seq_len: prepared_read.seq_len,
+    })
+}
+
+fn collect_gene_ec_probes(
+    index: &LoadedEcIndex,
+    seq: &[u8],
+    sparse_probe_stride: u32,
+    read_idx: usize,
+    stats: &mut EcMappingStats,
+    probes: &mut Vec<GeneEcProbe>,
+) {
+    let encoded = encode_acgt(seq);
+    let stride = sparse_probe_stride.max(1);
+    for kmer in iter_kmers_2bit(&encoded, index.k()) {
+        if kmer.pos % stride != 0 {
+            continue;
+        }
+        stats.seed_lookups += 1;
+        probes.push(GeneEcProbe {
+            kmer_code: kmer.code,
+            read_idx,
+        });
+    }
+}
+
+fn collect_gene_ec_encoded_probes(
+    index: &LoadedEcIndex,
+    encoded: &EncodedSeq,
+    sparse_probe_stride: u32,
+    read_idx: usize,
+    stats: &mut EcMappingStats,
+    probes: &mut Vec<PrefixTiledProbe>,
+    tile_counts: &mut [usize; 4096],
+) {
+    let stride = sparse_probe_stride.max(1);
+    for kmer in iter_kmers_2bit(encoded, index.k()) {
+        if kmer.pos % stride != 0 {
+            continue;
+        }
+        stats.seed_lookups += 1;
+        let tile = gene_ec_prefix_tile(index, kmer.code);
+        tile_counts[tile as usize] += 1;
+        probes.push(PrefixTiledProbe {
+            kmer_code: kmer.code,
+            read_idx,
+            tile,
+        });
+    }
+}
+
+fn gene_ec_prefix_tile(index: &LoadedEcIndex, kmer_code: u64) -> u16 {
+    const TILE_BITS: u8 = 12;
+    let prefix_bits = 24_u8.min(index.k().saturating_mul(2));
+    let prefix = index.kmer_prefix(kmer_code);
+    if prefix_bits > TILE_BITS {
+        (prefix >> (prefix_bits - TILE_BITS)) as u16
+    } else {
+        (prefix << (TILE_BITS - prefix_bits)) as u16
     }
 }
 
@@ -1574,6 +2623,22 @@ impl AssignmentCounts {
         if is_target_assignment_type(assignment.assignment_type) && target_count == 0 {
             self.unknown_target += 1;
         }
+    }
+
+    fn add_all(&mut self, next: AssignmentCounts) {
+        self.unique_gene += next.unique_gene;
+        self.ambiguous_gene += next.ambiguous_gene;
+        self.same_gene_multitranscript += next.same_gene_multitranscript;
+        self.antisense_gene += next.antisense_gene;
+        self.unmapped += next.unmapped;
+        self.low_complexity += next.low_complexity;
+        self.low_quality += next.low_quality;
+        self.exon_target += next.exon_target;
+        self.intron_target += next.intron_target;
+        self.gene_body_target += next.gene_body_target;
+        self.mixed_target += next.mixed_target;
+        self.unknown_target += next.unknown_target;
+        self.rescued += next.rescued;
     }
 
     fn rate(&self, total: u64, assignment_type: AssignmentType) -> f64 {

@@ -1,0 +1,71 @@
+# Failed and superseded performance paths
+
+This is the authoritative negative-results ledger. Treat every row as **do not
+retry** unless the underlying premise changes and the new experiment states that
+change explicitly. Raw results from the 2026-08-02 audit are in
+`experiments/archive/2026-08-02-memory-locality-audit/raw/`; older large outputs
+remain in the git-ignored `benchdata/` corpus.
+
+All CPU rates below used at most 12 cores unless marked otherwise. The comparison
+workload is 10 million PBMC 10k v3 read pairs, a warm v4 prefix24 EC index, batch
+size 65,536, and no assignment output. Assignment rates are fractions of reads.
+
+## Rejected in the 2026-08-02 audit
+
+| Path | Result | Why it is closed |
+|---|---:|---|
+| Read-at-a-time v4 baseline | 1.035M reads/s; 78.54% countable; 9.27% ambiguous; 11.46% unmapped; 17.58GB max RSS | Control, not a rejected path. |
+| Seed-batched traversal | 0.609M reads/s | 41% slower with identical assignments. Probe materialization, grouping, and per-read finalization cost more than any locality gained. |
+| Prefix-tiled traversal | 0.695M reads/s | 33% slower with identical assignments. Partitioning and scattered per-read accumulation erased lookup locality gains. |
+| v5 packed suffix/payload layout | 1.057–1.077M reads/s; about 20.7GB RSS; 21.0GB index | Only 2–4% faster in these runs while adding roughly 3.1GB RSS and a larger index. It is not a frontier tradeoff. |
+| v6 blocked suffix lookup | 0.755–0.997M reads/s; about 21.2GB RSS | Slower and larger than v4. Blocking did not overcome metadata and search overhead. |
+| v7 target-range deduplication | 0.756–0.989M reads/s; about 20.9GB RSS | Slower and still substantially larger in memory than v4. |
+| v8 minimal-perfect-hash family | Build stopped; no valid result | The build was intentionally stopped rather than spend more time in the already unsuccessful larger-layout family. An empty timing file is retained. Do not cite it as a benchmark. |
+| Probe stride 16 | 1.200M reads/s; 76.31% countable; 12.95% unmapped | Faster only by discarding useful evidence: countable rate fell 2.23 percentage points. |
+| Probe stride 24 | 1.276M reads/s; 74.94% countable; 14.15% unmapped | Faster only by a larger quality regression. |
+| Stride 16 plus rescue at 12 | 1.098M reads/s; 77.34% countable; 10.92% ambiguous | Not Pareto-optimal: it remained less countable and more ambiguous than stride 12. |
+| Stride 24 plus rescue at 12 | 1.173M reads/s; 76.38% countable; 11.43% ambiguous | Restored baseline unmapped rate by converting too many reads to ambiguity and remained less countable. |
+| Per-worker direct-mapped EC lookup cache, including misses | 1.003M reads/s | About 4% slower than the accepted dense-score version. Cache metadata and LLC pollution outweighed avoided index probes. Code was removed. |
+| `MADV_HUGEPAGE` on the file-backed index mmap | 1.015M reads/s; unchanged RSS | About 3% slower than the accepted version on a host configured for `madvise` THP. Code was removed. |
+
+The first unbounded/concurrent traversal files (`constellation_audit_v4_*` without
+`12t`/`serial`) are retained but invalid for comparison: some overlapped and the
+read-at-a-time run predates the 12-thread cap. Use the `12t_*_serial` files.
+
+## Older paths that are also closed
+
+The older 100k-read corpus under `benchdata/pbmc_10k_v3/` contains repeated
+variants of these ideas. The archived plans describe their motivation, but they
+are not an active backlog:
+
+- sketch-sorted read buckets and candidate-locus regrouping;
+- hot/cold or two-tier positional indexes and manual locality sorting;
+- seed-batched posting retrieval, posting prefetch, and WAND/early-stop variants;
+- small-vector/hash accumulator substitutions and parallel preparation variants;
+- exon-first/global rescue policies that trade unmapped reads for ambiguity;
+- SIMD/pulp candidate scoring and soft-clip fast paths in the legacy positional
+  mapper;
+- reverse-complement, TSO/poly-A trimming, and permissive scoring as a speed path.
+
+Those experiments either lost outright, improved only a legacy path that is no
+longer the recommended architecture, or failed the combined speed/quality/memory
+bar. The current gene-EC mapper performs no candidate-window scoring, so reviving
+legacy SIMD scoring cannot address its measured hot path.
+
+Compression is also closed as a primary speed target: zstd level 3 was under 1%
+of historical cycle samples and current output writing is a small fraction of
+wall time. More threads are not the next experiment either; all project work is
+capped at 12 threads, and 6/8/12-core scaling is already healthy.
+
+## Revisit gate
+
+A closed path may be revisited only when all of the following are written down
+before implementation:
+
+1. The premise that is new (different index density, workload, hardware feature,
+   or algorithm—not a renamed version of the same layout).
+2. A correctness oracle, preferably byte-identical output or a predeclared
+   quality tolerance.
+3. A 12-thread baseline and an acceptance threshold covering wall time, max RSS,
+   index size/build cost, countable rate, ambiguity, and unmapped rate.
+4. A plan to remove the code if it fails.

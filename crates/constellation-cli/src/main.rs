@@ -178,6 +178,13 @@ enum ReadChunkingArg {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum GeneEcTraversalArg {
+    ReadAtATime,
+    SeedBatched,
+    PrefixTiled,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 enum CandidatePruningArg {
     None,
     WandLite,
@@ -251,8 +258,14 @@ struct MapArgs {
     wand_max_loci_per_gene: usize,
     #[arg(long, value_enum, default_value_t = ReadChunkingArg::Sketch, hide = true)]
     read_chunking: ReadChunkingArg,
+    #[arg(long, value_enum, default_value_t = GeneEcTraversalArg::ReadAtATime, hide = true)]
+    gene_ec_traversal: GeneEcTraversalArg,
     #[arg(long, default_value_t = 12)]
     sparse_probe_stride: u32,
+    #[arg(long, default_value_t = false, hide = true)]
+    gene_ec_adaptive_rescue: bool,
+    #[arg(long, hide = true)]
+    gene_ec_rescue_stride: Option<u32>,
     #[arg(long, default_value_t = 3, hide = true)]
     sparse_probe_max_seeds: usize,
     #[arg(long, default_value_t = 2, hide = true)]

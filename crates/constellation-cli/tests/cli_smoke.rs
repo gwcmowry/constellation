@@ -110,6 +110,39 @@ fn cli_index_simulate_gene_ec_map_and_report() {
     assert!(metrics_text.contains("\"mode\": \"gene-ec\""));
     assert!(metrics_text.contains("\"same_gene_multitranscript_rate\""));
     assert!(metrics_text.contains("\"gene_countable_rate\""));
+    let prefix_tiled_assignments = tmp.path().join("gene-ec.prefix-tiled.assignments.tsv");
+    let prefix_tiled_metrics = tmp.path().join("gene-ec.prefix-tiled.metrics.json");
+    assert_success(
+        constellation()
+            .args([
+                "map",
+                "--index",
+                path(&ec_index),
+                "--r1",
+                path(&tmp.path().join("sim_R1.fastq")),
+                "--r2",
+                path(&tmp.path().join("sim_R2.fastq")),
+                "--mode",
+                "gene-ec",
+                "--gene-ec-traversal",
+                "prefix-tiled",
+                "--output-format",
+                "tsv",
+                "--emit-metrics",
+                path(&prefix_tiled_metrics),
+                "--out",
+                path(&prefix_tiled_assignments),
+            ])
+            .output()
+            .unwrap(),
+    );
+    assert_eq!(
+        fs::read(&prefix_tiled_assignments).unwrap(),
+        fs::read(&assignments).unwrap()
+    );
+    let prefix_tiled_metrics_text = fs::read_to_string(&prefix_tiled_metrics).unwrap();
+    assert!(prefix_tiled_metrics_text.contains("prefix_tiled_prepare_reads"));
+    assert!(prefix_tiled_metrics_text.contains("prefix_tiled_lookup_accumulate"));
     let diagnostics_text = fs::read_to_string(&diagnostics).unwrap();
     assert!(diagnostics_text.starts_with("read_id\treason\tseq_len\t"));
 

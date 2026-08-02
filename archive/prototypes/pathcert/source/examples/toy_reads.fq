@@ -1,0 +1,12 @@
+@shared_exon1
+AAAACCCCGGGG
++
+IIIIIIIIIIII
+@include_junction
+GGGGTTTTGGGG
++
+IIIIIIIIIIII
+@skip_junction
+GGGGACACACAC
++
+IIIIIIIIIIII
