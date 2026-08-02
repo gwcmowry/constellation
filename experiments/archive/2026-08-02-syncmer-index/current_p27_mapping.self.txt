@@ -1,0 +1,51 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 38K of event 'cycles:u'
+# Event count (approx.): 398824172145
+#
+# Overhead  Command        Shared Object         Symbol                                                                                            IPC   [IPC Coverage]
+# ........  .............  ....................  ................................................................................................  ....................
+#
+    27.88%  constellation  constellation         [.] constellation_core::ec_index::MmapEcIndex::lookup_v4                                          -      -
+    15.98%  constellation  constellation         [.] <constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next  -      -
+     6.89%  constellation  constellation         [.] constellation_core::sketch::is_low_complexity_read                                            -      -
+     6.76%  constellation  constellation         [.] constellation_core::dna::encode_acgt                                                          -      -
+     5.87%  constellation  constellation         [.] constellation_core::ec_index::accumulate_ec_seq_dense::{{closure}}                            -      -
+     5.21%  constellation  constellation         [.] constellation_core::ec_index::EcScoreScratch::new                                             -      -
+     3.81%  constellation  constellation         [.] constellation_core::ec_index::EcScoreScratch::add                                             -      -
+     3.26%  constellation  constellation         [.] constellation_core::chemistry::parse_tenx_3p_v3_r1                                            -      -
+     3.00%  constellation  constellation         [.] miniz_oxide::inflate::core::decompress                                                        -      -
+     2.97%  constellation  constellation         [.] core::ptr::drop_in_place<constellation_core::ec_index::EcIndexError>                          -      -
+     2.33%  constellation  libc.so.6             [.] _int_malloc                                                                                   -      -
+     1.13%  constellation  constellation         [.] constellation_core::ec_index::LoadedEcIndex::map_encoded_sparse_resolved_with_scratch         -      -
+     1.08%  constellation  libc.so.6             [.] _int_free                                                                                     -      -
+     1.07%  constellation  libc.so.6             [.] malloc_consolidate                                                                            -      -
+     1.04%  constellation  libc.so.6             [.] cfree@GLIBC_2.2.5                                                                             -      -
+     1.00%  constellation  libc.so.6             [.] __memmove_avx512_unaligned_erms                                                               -      -
+     0.95%  constellation  libc.so.6             [.] __memset_avx512_unaligned_erms                                                                -      -
+     0.93%  constellation  constellation         [.] constellation_core::ec_index::MmapEcIndex::v4_gene_df                                         -      -
+     0.86%  constellation  constellation         [.] core::str::converts::from_utf8                                                                -      -
+     0.80%  constellation  constellation         [.] constellation::cmd_map::prepare_and_map_gene_ec_raw                                           -      -
+     0.73%  constellation  constellation         [.] constellation_core::ec_index::MmapEcIndex::ec_offsets                                         -      -
+     0.71%  constellation  constellation         [.] miniz_oxide::inflate::core::apply_match                                                       -      -
+     0.71%  constellation  constellation         [.] constellation::cmd_map::run_map_gene_ec                                                       -      -
+     0.68%  constellation  libc.so.6             [.] malloc                                                                                        -      -
+     0.58%  constellation  constellation         [.] constellation::cmd_map::stream_fastq_batches                                                  -      -
+     0.57%  constellation  libc.so.6             [.] unlink_chunk.isra.0                                                                           -      -
+     0.55%  constellation  libc.so.6             [.] __libc_calloc                                                                                 -      -
+     0.52%  constellation  constellation         [.] rayon::iter::plumbing::bridge_producer_consumer::helper                                       -      -
+     0.51%  constellation  constellation         [.] constellation_core::ec_index::accumulate_ec_seq_dense                                         -      -
+     0.21%  constellation  constellation         [.] crc32fast::specialized::pclmulqdq::calculate                                                  -      -
+     0.20%  constellation  constellation         [.] constellation_core::ec_index::MmapEcIndex::v4_ec_ids                                          -      -
+     0.19%  constellation  constellation         [.] constellation::cmd_map::AssignmentCounts::add                                                 -      -
+     0.18%  constellation  constellation         [.] std::io::read_until                                                                           -      -
+     0.13%  constellation  constellation         [.] constellation_core::ec_index::MmapEcIndex::lookup                                             -      -
+     0.13%  constellation  constellation         [.] constellation::cmd_map::write_gene_ec_record_to_buffer                                        -      -
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

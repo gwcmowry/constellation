@@ -1,0 +1,273 @@
+ Percent |	Source code & Disassembly of constellation for cycles:u (5921 samples, percent: local period)
+-------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      00000000001c4f30 <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next>:
+    0.37 :   1c4f30: push   %rbp
+    0.06 :   1c4f31: push   %r15
+    0.12 :   1c4f33: push   %r14
+    0.10 :   1c4f35: push   %r13
+    0.10 :   1c4f37: push   %r12
+    0.43 :   1c4f39: push   %rbx
+    1.64 :   1c4f3a: sub    $0x68,%rsp
+    0.44 :   1c4f3e: movzbl 0x1c4(%rsi),%r15d
+    0.07 :   1c4f46: movzbl 0x1c5(%rsi),%eax
+    0.02 :   1c4f4d: lea    -0x21(%r15),%ecx
+    0.15 :   1c4f51: cmp    $0xe0,%cl
+    0.00 :   1c4f54: setb   %cl
+    0.13 :   1c4f57: lea    -0x1(%rax),%edx
+    0.73 :   1c4f5a: cmp    %r15b,%dl
+    0.55 :   1c4f5d: setae  %dl
+    1.66 :   1c4f60: or     %cl,%dl
+    0.36 :   1c4f62: jne    1c52ea <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x3ba>
+    0.00 :   1c4f68: movzbl %r15b,%ecx
+    0.02 :   1c4f6c: movzbl %al,%edx
+    0.02 :   1c4f6f: mov    %rcx,0x28(%rsp)
+    0.00 :   1c4f74: add    %ecx,%ecx
+    0.05 :   1c4f76: mov    $0xffffffffffffffff,%r8
+    0.37 :   1c4f7d: mov    $0xffffffffffffffff,%rax
+    1.11 :   1c4f84: shl    %cl,%rax
+    1.99 :   1c4f87: cmp    $0x20,%r15b
+    0.03 :   1c4f8b: not    %rax
+    0.41 :   1c4f8e: movq   $0xffffffffffffffff,0x20(%rsp)
+    0.10 :   1c4f97: cmove  %r8,%rax
+    0.05 :   1c4f9b: mov    %rax,0x60(%rsp)
+    0.02 :   1c4fa0: mov    %rdx,0x8(%rsp)
+    0.53 :   1c4fa5: cmp    $0x20,%edx
+    1.08 :   1c4fa8: je     1c4fc4 <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x94>
+    0.00 :   1c4faa: mov    0x8(%rsp),%rax
+    9.98 :   1c4faf: lea    (%rax,%rax,1),%ecx
+    0.69 :   1c4fb2: mov    $0xffffffffffffffff,%rax
+    0.12 :   1c4fb9: shl    %cl,%rax
+    0.62 :   1c4fbc: not    %rax
+    0.65 :   1c4fbf: mov    %rax,0x20(%rsp)
+    0.14 :   1c4fc4: mov    (%rsi),%r12
+    0.01 :   1c4fc7: mov    0x8(%rsi),%rbp
+    0.09 :   1c4fcb: mov    0x30(%r12),%eax
+    0.26 :   1c4fd0: mov    %rax,0x30(%rsp)
+    0.15 :   1c4fd5: cmp    %rax,%rbp
+    0.00 :   1c4fd8: jae    1c52ea <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x3ba>
+    0.00 :   1c4fde: mov    %rdi,0x10(%rsp)
+    0.04 :   1c4fe3: mov    0x28(%r12),%r11
+    0.07 :   1c4fe8: lea    0x10(%rsi),%rax
+    0.91 :   1c4fec: mov    %rax,0x50(%rsp)
+    0.03 :   1c4ff1: lea    0x20(%rsi),%rax
+    0.00 :   1c4ff5: mov    %rax,0x38(%rsp)
+    0.05 :   1c4ffa: lea    0x130(%rsi),%rax
+    0.02 :   1c5001: mov    %rax,0x48(%rsp)
+    0.10 :   1c5006: mov    0x8(%rsp),%rax
+    0.00 :   1c500b: lea    0x3e(,%rax,2),%eax
+    0.08 :   1c5012: and    $0x3e,%eax
+    0.74 :   1c5015: mov    %rax,0x58(%rsp)
+    0.00 :   1c501a: mov    0x10(%rsi),%r13
+    0.00 :   1c501e: mov    0x18(%rsi),%r14
+    0.00 :   1c5022: mov    0x20(%rsi),%rbx
+    0.03 :   1c5026: movzbl 0x1c6(%rsi),%r8d
+    0.15 :   1c502e: mov    0x130(%rsi),%r10
+    0.05 :   1c5035: mov    0x138(%rsi),%r9
+    0.06 :   1c503c: xorps  %xmm0,%xmm0
+    0.48 :   1c503f: mov    %r15,0x40(%rsp)
+    0.05 :   1c5044: mov    %r12,0x18(%rsp)
+    0.02 :   1c5049: jmp    1c5063 <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x133>
+    0.00 :   1c504b: nopl   0x0(%rax,%rax,1)
+    0.00 :   1c5050: mov    0x18(%rsp),%r12
+    0.09 :   1c5055: mov    %rdi,%r11
+    0.39 :   1c5058: cmp    0x30(%rsp),%rbp
+    0.40 :   1c505d: je     1c52ee <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x3be>
+    0.00 :   1c5063: mov    %rbp,%rcx
+    0.19 :   1c5066: inc    %rbp
+    0.27 :   1c5069: test   %r11,%r11
+    0.10 :   1c506c: je     1c50d0 <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x1a0>
+    0.00 :   1c506e: mov    %rcx,%rax
+    0.00 :   1c5071: shr    $0x6,%rax
+    0.00 :   1c5075: cmp    %r11,%rax
+    0.00 :   1c5078: jae    1c532c <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x3fc>
+    0.00 :   1c507e: mov    0x20(%r12),%rdx
+    0.00 :   1c5083: mov    (%rdx,%rax,8),%rax
+    0.00 :   1c5087: bt     %rcx,%rax
+    0.00 :   1c508b: jae    1c50d0 <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x1a0>
+    0.00 :   1c508d: movb   $0x0,0x1c6(%rsi)
+    0.00 :   1c5094: mov    0x50(%rsp),%rax
+    0.00 :   1c5099: movups %xmm0,(%rax)
+    0.00 :   1c509c: movq   $0x0,0x10(%rax)
+    0.00 :   1c50a4: mov    0x48(%rsp),%rax
+    0.00 :   1c50a9: movups %xmm0,(%rax)
+    0.00 :   1c50ac: xor    %r9d,%r9d
+    0.00 :   1c50af: xor    %r10d,%r10d
+    0.00 :   1c50b2: xor    %r8d,%r8d
+    0.00 :   1c50b5: xor    %ebx,%ebx
+    0.00 :   1c50b7: xor    %r14d,%r14d
+    0.00 :   1c50ba: xor    %r13d,%r13d
+    0.00 :   1c50bd: cmp    0x30(%rsp),%rbp
+    0.00 :   1c50c2: jne    1c5063 <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x133>
+    0.00 :   1c50c4: jmp    1c52ee <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x3be>
+    0.00 :   1c50c9: nopl   0x0(%rax)
+    0.00 :   1c50d0: mov    %r11,%rdi
+    0.25 :   1c50d3: mov    %rcx,%rax
+    0.75 :   1c50d6: shr    $0x5,%rax
+    0.00 :   1c50da: mov    0x10(%r12),%r11
+    0.34 :   1c50df: cmp    %r11,%rax
+    0.03 :   1c50e2: jae    1c5343 <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x413>
+    0.00 :   1c50e8: mov    0x8(%r12),%rdx
+    0.36 :   1c50ed: mov    (%rdx,%rax,8),%rax
+    1.06 :   1c50f1: add    %ecx,%ecx
+    0.17 :   1c50f3: shr    %cl,%rax
+    0.55 :   1c50f6: mov    %rbx,%rdx
+    0.03 :   1c50f9: and    $0x3,%eax
+    0.66 :   1c50fc: lea    (%rax,%r13,4),%r13
+    0.96 :   1c5100: and    0x60(%rsp),%r13
+    0.59 :   1c5105: mov    %r13,0x10(%rsi)
+    0.08 :   1c5109: lea    (%rax,%r14,4),%r14
+    0.08 :   1c510d: and    0x20(%rsp),%r14
+    1.64 :   1c5112: mov    %r14,0x18(%rsi)
+    0.19 :   1c5116: shr    $0x2,%rdx
+    0.20 :   1c511a: xor    $0x3,%rax
+    0.02 :   1c511e: mov    0x58(%rsp),%rcx
+    0.43 :   1c5123: shl    %cl,%rax
+    0.37 :   1c5126: mov    %rax,%rbx
+    0.44 :   1c5129: or     %rdx,%rbx
+    0.00 :   1c512c: mov    %rbx,0x20(%rsi)
+    0.40 :   1c5130: inc    %r8b
+    0.66 :   1c5133: movzbl %r8b,%r12d
+    0.13 :   1c5137: mov    $0xff,%eax
+    0.18 :   1c513c: cmove  %eax,%r12d
+    0.00 :   1c5140: cmp    %r12b,%r15b
+    0.02 :   1c5143: mov    %r12d,%r8d
+    0.40 :   1c5146: cmovb  0x28(%rsp),%r8d
+    0.32 :   1c514c: mov    %r8b,0x1c6(%rsi)
+    0.49 :   1c5153: cmp    0x8(%rsp),%r8b
+    0.30 :   1c5158: jae    1c5170 <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x240>
+    0.00 :   1c515a: xor    %r11d,%r11d
+    0.03 :   1c515d: cmp    %r15b,%r12b
+    0.02 :   1c5160: jb     1c5050 <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x120>
+    0.00 :   1c5166: jmp    1c525c <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x32c>
+    0.00 :   1c516b: nopl   0x0(%rax,%rax,1)
+    0.00 :   1c5170: cmp    %r14,%rbx
+    0.92 :   1c5173: mov    %r14,%rax
+    0.34 :   1c5176: cmovb  %rbx,%rax
+    0.00 :   1c517a: movabs $0x9e3779b97f4a7c15,%rcx
+    0.03 :   1c5184: add    %rcx,%rax
+    1.70 :   1c5187: mov    %rax,%rcx
+    2.08 :   1c518a: shr    $0x1e,%rcx
+    2.02 :   1c518e: xor    %rax,%rcx
+    1.06 :   1c5191: movabs $0xbf58476d1ce4e5b9,%rax
+    0.03 :   1c519b: imul   %rax,%rcx
+    2.22 :   1c519f: mov    %rcx,%rax
+    2.71 :   1c51a2: shr    $0x1b,%rax
+    4.04 :   1c51a6: xor    %rcx,%rax
+    0.67 :   1c51a9: movabs $0x94d049bb133111eb,%rcx
+    0.16 :   1c51b3: imul   %rcx,%rax
+    1.66 :   1c51b7: mov    %rax,%r11
+    2.15 :   1c51ba: shr    $0x1f,%r11
+    2.05 :   1c51be: xor    %rax,%r11
+    0.37 :   1c51c1: test   %r9,%r9
+    0.00 :   1c51c4: je     1c520c <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x2dc>
+    0.00 :   1c51c6: lea    (%r9,%r10,1),%rax
+    0.15 :   1c51ca: mov    0x38(%rsp),%rcx
+    0.00 :   1c51cf: lea    (%rcx,%rax,8),%r15
+    0.22 :   1c51d3: lea    (%r9,%r10,1),%rcx
+    0.05 :   1c51d7: dec    %rcx
+    0.00 :   1c51da: nopw   0x0(%rax,%rax,1)
+    0.00 :   1c51e0: mov    %rcx,%rax
+    0.92 :   1c51e3: movabs $0xf83e0f83e0f83e1,%rdx
+    0.89 :   1c51ed: mul    %rdx
+    0.52 :   1c51f0: shr    $1,%rdx
+    1.09 :   1c51f3: imul   $0xfffffffffffffef8,%rdx,%rax
+    0.45 :   1c51fa: cmp    %r11,(%r15,%rax,1)
+    2.95 :   1c51fe: jbe    1c520f <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x2df>
+    0.00 :   1c5200: add    $0xfffffffffffffff8,%r15
+    5.42 :   1c5204: dec    %rcx
+    0.36 :   1c5207: dec    %r9
+    0.00 :   1c520a: jne    1c51e0 <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x2b0>
+    0.00 :   1c520c: xor    %r9d,%r9d
+    0.54 :   1c520f: mov    %ebp,%r15d
+    4.59 :   1c5212: sub    0x8(%rsp),%r15d
+    2.35 :   1c5217: lea    (%r9,%r10,1),%rcx
+    0.04 :   1c521b: mov    %rcx,%rax
+    0.07 :   1c521e: movabs $0xf83e0f83e0f83e1,%rdx
+    0.02 :   1c5228: mul    %rdx
+    0.10 :   1c522b: shr    $1,%rdx
+    0.59 :   1c522e: mov    %edx,%eax
+    0.08 :   1c5230: shl    $0x5,%eax
+    0.76 :   1c5233: add    %edx,%eax
+    0.00 :   1c5235: sub    %eax,%ecx
+    0.55 :   1c5237: mov    %r15d,0x140(%rsi,%rcx,4)
+    2.38 :   1c523f: mov    %r11,0x28(%rsi,%rcx,8)
+    1.71 :   1c5244: inc    %r9
+    0.17 :   1c5247: mov    %r9,0x138(%rsi)
+    0.20 :   1c524e: mov    0x40(%rsp),%r15
+    0.10 :   1c5253: cmp    %r15b,%r12b
+    0.00 :   1c5256: jb     1c5050 <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x120>
+    0.00 :   1c525c: mov    %ebp,%eax
+    0.30 :   1c525e: sub    0x28(%rsp),%eax
+    0.03 :   1c5262: test   %r9,%r9
+    0.00 :   1c5265: mov    0x18(%rsp),%r12
+    0.12 :   1c526a: je     1c52ab <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x37b>
+    0.00 :   1c526c: nopl   0x0(%rax)
+    0.10 :   1c5270: cmp    $0x21,%r10
+    0.56 :   1c5274: jae    1c5313 <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x3e3>
+    0.00 :   1c527a: mov    0x140(%rsi,%r10,4),%ecx
+    1.78 :   1c5282: cmp    %eax,%ecx
+    0.03 :   1c5284: jae    1c52c0 <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x390>
+    0.00 :   1c5286: lea    0x1(%r10),%rcx
+    0.21 :   1c528a: cmp    $0x20,%r10
+    0.00 :   1c528e: mov    $0x0,%r10d
+    0.00 :   1c5294: cmovne %rcx,%r10
+    0.02 :   1c5298: mov    %r10,0x130(%rsi)
+    0.03 :   1c529f: dec    %r9
+    0.02 :   1c52a2: mov    %r9,0x138(%rsi)
+    0.02 :   1c52a9: jne    1c5270 <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x340>
+    0.00 :   1c52ab: cmp    $0x20,%r10
+    0.00 :   1c52af: ja     1c535a <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x42a>
+    0.00 :   1c52b5: mov    0x140(%rsi,%r10,4),%ecx
+    0.00 :   1c52bd: xor    %r9d,%r9d
+    0.00 :   1c52c0: cmp    0x28(%rsi,%r10,8),%r11
+    0.90 :   1c52c5: je     1c52cf <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x39f>
+    0.00 :   1c52c7: cmp    %eax,%ecx
+    0.14 :   1c52c9: jne    1c5055 <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x125>
+    0.00 :   1c52cf: mov    %rbp,0x8(%rsi)
+    1.19 :   1c52d3: mov    0x10(%rsp),%rdi
+    0.03 :   1c52d8: mov    %r13,0x8(%rdi)
+    0.40 :   1c52dc: mov    %eax,0x10(%rdi)
+    0.00 :   1c52df: mov    %r15b,0x14(%rdi)
+    0.05 :   1c52e3: mov    $0x1,%eax
+    0.00 :   1c52e8: jmp    1c52fe <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x3ce>
+    0.00 :   1c52ea: xor    %eax,%eax
+    0.03 :   1c52ec: jmp    1c52fe <<constellation_core::dna::ClosedSyncmerIter as core::iter::traits::iterator::Iterator>::next+0x3ce>
+    0.00 :   1c52ee: mov    0x30(%rsp),%rax
+    0.15 :   1c52f3: mov    %rax,0x8(%rsi)
+    0.00 :   1c52f7: xor    %eax,%eax
+    0.00 :   1c52f9: mov    0x10(%rsp),%rdi
+    0.02 :   1c52fe: mov    %rax,(%rdi)
+    0.12 :   1c5301: mov    %rdi,%rax
+    0.07 :   1c5304: add    $0x68,%rsp
+    0.00 :   1c5308: pop    %rbx
+    0.03 :   1c5309: pop    %r12
+    0.02 :   1c530b: pop    %r13
+    0.12 :   1c530d: pop    %r14
+    0.02 :   1c530f: pop    %r15
+    0.03 :   1c5311: pop    %rbp
+    0.09 :   1c5312: ret
+    0.00 :   1c5313: mov    %rbp,0x8(%rsi)
+    0.00 :   1c5317: lea    0x1389c2(%rip),%rdx        # 2fdce0 <anon.c9e8f5e4cfd8d101b725394a690c2ac8.2.llvm.1037466475841016788+0x4368>
+    0.00 :   1c531e: mov    $0x21,%esi
+    0.00 :   1c5323: mov    %r10,%rdi
+    0.00 :   1c5326: call   *0x13ebc4(%rip)        # 303ef0 <_DYNAMIC+0x230>
+    0.00 :   1c532c: mov    %rbp,0x8(%rsi)
+    0.00 :   1c5330: lea    0x138f51(%rip),%rdx        # 2fe288 <anon.1399d7773c1a2be9ecaf3389095c206c.136.llvm.16513272338103500774>
+    0.00 :   1c5337: mov    %rax,%rdi
+    0.00 :   1c533a: mov    %r11,%rsi
+    0.00 :   1c533d: call   *0x13ebad(%rip)        # 303ef0 <_DYNAMIC+0x230>
+    0.00 :   1c5343: mov    %rbp,0x8(%rsi)
+    0.00 :   1c5347: lea    0x138f52(%rip),%rdx        # 2fe2a0 <anon.1399d7773c1a2be9ecaf3389095c206c.137.llvm.16513272338103500774>
+    0.00 :   1c534e: mov    %rax,%rdi
+    0.00 :   1c5351: mov    %r11,%rsi
+    0.00 :   1c5354: call   *0x13eb96(%rip)        # 303ef0 <_DYNAMIC+0x230>
+    0.00 :   1c535a: mov    %rbp,0x8(%rsi)
+    0.00 :   1c535e: lea    0x138993(%rip),%rdx        # 2fdcf8 <anon.c9e8f5e4cfd8d101b725394a690c2ac8.2.llvm.1037466475841016788+0x4380>
+    0.00 :   1c5365: mov    $0x21,%esi
+    0.00 :   1c536a: mov    %r10,%rdi
+    0.00 :   1c536d: call   *0x13eb7d(%rip)        # 303ef0 <_DYNAMIC+0x230>

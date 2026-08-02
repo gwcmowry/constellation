@@ -1,0 +1,385 @@
+ Percent |	Source code & Disassembly of constellation for cycles:u (10372 samples, percent: local period)
+--------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      00000000001e7e20 <constellation_core::ec_index::MmapEcIndex::lookup_v4>:
+    0.00 :   1e7e20: push   %rbp
+    0.00 :   1e7e21: push   %r15
+    0.02 :   1e7e23: push   %r14
+    0.01 :   1e7e25: push   %r13
+    0.06 :   1e7e27: push   %r12
+    0.00 :   1e7e29: push   %rbx
+    0.02 :   1e7e2a: sub    $0x78,%rsp
+    0.00 :   1e7e2e: xor    %eax,%eax
+    0.00 :   1e7e30: testb  $0x1,(%rsi)
+    0.02 :   1e7e33: mov    0x20(%rsi),%ebx
+    0.01 :   1e7e36: mov    $0x0,%ebp
+    0.01 :   1e7e3b: cmovne %rbx,%rbp
+    0.02 :   1e7e3f: je     1e830c <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x4ec>
+    0.00 :   1e7e45: mov    %rdx,%r8
+    0.04 :   1e7e48: mov    0x18(%rsi),%r13d
+    0.01 :   1e7e4c: test   %r13b,%r13b
+    0.01 :   1e7e4f: je     1e7ebd <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x9d>
+    0.00 :   1e7e51: movzbl %r13b,%ecx
+    0.00 :   1e7e55: movzbl 0x384(%rsi),%eax
+    0.02 :   1e7e5c: test   %al,%al
+    0.00 :   1e7e5e: js     1e8366 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x546>
+    0.00 :   1e7e64: add    %al,%al
+    0.03 :   1e7e66: xor    %edx,%edx
+    0.00 :   1e7e68: sub    %r13b,%al
+    0.04 :   1e7e6b: movzbl %al,%eax
+    0.04 :   1e7e6e: cmovb  %edx,%eax
+    0.02 :   1e7e71: mov    $0xffffffffffffffff,%r14
+    0.01 :   1e7e78: shl    %cl,%r14
+    0.00 :   1e7e7b: mov    %r8,%rdx
+    0.00 :   1e7e7e: mov    %eax,%ecx
+    0.03 :   1e7e80: shr    %cl,%rdx
+    0.05 :   1e7e83: mov    $0xffffffff,%eax
+    0.01 :   1e7e88: xor    %eax,%r14d
+    0.01 :   1e7e8b: cmp    $0x20,%r13b
+    0.00 :   1e7e8f: cmovae %eax,%r14d
+    0.00 :   1e7e93: and    %edx,%r14d
+    0.04 :   1e7e96: mov    0x348(%rsi),%rdx
+    0.03 :   1e7e9d: test   %rdx,%rdx
+    0.00 :   1e7ea0: mov    %rsi,0x30(%rsp)
+    0.00 :   1e7ea5: je     1e7ed1 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0xb1>
+    0.03 :   1e7ea7: mov    0x340(%rsi),%rax
+    0.02 :   1e7eae: xor    %r15d,%r15d
+    0.05 :   1e7eb1: cmp    %rdx,%r14
+    0.00 :   1e7eb4: mov    %rdi,0x28(%rsp)
+    0.02 :   1e7eb9: jb     1e7ef7 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0xd7>
+    0.00 :   1e7ebb: jmp    1e7f00 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0xe0>
+    0.00 :   1e7ebd: xor    %r14d,%r14d
+    0.00 :   1e7ec0: mov    0x348(%rsi),%rdx
+    0.00 :   1e7ec7: test   %rdx,%rdx
+    0.00 :   1e7eca: mov    %rsi,0x30(%rsp)
+    0.00 :   1e7ecf: jne    1e7ea7 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x87>
+    0.00 :   1e7ed1: mov    %rdi,%r15
+    0.00 :   1e7ed4: mov    %rsi,%rdi
+    0.00 :   1e7ed7: mov    %r8,%r12
+    0.00 :   1e7eda: call   1e5800 <constellation_core::ec_index::MmapEcIndex::prefix_offsets_slice>
+    0.00 :   1e7edf: mov    0x30(%rsp),%rsi
+    0.00 :   1e7ee4: mov    %r12,%r8
+    0.00 :   1e7ee7: mov    %r15,%rdi
+    0.00 :   1e7eea: xor    %r15d,%r15d
+    0.00 :   1e7eed: cmp    %rdx,%r14
+    0.00 :   1e7ef0: mov    %rdi,0x28(%rsp)
+    0.00 :   1e7ef5: jae    1e7f00 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0xe0>
+    0.06 :   1e7ef7: test   %rax,%rax
+    0.00 :   1e7efa: je     1e7f00 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0xe0>
+    0.00 :   1e7efc: mov    (%rax,%r14,4),%r15d
+   13.71 :   1e7f00: mov    %r15d,%r12d
+    0.01 :   1e7f03: lea    0x1(%r14),%rcx
+    0.00 :   1e7f07: mov    %r12,0x8(%rsp)
+    0.00 :   1e7f0c: mov    %r15d,%edi
+    0.00 :   1e7f0f: cmp    %rdx,%rcx
+    0.00 :   1e7f12: jae    1e7f20 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x100>
+    0.00 :   1e7f14: mov    0x4(%rax,%r14,4),%eax
+    0.06 :   1e7f19: mov    %rax,0x8(%rsp)
+    0.02 :   1e7f1e: mov    %eax,%edi
+    0.00 :   1e7f20: movzbl 0x384(%rsi),%eax
+    0.00 :   1e7f27: test   %al,%al
+    0.00 :   1e7f29: js     1e835f <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x53f>
+    0.00 :   1e7f2f: add    %al,%al
+    0.00 :   1e7f31: xor    %edx,%edx
+    0.00 :   1e7f33: sub    %r13b,%al
+    0.00 :   1e7f36: movzbl %al,%ecx
+    0.00 :   1e7f39: mov    $0x0,%eax
+    0.00 :   1e7f3e: mov    %rax,0x10(%rsp)
+    0.01 :   1e7f43: cmovb  %edx,%ecx
+    0.00 :   1e7f46: jbe    1e7f67 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x147>
+    0.00 :   1e7f48: mov    %r8,0x10(%rsp)
+    0.01 :   1e7f4d: cmp    $0x3f,%cl
+    0.00 :   1e7f50: ja     1e7f67 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x147>
+    0.00 :   1e7f52: mov    $0xffffffffffffffff,%rax
+    0.00 :   1e7f59: shl    %cl,%rax
+    0.00 :   1e7f5c: not    %rax
+    0.00 :   1e7f5f: and    %r8,%rax
+    0.00 :   1e7f62: mov    %rax,0x10(%rsp)
+    0.01 :   1e7f67: mov    0x58(%rsi),%rax
+    0.00 :   1e7f6b: mov    0x38(%rsi),%r13
+    0.00 :   1e7f6f: imul   %rbx,%r13
+    0.02 :   1e7f73: mov    %r13,%r14
+    0.00 :   1e7f76: mov    %rax,0x20(%rsp)
+    0.00 :   1e7f7b: add    %rax,%r14
+    0.00 :   1e7f7e: jb     1e832e <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x50e>
+    0.00 :   1e7f84: mov    %rbx,0x38(%rsp)
+    0.01 :   1e7f89: mov    %edi,%ebx
+    0.00 :   1e7f8b: mov    %r8,0x40(%rsp)
+    0.03 :   1e7f90: movb   $0x8,0x58(%rsp)
+    0.00 :   1e7f95: lea    0x58(%rsp),%rdi
+    0.00 :   1e7f9a: call   1f8f50 <core::ptr::drop_in_place<constellation_core::ec_index::EcIndexError>>
+    0.00 :   1e7f9f: mov    0x30(%rsp),%rax
+    0.00 :   1e7fa4: cmp    0x370(%rax),%r14
+    0.01 :   1e7fab: ja     1e832e <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x50e>
+    0.00 :   1e7fb1: mov    0x368(%rax),%rax
+    0.00 :   1e7fb8: mov    %rax,0x18(%rsp)
+    0.00 :   1e7fbd: movb   $0x8,0x58(%rsp)
+    0.00 :   1e7fc2: lea    0x58(%rsp),%rdi
+    0.00 :   1e7fc7: call   1f8f50 <core::ptr::drop_in_place<constellation_core::ec_index::EcIndexError>>
+    0.00 :   1e7fcc: cmp    %ebx,%r15d
+    0.00 :   1e7fcf: jae    1e81b5 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x395>
+    0.00 :   1e7fd5: cmpq   $0x0,0x38(%rsp)
+    0.00 :   1e7fdb: je     1e814c <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x32c>
+    0.02 :   1e7fe1: lea    -0x1(%rbp),%rax
+    0.00 :   1e7fe5: mov    %rax,0x38(%rsp)
+    0.00 :   1e7fea: mov    %ebp,%edx
+    0.00 :   1e7fec: and    $0x3,%edx
+    0.00 :   1e7fef: mov    %ebp,%r8d
+    0.00 :   1e7ff2: and    $0xfffffffc,%r8d
+    0.00 :   1e7ff6: mov    0x18(%rsp),%rax
+    0.00 :   1e7ffb: mov    0x20(%rsp),%rcx
+    0.00 :   1e8000: lea    (%rax,%rcx,1),%rsi
+    0.00 :   1e8004: add    $0x3,%rsi
+    0.02 :   1e8008: mov    %rsi,0x48(%rsp)
+    0.00 :   1e800d: add    %rcx,%rax
+    0.00 :   1e8010: mov    %rax,0x50(%rsp)
+    0.00 :   1e8015: mov    0x8(%rsp),%r11
+    0.00 :   1e801a: jmp    1e802c <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x20c>
+    0.00 :   1e801c: nopl   0x0(%rax)
+    0.00 :   1e8020: mov    %rbx,%r11
+    0.69 :   1e8023: cmp    %r11,%r12
+    0.00 :   1e8026: jae    1e81b5 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x395>
+    0.00 :   1e802c: mov    %r11,%rbx
+    0.12 :   1e802f: sub    %r12,%rbx
+    0.07 :   1e8032: shr    $1,%rbx
+    0.00 :   1e8035: add    %r12,%rbx
+    0.10 :   1e8038: mov    %rbx,%rdi
+    0.11 :   1e803b: imul   %rbp,%rdi
+    0.00 :   1e803f: mov    %rdi,%rsi
+    0.05 :   1e8042: add    %rbp,%rsi
+    0.17 :   1e8045: jb     1e831e <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x4fe>
+    0.00 :   1e804b: cmp    %r13,%rsi
+    0.12 :   1e804e: ja     1e831e <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x4fe>
+    0.00 :   1e8054: cmpq   $0x3,0x38(%rsp)
+    0.16 :   1e805a: jae    1e8070 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x250>
+    0.00 :   1e805c: xor    %r15d,%r15d
+    0.00 :   1e805f: xor    %esi,%esi
+    0.00 :   1e8061: jmp    1e80e7 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x2c7>
+    0.00 :   1e8066: cs nopw 0x0(%rax,%rax,1)
+    0.15 :   1e8070: mov    0x48(%rsp),%rax
+    0.01 :   1e8075: lea    (%rax,%rdi,1),%r9
+    0.00 :   1e8079: mov    $0x18,%r10d
+    0.00 :   1e807f: xor    %r15d,%r15d
+    0.04 :   1e8082: xor    %esi,%esi
+    0.00 :   1e8084: data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   1e8090: movzbl -0x3(%r9,%r15,1),%r14d
+   52.14 :   1e8096: lea    -0x18(%r10),%ecx
+    0.05 :   1e809a: and    $0x20,%cl
+    0.01 :   1e809d: shl    %cl,%r14
+    0.09 :   1e80a0: or     %rsi,%r14
+    0.05 :   1e80a3: movzbl -0x2(%r9,%r15,1),%esi
+    0.07 :   1e80a9: lea    -0x10(%r10),%ecx
+    0.01 :   1e80ad: and    $0x28,%cl
+    0.00 :   1e80b0: shl    %cl,%rsi
+    0.02 :   1e80b3: movzbl -0x1(%r9,%r15,1),%eax
+    0.06 :   1e80b9: lea    -0x8(%r10),%ecx
+    0.01 :   1e80bd: and    $0x30,%cl
+    0.07 :   1e80c0: shl    %cl,%rax
+    0.13 :   1e80c3: or     %rsi,%rax
+    0.07 :   1e80c6: or     %r14,%rax
+    0.08 :   1e80c9: movzbl (%r9,%r15,1),%esi
+    0.05 :   1e80ce: mov    %r10d,%ecx
+    0.01 :   1e80d1: and    $0x38,%cl
+    0.00 :   1e80d4: shl    %cl,%rsi
+    0.03 :   1e80d7: or     %rax,%rsi
+    0.13 :   1e80da: add    $0x4,%r15
+    0.00 :   1e80de: add    $0x20,%r10
+    0.00 :   1e80e2: cmp    %r15,%r8
+    0.00 :   1e80e5: jne    1e8090 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x270>
+    0.00 :   1e80e7: test   %rdx,%rdx
+    0.02 :   1e80ea: je     1e811d <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x2fd>
+    0.00 :   1e80ec: lea    0x0(,%r15,8),%r9
+    0.00 :   1e80f4: add    %r15,%rdi
+    0.01 :   1e80f7: add    0x50(%rsp),%rdi
+    0.03 :   1e80fc: xor    %r10d,%r10d
+    0.00 :   1e80ff: nop
+    0.00 :   1e8100: movzbl (%rdi,%r10,1),%eax
+    0.12 :   1e8105: mov    %r9d,%ecx
+    0.00 :   1e8108: and    $0x38,%cl
+    0.00 :   1e810b: shl    %cl,%rax
+    0.17 :   1e810e: or     %rax,%rsi
+    0.00 :   1e8111: inc    %r10
+    0.01 :   1e8114: add    $0x8,%r9
+    0.00 :   1e8118: cmp    %r10,%rdx
+    0.03 :   1e811b: jne    1e8100 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x2e0>
+    0.00 :   1e811d: cmp    0x10(%rsp),%rsi
+    0.17 :   1e8122: seta   %cl
+    0.35 :   1e8125: sbb    $0x0,%cl
+    0.24 :   1e8128: cmp    $0x1,%cl
+    0.03 :   1e812b: je     1e8020 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x200>
+    0.00 :   1e8131: movzbl %cl,%eax
+    0.55 :   1e8134: cmp    $0xff,%eax
+    0.02 :   1e8139: jne    1e8184 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x364>
+    0.00 :   1e813b: inc    %rbx
+    0.21 :   1e813e: mov    %rbx,%r12
+    0.05 :   1e8141: cmp    %r11,%r12
+    0.00 :   1e8144: jb     1e802c <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x20c>
+    0.00 :   1e814a: jmp    1e81b5 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x395>
+    0.00 :   1e814c: mov    0x10(%rsp),%rax
+    0.00 :   1e8151: neg    %rax
+    0.00 :   1e8154: seta   %al
+    0.00 :   1e8157: sbb    $0x0,%al
+    0.00 :   1e8159: je     1e8189 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x369>
+    0.00 :   1e815b: movzbl %al,%eax
+    0.00 :   1e815e: cmp    $0xff,%eax
+    0.00 :   1e8163: jne    1e8198 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x378>
+    0.00 :   1e8165: mov    0x8(%rsp),%rcx
+    0.00 :   1e816a: nopw   0x0(%rax,%rax,1)
+    0.00 :   1e8170: mov    %ecx,%eax
+    0.00 :   1e8172: sub    %r12d,%eax
+    0.00 :   1e8175: shr    $1,%eax
+    0.00 :   1e8177: add    %rax,%r12
+    0.00 :   1e817a: inc    %r12
+    0.00 :   1e817d: cmp    %rcx,%r12
+    0.00 :   1e8180: jb     1e8170 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x350>
+    0.00 :   1e8182: jmp    1e81b5 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x395>
+    0.00 :   1e8184: mov    %rbx,%r12
+    0.43 :   1e8187: jmp    1e81b5 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x395>
+    0.00 :   1e8189: mov    0x8(%rsp),%rax
+    0.00 :   1e818e: sub    %r12d,%eax
+    0.00 :   1e8191: shr    $1,%eax
+    0.00 :   1e8193: add    %rax,%r12
+    0.00 :   1e8196: jmp    1e81b5 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x395>
+    0.00 :   1e8198: mov    0x8(%rsp),%rax
+    0.00 :   1e819d: nopl   (%rax)
+    0.00 :   1e81a0: sub    %r12,%rax
+    0.00 :   1e81a3: mov    %rax,%rcx
+    0.00 :   1e81a6: shr    $1,%rcx
+    0.00 :   1e81a9: add    %r12,%rcx
+    0.00 :   1e81ac: cmp    $0x2,%rax
+    0.00 :   1e81b0: mov    %rcx,%rax
+    0.00 :   1e81b3: jae    1e81a0 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x380>
+    0.12 :   1e81b5: cmp    0x8(%rsp),%r12
+    0.73 :   1e81ba: jae    1e8305 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x4e5>
+    0.00 :   1e81c0: mov    %r12,%rdi
+    0.00 :   1e81c3: imul   %rbp,%rdi
+    0.00 :   1e81c7: lea    (%rdi,%rbp,1),%rsi
+    0.10 :   1e81cb: cmp    %r13,%rsi
+    0.00 :   1e81ce: ja     1e836d <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x54d>
+    0.00 :   1e81d4: test   %rbp,%rbp
+    0.00 :   1e81d7: je     1e81f2 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x3d2>
+    0.00 :   1e81d9: mov    %ebp,%eax
+    0.03 :   1e81db: and    $0x3,%eax
+    0.01 :   1e81de: cmp    $0x4,%rbp
+    0.00 :   1e81e2: jae    1e81f9 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x3d9>
+    0.00 :   1e81e4: xor    %esi,%esi
+    0.00 :   1e81e6: xor    %edx,%edx
+    0.00 :   1e81e8: mov    0x18(%rsp),%rbx
+    0.00 :   1e81ed: jmp    1e8277 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x457>
+    0.00 :   1e81f2: xor    %edx,%edx
+    0.00 :   1e81f4: jmp    1e82bc <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x49c>
+    0.00 :   1e81f9: and    $0xfffffffc,%ebp
+    0.01 :   1e81fc: mov    0x20(%rsp),%rcx
+    0.15 :   1e8201: add    %rdi,%rcx
+    0.13 :   1e8204: mov    0x18(%rsp),%rbx
+    0.00 :   1e8209: lea    (%rbx,%rcx,1),%r8
+    0.11 :   1e820d: add    $0x3,%r8
+    0.11 :   1e8211: mov    $0x18,%r9d
+    0.00 :   1e8217: xor    %esi,%esi
+    0.01 :   1e8219: xor    %edx,%edx
+    0.00 :   1e821b: nopl   0x0(%rax,%rax,1)
+    0.00 :   1e8220: movzbl -0x3(%r8,%rsi,1),%r10d
+    0.46 :   1e8226: lea    -0x18(%r9),%ecx
+    0.00 :   1e822a: and    $0x20,%cl
+    0.00 :   1e822d: shl    %cl,%r10
+    0.11 :   1e8230: or     %rdx,%r10
+    0.13 :   1e8233: movzbl -0x2(%r8,%rsi,1),%edx
+    0.00 :   1e8239: lea    -0x10(%r9),%ecx
+    0.01 :   1e823d: and    $0x28,%cl
+    0.00 :   1e8240: shl    %cl,%rdx
+    0.01 :   1e8243: movzbl -0x1(%r8,%rsi,1),%r11d
+    0.00 :   1e8249: lea    -0x8(%r9),%ecx
+    0.00 :   1e824d: and    $0x30,%cl
+    0.00 :   1e8250: shl    %cl,%r11
+    0.19 :   1e8253: or     %rdx,%r11
+    0.00 :   1e8256: or     %r10,%r11
+    0.10 :   1e8259: movzbl (%r8,%rsi,1),%edx
+    0.00 :   1e825e: mov    %r9d,%ecx
+    0.00 :   1e8261: and    $0x38,%cl
+    0.00 :   1e8264: shl    %cl,%rdx
+    0.11 :   1e8267: or     %r11,%rdx
+    0.01 :   1e826a: add    $0x4,%rsi
+    0.01 :   1e826e: add    $0x20,%r9
+    0.00 :   1e8272: cmp    %rsi,%rbp
+    0.00 :   1e8275: jne    1e8220 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x400>
+    0.00 :   1e8277: test   %rax,%rax
+    0.00 :   1e827a: je     1e82bc <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x49c>
+    0.00 :   1e827c: lea    0x0(,%rsi,8),%r8
+    0.00 :   1e8284: mov    0x20(%rsp),%rcx
+    0.00 :   1e8289: add    %rsi,%rcx
+    0.10 :   1e828c: add    %rdi,%rcx
+    0.01 :   1e828f: add    %rcx,%rbx
+    0.00 :   1e8292: xor    %esi,%esi
+    0.00 :   1e8294: data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   1e82a0: movzbl (%rbx,%rsi,1),%edi
+    0.02 :   1e82a4: mov    %r8d,%ecx
+    0.00 :   1e82a7: and    $0x38,%cl
+    0.00 :   1e82aa: shl    %cl,%rdi
+    0.09 :   1e82ad: or     %rdi,%rdx
+    0.00 :   1e82b0: inc    %rsi
+    0.00 :   1e82b3: add    $0x8,%r8
+    0.00 :   1e82b7: cmp    %rsi,%rax
+    0.00 :   1e82ba: jne    1e82a0 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x480>
+    0.00 :   1e82bc: cmp    0x10(%rsp),%rdx
+    0.02 :   1e82c1: jne    1e8305 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x4e5>
+    0.00 :   1e82c3: mov    0x30(%rsp),%r14
+    0.00 :   1e82c8: mov    %r14,%rdi
+    0.00 :   1e82cb: call   *0x11c517(%rip)        # 3047e8 <_DYNAMIC+0xb28>
+    0.00 :   1e82d1: cmp    %rdx,%r12
+    0.00 :   1e82d4: jae    1e837d <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x55d>
+    0.00 :   1e82da: mov    (%rax,%r12,4),%ebx
+   24.49 :   1e82de: mov    %r14,%rdi
+    0.08 :   1e82e1: mov    %r12,%rsi
+    0.00 :   1e82e4: call   *0x11c546(%rip)        # 304830 <_DYNAMIC+0xb70>
+    0.07 :   1e82ea: mov    0x28(%rsp),%rdi
+    0.00 :   1e82ef: mov    0x40(%rsp),%rcx
+    0.00 :   1e82f4: mov    %rcx,0x8(%rdi)
+    0.12 :   1e82f8: mov    %ebx,0x10(%rdi)
+    0.02 :   1e82fb: mov    %eax,0x14(%rdi)
+    0.18 :   1e82fe: mov    $0x1,%eax
+    0.09 :   1e8303: jmp    1e830c <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x4ec>
+    0.00 :   1e8305: xor    %eax,%eax
+    0.00 :   1e8307: mov    0x28(%rsp),%rdi
+    0.00 :   1e830c: mov    %rax,(%rdi)
+    0.07 :   1e830f: add    $0x78,%rsp
+    0.07 :   1e8313: pop    %rbx
+    0.00 :   1e8314: pop    %r12
+    0.00 :   1e8316: pop    %r13
+    0.01 :   1e8318: pop    %r14
+    0.01 :   1e831a: pop    %r15
+    0.01 :   1e831c: pop    %rbp
+    0.04 :   1e831d: ret
+    0.00 :   1e831e: lea    0x11669b(%rip),%rcx        # 2fe9c0 <anon.1399d7773c1a2be9ecaf3389095c206c.309.llvm.16513272338103500774+0x90>
+    0.00 :   1e8325: mov    %r13,%rdx
+    0.00 :   1e8328: call   *0x11bcba(%rip)        # 303fe8 <_DYNAMIC+0x328>
+    0.00 :   1e832e: movb   $0x8,0x58(%rsp)
+    0.00 :   1e8333: mov    %r13,0x68(%rsp)
+    0.00 :   1e8338: lea    -0x1c425d(%rip),%rdi        # 240e2 <anon.1399d7773c1a2be9ecaf3389095c206c.238.llvm.16513272338103500774+0x15>
+    0.00 :   1e833f: lea    0x116d42(%rip),%rcx        # 2ff088 <anon.1399d7773c1a2be9ecaf3389095c206c.502.llvm.16513272338103500774>
+    0.00 :   1e8346: lea    0x1161f3(%rip),%r8        # 2fe540 <anon.1399d7773c1a2be9ecaf3389095c206c.239.llvm.16513272338103500774+0x18>
+    0.00 :   1e834d: lea    0x58(%rsp),%rdx
+    0.00 :   1e8352: mov    $0x18,%esi
+    0.00 :   1e8357: call   *0x11bbfb(%rip)        # 303f58 <_DYNAMIC+0x298>
+    0.00 :   1e835d: ud2
+    0.00 :   1e835f: mov    $0xff,%al
+    0.00 :   1e8361: jmp    1e7f31 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x111>
+    0.00 :   1e8366: mov    $0xff,%al
+    0.00 :   1e8368: jmp    1e7e66 <constellation_core::ec_index::MmapEcIndex::lookup_v4+0x46>
+    0.00 :   1e836d: lea    0x116634(%rip),%rcx        # 2fe9a8 <anon.1399d7773c1a2be9ecaf3389095c206c.309.llvm.16513272338103500774+0x78>
+    0.00 :   1e8374: mov    %r13,%rdx
+    0.00 :   1e8377: call   *0x11bc6b(%rip)        # 303fe8 <_DYNAMIC+0x328>
+    0.00 :   1e837d: lea    0x11660c(%rip),%rax        # 2fe990 <anon.1399d7773c1a2be9ecaf3389095c206c.309.llvm.16513272338103500774+0x60>
+    0.00 :   1e8384: mov    %r12,%rdi
+    0.00 :   1e8387: mov    %rdx,%rsi
+    0.00 :   1e838a: mov    %rax,%rdx
+    0.00 :   1e838d: call   *0x11bb5d(%rip)        # 303ef0 <_DYNAMIC+0x230>
+    0.00 :   1e8393: mov    %rax,%rbx
+    0.00 :   1e8396: lea    0x58(%rsp),%rdi
+    0.00 :   1e839b: call   1f8f50 <core::ptr::drop_in_place<constellation_core::ec_index::EcIndexError>>
+    0.00 :   1e83a0: mov    %rbx,%rdi
+    0.00 :   1e83a3: call   2f77d0 <_Unwind_Resume@plt>
+    0.00 :   1e83a8: call   *0x11bcfa(%rip)        # 3040a8 <_DYNAMIC+0x3e8>
