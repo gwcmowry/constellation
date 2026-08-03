@@ -1,0 +1,9 @@
+Command attempted:
+
+perf record -o experiments/2026-08-02-ptrhash-index/perf.data.ptrhash-mapping -F 999 -g -- env RAYON_NUM_THREADS=12 taskset -c 0-11 target/release/constellation map --index /tmp/constellation_ptrhash_v9_audited.ecidx --r1 /tmp/constellation_audit_pbmc10m_R1.fastq.gz --r2 /tmp/constellation_audit_pbmc10m_R2.fastq.gz --batch-size 65536 --skip-assignments --out /tmp/ptrhash-profile.cstrad
+
+Result:
+
+No samples were collected. The kernel rejected performance monitoring because
+kernel.perf_event_paranoid was 4. The elevated tool retry encountered the same
+host setting. Run the command with sudo on the host to collect the raw profile.

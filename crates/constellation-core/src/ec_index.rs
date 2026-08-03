@@ -3,12 +3,14 @@ use crate::dna::{
 };
 use crate::GeneId;
 use bytemuck::{Pod, Zeroable};
+use epserde::prelude::*;
 use memmap2::{Advice, Mmap};
+use ptr_hash::{bucket_fn::Linear, hash::Xxh3Int, PtrHash, PtrHashParams};
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::cmp::Reverse;
 use std::collections::{BTreeMap, BinaryHeap};
 use std::fs::File;
-use std::io::{BufRead, BufReader, BufWriter, Read, Write};
+use std::io::{BufRead, BufReader, BufWriter, Cursor, Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
@@ -20,6 +22,7 @@ const EC_MMAP_VERSION_V5: u32 = 5;
 const EC_MMAP_VERSION_V6: u32 = 6;
 const EC_MMAP_VERSION: u32 = 7;
 const EC_MMAP_VERSION_V8: u32 = 8;
+const EC_MMAP_VERSION_V9: u32 = 9;
 const EC_PREFIX_BITS: u8 = 24;
 const EC_SAMPLED_PREFIX_BITS: u8 = 27;
 const EC_V6_BLOCK_SIZE: usize = 32;
@@ -35,6 +38,8 @@ const EC_CLASS_INTRON: u8 = 2;
 const EC_CLASS_ANTISENSE: u8 = 4;
 const EC_V4_TARGET_WIDTH: usize = 5;
 const EC_V5_TARGET_WIDTH: usize = 5;
+
+type EcPtrHash = PtrHash<u64, Linear, Vec<u32>, Xxh3Int, Vec<u8>, false, false>;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Zeroable, Pod)]
 #[repr(C)]
@@ -61,7 +66,6 @@ pub enum LoadedEcIndex {
     Mmap(MmapEcIndex),
 }
 
-#[derive(Debug)]
 pub struct MmapEcIndex {
     mmap: Mmap,
     header: EcMmapHeader,
@@ -71,8 +75,20 @@ pub struct MmapEcIndex {
     header_v6: Option<EcMmapHeaderV6>,
     header_v7: Option<EcMmapHeaderV7>,
     header_v8: Option<EcMmapHeaderV8>,
+    header_v9: Option<EcMmapHeaderV9>,
+    ptrhash: Option<EcPtrHash>,
     prefix_offsets: Vec<u32>,
     seed_scores: Vec<u16>,
+}
+
+impl std::fmt::Debug for MmapEcIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MmapEcIndex")
+            .field("header", &self.header)
+            .field("sampling", &self.sampling)
+            .field("has_ptrhash", &self.ptrhash.is_some())
+            .finish_non_exhaustive()
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -303,7 +319,39 @@ struct EcMmapHeaderV8 {
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Zeroable, Pod)]
 #[repr(C)]
+struct EcMmapHeaderV9 {
+    magic: [u8; 8],
+    version: u32,
+    k: u32,
+    sampling_marker: u32,
+    sampling_s: u32,
+    num_genes: u64,
+    num_kmers: u64,
+    num_slots: u64,
+    num_ec_offsets: u64,
+    num_ec_targets: u64,
+    ptrhash_offset: u64,
+    ptrhash_len: u64,
+    genes_offset: u64,
+    slots_offset: u64,
+    ec_offsets_offset: u64,
+    ec_targets_offset: u64,
+    gene_names_offset: u64,
+    gene_names_len: u64,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Zeroable, Pod)]
+#[repr(C)]
 struct EcV5KmerPayload {
+    target_start: u32,
+    gene_df: u16,
+    target_len: u16,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Zeroable, Pod)]
+#[repr(C)]
+struct EcPtrHashSlot {
+    kmer_code: u64,
     target_start: u32,
     gene_df: u16,
     target_len: u16,
@@ -504,6 +552,32 @@ impl From<EcMmapHeaderV8> for EcMmapHeader {
             ec_class_bits_len: 0,
             prefix_offsets_offset: header.slot_offsets_offset,
             prefix_offsets_len: header.slot_offsets_len,
+        }
+    }
+}
+
+impl From<EcMmapHeaderV9> for EcMmapHeader {
+    fn from(header: EcMmapHeaderV9) -> Self {
+        Self {
+            magic: header.magic,
+            version: header.version,
+            k: header.k,
+            prefix_bits: 0,
+            _pad0: 0,
+            num_genes: header.num_genes,
+            num_kmers: header.num_kmers,
+            num_ec_offsets: header.num_ec_offsets,
+            num_ec_gene_ids: header.num_ec_targets,
+            genes_offset: header.genes_offset,
+            kmers_offset: header.slots_offset,
+            ec_offsets_offset: header.ec_offsets_offset,
+            ec_gene_ids_offset: header.ec_targets_offset,
+            gene_names_offset: header.gene_names_offset,
+            gene_names_len: header.gene_names_len,
+            ec_class_bits_offset: 0,
+            ec_class_bits_len: 0,
+            prefix_offsets_offset: 0,
+            prefix_offsets_len: 0,
         }
     }
 }
@@ -758,6 +832,8 @@ pub enum EcIndexError {
     SampledLegacyFormat,
     #[error("EC index field is too large: {0}")]
     TooLarge(&'static str),
+    #[error("PtrHash serialization error: {0}")]
+    PtrHash(String),
 }
 
 impl EcIndex {
@@ -1446,6 +1522,7 @@ impl LoadedEcIndex {
                     || index.header_v6.is_some()
                     || index.header_v7.is_some()
                     || index.header_v8.is_some()
+                    || index.header_v9.is_some()
                 {
                     index.for_each_ec_target_range(
                         hit.target_start,
@@ -1601,6 +1678,7 @@ impl MmapEcIndex {
         let mut header_v6 = None;
         let mut header_v7 = None;
         let mut header_v8 = None;
+        let mut header_v9 = None;
         let header = if header_v1.version == 1 {
             EcMmapHeader::from(header_v1)
         } else if header_v1.version == 2 {
@@ -1655,10 +1733,25 @@ impl MmapEcIndex {
                 *bytemuck::from_bytes(&mmap[..std::mem::size_of::<EcMmapHeaderV8>()]);
             header_v8 = Some(v8);
             EcMmapHeader::from(v8)
+        } else if header_v1.version == EC_MMAP_VERSION_V9 {
+            if mmap.len() < std::mem::size_of::<EcMmapHeaderV9>() {
+                return Err(EcIndexError::Truncated);
+            }
+            let v9: EcMmapHeaderV9 =
+                *bytemuck::from_bytes(&mmap[..std::mem::size_of::<EcMmapHeaderV9>()]);
+            header_v9 = Some(v9);
+            EcMmapHeader::from(v9)
         } else {
             return Err(EcIndexError::UnsupportedVersion(header_v1.version));
         };
-        let sampling = if let Some(v4) = header_v4 {
+        let sampling = if let Some(v9) = header_v9 {
+            match v9.sampling_marker {
+                EC_V4_SAMPLING_MARKER => EcSampling::ClosedSyncmer {
+                    s: u8::try_from(v9.sampling_s).unwrap_or(0),
+                },
+                _ => EcSampling::AllKmers,
+            }
+        } else if let Some(v4) = header_v4 {
             match v4._pad0 {
                 EC_V4_SAMPLING_MARKER => EcSampling::ClosedSyncmer {
                     s: u8::try_from(v4._pad1).unwrap_or(0),
@@ -1672,6 +1765,21 @@ impl MmapEcIndex {
             EcSampling::AllKmers
         };
         sampling.validate(header.k as u8)?;
+        let ptrhash = if let Some(v9) = header_v9 {
+            let start = usize::try_from(v9.ptrhash_offset).map_err(|_| EcIndexError::Truncated)?;
+            let len = usize::try_from(v9.ptrhash_len).map_err(|_| EcIndexError::Truncated)?;
+            let end = start.checked_add(len).ok_or(EcIndexError::Truncated)?;
+            let bytes = mmap.get(start..end).ok_or(EcIndexError::Truncated)?;
+            let mut reader = Cursor::new(bytes);
+            let ptrhash = unsafe { EcPtrHash::deserialize_full(&mut reader) }
+                .map_err(|err| EcIndexError::PtrHash(err.to_string()))?;
+            if ptrhash.n() as u64 != v9.num_kmers || ptrhash.max_index() as u64 != v9.num_slots {
+                return Err(EcIndexError::Truncated);
+            }
+            Some(ptrhash)
+        } else {
+            None
+        };
         let mut this = Self {
             mmap,
             header,
@@ -1681,6 +1789,8 @@ impl MmapEcIndex {
             header_v6,
             header_v7,
             header_v8,
+            header_v9,
+            ptrhash,
             prefix_offsets: Vec::new(),
             seed_scores: Vec::new(),
         };
@@ -1693,6 +1803,14 @@ impl MmapEcIndex {
     }
 
     fn save_mmap(&self, path: impl AsRef<Path>) -> Result<(), EcIndexError> {
+        if ec_ptrhash_enabled() && self.header_v4.is_some() {
+            return save_mmap_v9_from_mmap_v4(path, self);
+        }
+        if self.header_v9.is_some() {
+            let mut file = File::create(path)?;
+            file.write_all(&self.mmap)?;
+            return Ok(());
+        }
         if self.sampling.is_sampled() {
             let mut file = File::create(path)?;
             file.write_all(&self.mmap)?;
@@ -1763,7 +1881,14 @@ impl MmapEcIndex {
         } else {
             self.slice::<u32>(self.header.ec_offsets_offset, self.header.num_ec_offsets)?;
         }
-        if let Some(v8) = self.header_v8 {
+        if let Some(v9) = self.header_v9 {
+            self.bytes(v9.ptrhash_offset, v9.ptrhash_len)?;
+            self.slice::<EcPtrHashSlot>(v9.slots_offset, v9.num_slots)?;
+            self.bytes(
+                v9.ec_targets_offset,
+                v9.num_ec_targets * EC_V5_TARGET_WIDTH as u64,
+            )?;
+        } else if let Some(v8) = self.header_v8 {
             let suffix_width = usize::try_from(v8.suffix_width)
                 .map_err(|_| EcIndexError::TooLarge("EC v8 suffix width"))?;
             if v8.suffix_bits > 48 || suffix_width > 8 || v8.group_size == 0 {
@@ -1854,6 +1979,7 @@ impl MmapEcIndex {
             && self.header_v6.is_none()
             && self.header_v7.is_none()
             && self.header_v8.is_none()
+            && self.header_v9.is_none()
         {
             self.bytes(
                 self.header.ec_class_bits_offset,
@@ -1903,6 +2029,14 @@ impl MmapEcIndex {
     }
 
     fn lookup(&self, kmer_code: u64) -> Option<EcKmerRecord> {
+        if self.header_v9.is_some() {
+            let hit = self.lookup_v9(kmer_code)?;
+            return Some(EcKmerRecord {
+                kmer_code,
+                ec_id: self.v5_ec_id_for_target_start(hit.target_start)?,
+                gene_df: hit.gene_df,
+            });
+        }
         if self.header_v4.is_some() {
             return self.lookup_v4(kmer_code);
         }
@@ -1947,6 +2081,9 @@ impl MmapEcIndex {
 
     #[inline]
     fn lookup_hit(&self, kmer_code: u64) -> Option<EcLookupHit> {
+        if self.header_v9.is_some() {
+            return self.lookup_v9(kmer_code);
+        }
         if self.header_v8.is_some() {
             return self.lookup_v8(kmer_code);
         }
@@ -1989,6 +2126,23 @@ impl MmapEcIndex {
                 target_len: end.saturating_sub(start),
                 ec_id: Some(record.ec_id),
             }
+        })
+    }
+
+    #[inline]
+    fn lookup_v9(&self, kmer_code: u64) -> Option<EcLookupHit> {
+        let ptrhash = self.ptrhash.as_ref()?;
+        let idx = ptrhash.index(&kmer_code);
+        let slot = *self.v9_slots().get(idx)?;
+        if slot.kmer_code != kmer_code || slot.target_len == 0 {
+            return None;
+        }
+        Some(EcLookupHit {
+            kmer_code,
+            gene_df: slot.gene_df as u32,
+            target_start: slot.target_start,
+            target_len: slot.target_len as u32,
+            ec_id: None,
         })
     }
 
@@ -2255,7 +2409,8 @@ impl MmapEcIndex {
                 && self.header_v5.is_none()
                 && self.header_v6.is_none()
                 && self.header_v7.is_none()
-                && self.header_v8.is_none(),
+                && self.header_v8.is_none()
+                && self.header_v9.is_none(),
             "packed EC gene targets are only available through iteration"
         );
         let offsets = self.ec_offsets();
@@ -2273,7 +2428,8 @@ impl MmapEcIndex {
                 && self.header_v5.is_none()
                 && self.header_v6.is_none()
                 && self.header_v7.is_none()
-                && self.header_v8.is_none(),
+                && self.header_v8.is_none()
+                && self.header_v9.is_none(),
             "packed EC class targets are only available through iteration"
         );
         let offsets = self.ec_offsets();
@@ -2305,7 +2461,8 @@ impl MmapEcIndex {
             self.header_v5.is_none()
                 && self.header_v6.is_none()
                 && self.header_v7.is_none()
-                && self.header_v8.is_none(),
+                && self.header_v8.is_none()
+                && self.header_v9.is_none(),
             "packed EC targets are addressed by range, not ec_id"
         );
         let genes = self.ec_genes(ec_id);
@@ -2329,7 +2486,8 @@ impl MmapEcIndex {
                 && self.header_v5.is_none()
                 && self.header_v6.is_none()
                 && self.header_v7.is_none()
-                && self.header_v8.is_none(),
+                && self.header_v8.is_none()
+                && self.header_v9.is_none(),
             "packed EC kmer records are stored separately"
         );
         self.slice(self.header.kmers_offset, self.header.num_kmers)
@@ -2359,7 +2517,8 @@ impl MmapEcIndex {
                 && self.header_v5.is_none()
                 && self.header_v6.is_none()
                 && self.header_v7.is_none()
-                && self.header_v8.is_none(),
+                && self.header_v8.is_none()
+                && self.header_v9.is_none(),
             "packed EC gene targets are stored as packed target records"
         );
         self.slice(self.header.ec_gene_ids_offset, self.header.num_ec_gene_ids)
@@ -2377,7 +2536,8 @@ impl MmapEcIndex {
                 && self.header_v5.is_none()
                 && self.header_v6.is_none()
                 && self.header_v7.is_none()
-                && self.header_v8.is_none(),
+                && self.header_v8.is_none()
+                && self.header_v9.is_none(),
             "packed EC class bits are stored as packed target records"
         );
         self.bytes(
@@ -2444,6 +2604,12 @@ impl MmapEcIndex {
         let v5 = self.header_v5.expect("v5/v6 header");
         self.slice(v5.payloads_offset, v5.num_kmers)
             .expect("validated EC v5/v6 payloads")
+    }
+
+    fn v9_slots(&self) -> &[EcPtrHashSlot] {
+        let v9 = self.header_v9.expect("v9 header");
+        self.slice(v9.slots_offset, v9.num_slots)
+            .expect("validated EC v9 slots")
     }
 
     fn v8_group_offsets(&self) -> &[u32] {
@@ -2678,7 +2844,9 @@ impl MmapEcIndex {
         target_len: u32,
         mut f: impl FnMut(GeneId, u8),
     ) {
-        let (ec_targets_offset, num_ec_targets, target_width) = if let Some(v8) = self.header_v8 {
+        let (ec_targets_offset, num_ec_targets, target_width) = if let Some(v9) = self.header_v9 {
+            (v9.ec_targets_offset, v9.num_ec_targets, EC_V5_TARGET_WIDTH)
+        } else if let Some(v8) = self.header_v8 {
             (v8.ec_targets_offset, v8.num_ec_targets, EC_V5_TARGET_WIDTH)
         } else if let Some(v7) = self.header_v7 {
             (
@@ -2752,6 +2920,7 @@ fn accumulate_ec_seq(
                 || mmap.header_v6.is_some()
                 || mmap.header_v7.is_some()
                 || mmap.header_v8.is_some()
+                || mmap.header_v9.is_some()
     );
     for_each_selected_kmer(encoded, index.k(), index.sampling(), stride, |kmer| {
         stats.seed_lookups += 1;
@@ -2784,6 +2953,7 @@ fn accumulate_ec_seq_dense(
                 || mmap.header_v6.is_some()
                 || mmap.header_v7.is_some()
                 || mmap.header_v8.is_some()
+                || mmap.header_v9.is_some()
     );
     for_each_selected_kmer(encoded, index.k(), index.sampling(), stride, |kmer| {
         stats.seed_lookups += 1;
@@ -3209,6 +3379,13 @@ fn save_mmap_locality_from_slices(
 fn ec_mph_enabled() -> bool {
     matches!(
         std::env::var("CONSTELLATION_EC_MPH").as_deref(),
+        Ok("1") | Ok("true") | Ok("TRUE") | Ok("yes") | Ok("YES")
+    )
+}
+
+fn ec_ptrhash_enabled() -> bool {
+    matches!(
+        std::env::var("CONSTELLATION_EC_PTRHASH").as_deref(),
         Ok("1") | Ok("true") | Ok("TRUE") | Ok("yes") | Ok("YES")
     )
 }
@@ -4782,6 +4959,185 @@ fn save_mmap_v7_from_mmap_v5(
     Ok(())
 }
 
+fn save_mmap_v9_from_mmap_v4(
+    path: impl AsRef<Path>,
+    index: &MmapEcIndex,
+) -> Result<(), EcIndexError> {
+    let v4 = index.header_v4.ok_or(EcIndexError::Truncated)?;
+    if v4.suffix_bits > 64 || v4.suffix_width > 8 {
+        return Err(EcIndexError::Truncated);
+    }
+    let num_kmers =
+        usize::try_from(v4.num_kmers).map_err(|_| EcIndexError::TooLarge("EC v9 kmer count"))?;
+    let suffix_width = v4.suffix_width as usize;
+    let suffixes = index.v4_suffixes();
+    let prefix_offsets = index.prefix_offsets();
+    let mut keys = Vec::with_capacity(num_kmers);
+    for (prefix, window) in prefix_offsets.windows(2).enumerate() {
+        let start = window[0] as usize;
+        let end = window[1] as usize;
+        if end < start || end > num_kmers {
+            return Err(EcIndexError::Truncated);
+        }
+        for idx in start..end {
+            let suffix_start = idx
+                .checked_mul(suffix_width)
+                .ok_or(EcIndexError::TooLarge("EC v9 suffix offset"))?;
+            let suffix_end = suffix_start + suffix_width;
+            let suffix = read_packed_le(
+                suffixes
+                    .get(suffix_start..suffix_end)
+                    .ok_or(EcIndexError::Truncated)?,
+            );
+            keys.push(((prefix as u64) << v4.suffix_bits) | suffix);
+        }
+    }
+    if keys.len() != num_kmers {
+        return Err(EcIndexError::Truncated);
+    }
+
+    let ptrhash = EcPtrHash::try_new(&keys, PtrHashParams::default_fast())
+        .ok_or_else(|| EcIndexError::PtrHash("construction failed after ten seeds".into()))?;
+    let mut slots = vec![EcPtrHashSlot::default(); ptrhash.max_index()];
+    let ec_ids = index.v4_ec_ids();
+    let ec_offsets = index.ec_offsets();
+    for (record_idx, &key) in keys.iter().enumerate() {
+        let ec_id = *ec_ids.get(record_idx).ok_or(EcIndexError::Truncated)? as usize;
+        let start = *ec_offsets.get(ec_id).ok_or(EcIndexError::Truncated)?;
+        let end = *ec_offsets.get(ec_id + 1).ok_or(EcIndexError::Truncated)?;
+        let target_len = end.checked_sub(start).ok_or(EcIndexError::Truncated)?;
+        if target_len == 0 {
+            return Err(EcIndexError::Truncated);
+        }
+        let slot_idx = ptrhash.index(&key);
+        let slot = slots.get_mut(slot_idx).ok_or(EcIndexError::Truncated)?;
+        if slot.target_len != 0 {
+            return Err(EcIndexError::PtrHash(
+                "two retained keys mapped to one slot".into(),
+            ));
+        }
+        *slot = EcPtrHashSlot {
+            kmer_code: key,
+            target_start: start,
+            gene_df: u16::try_from(index.v4_gene_df(record_idx))
+                .map_err(|_| EcIndexError::TooLarge("EC v9 gene df"))?,
+            target_len: u16::try_from(target_len)
+                .map_err(|_| EcIndexError::TooLarge("EC v9 target length"))?,
+        };
+    }
+
+    for (record_idx, &key) in keys.iter().enumerate() {
+        let ec_id = ec_ids[record_idx] as usize;
+        let start = ec_offsets[ec_id];
+        let end = ec_offsets[ec_id + 1];
+        let expected = EcPtrHashSlot {
+            kmer_code: key,
+            target_start: start,
+            gene_df: u16::try_from(index.v4_gene_df(record_idx))
+                .map_err(|_| EcIndexError::TooLarge("EC v9 gene df"))?,
+            target_len: u16::try_from(end - start)
+                .map_err(|_| EcIndexError::TooLarge("EC v9 target length"))?,
+        };
+        if slots[ptrhash.index(&key)] != expected {
+            return Err(EcIndexError::PtrHash(
+                "positive-key verification failed".into(),
+            ));
+        }
+    }
+    let total_bits = index.k().saturating_mul(2);
+    let kmer_mask = if total_bits == 64 {
+        u64::MAX
+    } else {
+        (1_u64 << total_bits) - 1
+    };
+    let mut random_state = 0x6a09_e667_f3bc_c909_u64;
+    let mut negatives_checked = 0_usize;
+    while negatives_checked < 1_000_000 {
+        random_state = splitmix64(random_state);
+        let candidate = random_state & kmer_mask;
+        if index.lookup_v4(candidate).is_some() {
+            continue;
+        }
+        let slot = slots[ptrhash.index(&candidate)];
+        if slot.target_len != 0 && slot.kmer_code == candidate {
+            return Err(EcIndexError::PtrHash(
+                "negative-key verification failed".into(),
+            ));
+        }
+        negatives_checked += 1;
+    }
+
+    let header_len = std::mem::size_of::<EcMmapHeaderV9>() as u64;
+    let ptrhash_offset = align_up(header_len, 64);
+    let mut file = File::create(path)?;
+    file.write_all(&vec![0_u8; header_len as usize])?;
+    write_padding(&mut file, header_len, ptrhash_offset)?;
+    unsafe { ptrhash.serialize(&mut file) }
+        .map_err(|err| EcIndexError::PtrHash(err.to_string()))?;
+    let ptrhash_end = file.stream_position()?;
+    let ptrhash_len = ptrhash_end
+        .checked_sub(ptrhash_offset)
+        .ok_or(EcIndexError::Truncated)?;
+
+    let gene_metas = index.genes();
+    let gene_names = index.gene_names();
+    let genes_offset = align_up(ptrhash_end, 8);
+    write_padding(&mut file, ptrhash_end, genes_offset)?;
+    write_pod_slice(&mut file, gene_metas)?;
+    let genes_end = genes_offset + byte_len::<EcGeneMeta>(gene_metas.len());
+    let slots_offset = align_up(genes_end, 8);
+    write_padding(&mut file, genes_end, slots_offset)?;
+    write_pod_slice(&mut file, &slots)?;
+    let slots_end = slots_offset + byte_len::<EcPtrHashSlot>(slots.len());
+    let ec_offsets_offset = align_up(slots_end, 4);
+    write_padding(&mut file, slots_end, ec_offsets_offset)?;
+    write_pod_slice(&mut file, ec_offsets)?;
+    let ec_offsets_end = ec_offsets_offset + byte_len::<u32>(ec_offsets.len());
+    let ec_targets_offset = align_up(ec_offsets_end, 4);
+    write_padding(&mut file, ec_offsets_end, ec_targets_offset)?;
+    let targets = index.bytes(
+        v4.ec_targets_offset,
+        checked_mul_u64(
+            v4.num_ec_targets,
+            EC_V4_TARGET_WIDTH as u64,
+            "EC v9 targets",
+        )?,
+    )?;
+    file.write_all(targets)?;
+    let targets_end = ec_targets_offset + targets.len() as u64;
+    let gene_names_offset = align_up(targets_end, 8);
+    write_padding(&mut file, targets_end, gene_names_offset)?;
+    file.write_all(gene_names)?;
+
+    let (sampling_marker, sampling_s) = match index.sampling {
+        EcSampling::AllKmers => (0, 0),
+        EcSampling::ClosedSyncmer { s } => (EC_V4_SAMPLING_MARKER, s as u32),
+    };
+    let header = EcMmapHeaderV9 {
+        magic: EC_MMAP_MAGIC,
+        version: EC_MMAP_VERSION_V9,
+        k: index.k() as u32,
+        sampling_marker,
+        sampling_s,
+        num_genes: gene_metas.len() as u64,
+        num_kmers: keys.len() as u64,
+        num_slots: slots.len() as u64,
+        num_ec_offsets: ec_offsets.len() as u64,
+        num_ec_targets: v4.num_ec_targets,
+        ptrhash_offset,
+        ptrhash_len,
+        genes_offset,
+        slots_offset,
+        ec_offsets_offset,
+        ec_targets_offset,
+        gene_names_offset,
+        gene_names_len: gene_names.len() as u64,
+    };
+    file.seek(SeekFrom::Start(0))?;
+    file.write_all(bytemuck::bytes_of(&header))?;
+    Ok(())
+}
+
 fn save_mmap_v5_from_mmap_v4(
     path: impl AsRef<Path>,
     index: &MmapEcIndex,
@@ -6081,6 +6437,52 @@ mod tests {
             sampled.save(legacy.path()),
             Err(EcIndexError::SampledLegacyFormat)
         ));
+    }
+
+    #[test]
+    fn ptrhash_v9_round_trips_sampled_v4_lookup_and_mapping() {
+        let mut fasta = tempfile::NamedTempFile::new().unwrap();
+        writeln!(
+            fasta,
+            ">tx1|gene:GENE_A\nACGTTGCATGTCGCATGATGCATGAGAGCT\n>tx2|gene:GENE_B\nTTGACCGTACCGATGCTAGCTTACGGTACA"
+        )
+        .unwrap();
+        let index = EcIndex::build_from_fasta_with_t2g_and_sampling(
+            fasta.path(),
+            None::<&Path>,
+            11,
+            EcSampling::ClosedSyncmer { s: 7 },
+        )
+        .unwrap();
+        let v4_path = tempfile::NamedTempFile::new().unwrap();
+        index.save_mmap(v4_path.path()).unwrap();
+        let v4 = LoadedEcIndex::load(v4_path.path()).unwrap();
+        let LoadedEcIndex::Mmap(v4_mmap) = &v4 else {
+            panic!("expected mmap index");
+        };
+        let v9_path = tempfile::NamedTempFile::new().unwrap();
+        save_mmap_v9_from_mmap_v4(v9_path.path(), v4_mmap).unwrap();
+        let v9 = LoadedEcIndex::load(v9_path.path()).unwrap();
+        assert_eq!(v9.sampling(), index.sampling);
+        assert!(matches!(
+            &v9,
+            LoadedEcIndex::Mmap(mmap)
+                if mmap.header_v9.is_some() && mmap.ptrhash.is_some()
+        ));
+        for record in &index.kmers {
+            assert_eq!(v9.lookup(record.kmer_code), Some(*record));
+            assert!(v9.lookup_hit(record.kmer_code).is_some());
+        }
+        for code in 0..4096_u64 {
+            if index.lookup(code).is_none() {
+                assert_eq!(v9.lookup(code), None);
+            }
+        }
+        let seq = b"ACGTTGCATGTCGCATGATGCATGAGAGCT";
+        assert_eq!(
+            v9.map_read_sparse(seq, false, 12, u32::MAX),
+            index.map_read_sparse(seq, false, 12, u32::MAX)
+        );
     }
 
     #[test]

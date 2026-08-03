@@ -1,0 +1,23 @@
+	Command being timed: "env CONSTELLATION_EC_PTRHASH=1 RAYON_NUM_THREADS=12 taskset -c 0-11 target/release/constellation convert-ec-index --index /tmp/constellation_syncmer_hashed_s20_p27.ecidx --out /tmp/constellation_ptrhash_v9_audited.ecidx"
+	User time (seconds): 82.56
+	System time (seconds): 4.48
+	Percent of CPU this job got: 141%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:01.50
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 10316360
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 3
+	Minor (reclaiming a frame) page faults: 2384953
+	Voluntary context switches: 3627
+	Involuntary context switches: 2646
+	Swaps: 0
+	File system inputs: 256
+	File system outputs: 8647760
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
