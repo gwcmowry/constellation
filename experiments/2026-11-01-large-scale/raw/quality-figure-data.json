@@ -1,0 +1,135 @@
+{
+  "source_sha256": {
+    "experiments/2026-10-30-consensus/raw/heldout-accuracy.json": "1966a4659470c2541884f7d9e091faebdbccbf34b7d2ab78507a1f3d44689447",
+    "experiments/2026-10-30-consensus/raw/heldout150-accuracy.json": "a399de456f4431225acbf8dd84210958fc4c56a5afd4d94a497e12bb0bf7b4ac",
+    "experiments/2026-10-31-build-count/raw/validation.json": "01d4269e81e529a0f119c25d0fa4f7530f1fd69462a0f79895669cae89375848",
+    "experiments/2026-10-31-build-count/raw/quality.json": "7713d32dcbd60ca5de3d2b5dd3faa6e3623bf2e24cfba8969114790ff46e51c9"
+  },
+  "rows": [
+    {
+      "length": 91,
+      "method": "constellation-consensus",
+      "name": "Constellation",
+      "color": "#087F8C",
+      "marker": "o",
+      "y": 0,
+      "precision": 99.94524476891988,
+      "recall": 85.18111111111111,
+      "positives": 360000,
+      "unique": 306820,
+      "correct_unique": 306652,
+      "wrong_unique": 168,
+      "candidate_recall": 94.84,
+      "intergenic_assigned": 6.986666666666666,
+      "random_assigned": 0
+    },
+    {
+      "length": 91,
+      "method": "piscem-forward",
+      "name": "piscem",
+      "color": "#3D64AE",
+      "marker": "s",
+      "y": 1,
+      "precision": 99.96089813487282,
+      "recall": 87.34444444444445,
+      "positives": 360000,
+      "unique": 314563,
+      "correct_unique": 314440,
+      "wrong_unique": 123,
+      "candidate_recall": 96.65916666666666,
+      "intergenic_assigned": 6.3,
+      "random_assigned": 0
+    },
+    {
+      "length": 91,
+      "method": "kallisto-forward",
+      "name": "kallisto",
+      "color": "#B56A29",
+      "marker": "D",
+      "y": 2,
+      "precision": 99.95135506352456,
+      "recall": 87.32527777777777,
+      "positives": 360000,
+      "unique": 314524,
+      "correct_unique": 314371,
+      "wrong_unique": 153,
+      "candidate_recall": 96.68194444444444,
+      "intergenic_assigned": 7.093333333333334,
+      "random_assigned": 0
+    },
+    {
+      "length": 150,
+      "method": "constellation-consensus",
+      "name": "Constellation",
+      "color": "#087F8C",
+      "marker": "o",
+      "y": 4,
+      "precision": 99.98408080707186,
+      "recall": 88.97694444444444,
+      "positives": 360000,
+      "unique": 320368,
+      "correct_unique": 320317,
+      "wrong_unique": 51,
+      "candidate_recall": 97.2725,
+      "intergenic_assigned": 6.086666666666667,
+      "random_assigned": 0
+    },
+    {
+      "length": 150,
+      "method": "piscem-forward",
+      "name": "piscem",
+      "color": "#3D64AE",
+      "marker": "s",
+      "y": 5,
+      "precision": 99.98870269252494,
+      "recall": 88.50666666666666,
+      "positives": 360000,
+      "unique": 318660,
+      "correct_unique": 318624,
+      "wrong_unique": 36,
+      "candidate_recall": 96.3,
+      "intergenic_assigned": 5.55,
+      "random_assigned": 0
+    },
+    {
+      "length": 150,
+      "method": "kallisto-forward",
+      "name": "kallisto",
+      "color": "#B56A29",
+      "marker": "D",
+      "y": 6,
+      "precision": 99.98399507927142,
+      "recall": 88.50027777777778,
+      "positives": 360000,
+      "unique": 318652,
+      "correct_unique": 318601,
+      "wrong_unique": 51,
+      "candidate_recall": 96.31055555555555,
+      "intergenic_assigned": 6.236666666666666,
+      "random_assigned": 0
+    }
+  ],
+  "constellation_policy": "read-level consensus, as enabled by map --splicing-state",
+  "precision_definition": "correct unique source-gene calls / unique calls on positive reads",
+  "recall_definition": "correct unique source-gene calls / all positive reads",
+  "recall_difference_vs_piscem_percentage_points": [
+    -2.163333333333341,
+    0.4702777777777811
+  ],
+  "optimization_regression": {
+    "pairs": 10000000,
+    "mapping_bytes_identical": true,
+    "seven_matrices_bytes_identical": true
+  },
+  "limitations": [
+    "Controlled simulated source origins, not biological PBMC error rates.",
+    "Read-level mapping, not downstream molecule/UMI accuracy.",
+    "Error variants share source windows; no independent-replicate error bars are claimed.",
+    "Shared sequence can make the sampled source origin unidentifiable."
+  ],
+  "output_pixels": [
+    2000,
+    1500
+  ],
+  "matplotlib_version": "3.10.7"
+}

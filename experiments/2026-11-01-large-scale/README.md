@@ -86,6 +86,30 @@ GB denotes decimal disk size; GiB denotes binary memory size.
 [Raw build results](../2026-11-01-competitor-stages/raw/summary.json).
 
 
+### Mapping quality on known-source holdouts
+
+![Controlled holdout gene-assignment precision and correct unique recall at 91 bp and 150 bp](figures/mapping_quality.png)
+
+[Sharing PNG](figures/mapping_quality.png) · [Vector SVG](figures/mapping_quality.svg).
+The same consensus gene-decision rule used by `map --splicing-state` reaches
+**99.945% precision at 91 bp** and
+**99.984% at 150 bp**. Correct unique recall is
+2.16 percentage points below piscem at 91 bp and 0.47 points
+above it at 150 bp, so these results do not establish zero accuracy/recall tradeoff.
+
+Each length has 360,000 positives: 90,000 source windows generated from genome/GTF
+without mapper code, each with four error conditions. Precision is correct unique source-gene
+calls divided by unique calls on positives; recall divides by all positives.
+These are read-level controlled scores before UMI resolution, not biological
+PBMC error rates. Optional USA resolution is not shown. Intergenic and random-DNA
+controls and per-error breakdowns are in the [full holdout report](../2026-10-30-consensus/README.md).
+
+Separately, the [build/count optimization audit](../2026-10-31-build-count/raw/validation.json)
+found byte-identical assignments and all seven count matrices on 10M real pairs
+before versus after those implementation changes. This checks output preservation
+within our conservative pipeline, not identity with competitor outputs.
+
+
 ## Scaling and remaining bottlenecks
 
 ![Mapping-and-counting throughput and peak memory at 100M and 500M pairs](figures/throughput_memory.png)
@@ -324,3 +348,10 @@ Python environment. It plots total native mapping/counting runtime against
 read-pair count for the three primary workflows. Only 100M and 500M are measured;
 lines connect those points. Values and the source hash are saved in
 [scaling-figure-data.json](raw/scaling-figure-data.json).
+
+`plot_quality.py` produces the companion 2000×1500 precision/recall figure from
+the saved 91 bp / 150 bp controlled holdouts and the build/count output-preservation
+audit. It derives plotted percentages from the saved integer counts, verifies
+the later state-mapping audit reproduces the same gene-call totals, and saves
+source hashes and definitions in [quality-figure-data.json](raw/quality-figure-data.json).
+No new accuracy or performance runs are needed to regenerate it.

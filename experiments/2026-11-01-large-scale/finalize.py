@@ -1,7 +1,7 @@
 """Write the final measured report after all six native workflows and comparisons."""
 import ast,json,subprocess
 from pathlib import Path
-from plots import render_build_section, update_root_readme
+from plots import render_build_section, render_quality_section, update_root_readme
 ROOT=Path(__file__).resolve().parents[2];RAW=Path(__file__).parent/'raw'
 subprocess.run(['python3',str(RAW.parent/'summarize.py')],stdout=(RAW/'summary.log').open('w'),check=True)
 s=json.loads((RAW/'summary.json').read_text());assert len(s['cases'])==6
@@ -44,6 +44,7 @@ preference, while mapping evidence still differs from the competitors.
 for size in (100,500):
  c=s['cases'][f'{size}m-ours'];q=c['stages']['usa'];text+=f"| {size}M | {q['seconds']:.2f}s | {c['usa_pipeline_seconds']:.2f}s | {q['rss_gib']:.2f} GiB |\n"
 text+='\n'+render_build_section()+'\n'
+text+='\n'+render_quality_section()+'\n'
 text+='''
 ## Scaling and remaining bottlenecks
 

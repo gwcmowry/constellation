@@ -252,6 +252,30 @@ and mapping evidence are not identical.
 Competitor versions: piscem 0.24.0, alevin-fry 0.19.0, kallisto 0.52.0,
 bustools 0.45.1.
 
+### Mapping quality on known-source holdouts
+
+![Controlled holdout gene-assignment precision and correct unique recall at 91 bp and 150 bp](experiments/2026-11-01-large-scale/figures/mapping_quality.png)
+
+[Sharing PNG](experiments/2026-11-01-large-scale/figures/mapping_quality.png) · [Vector SVG](experiments/2026-11-01-large-scale/figures/mapping_quality.svg).
+The same consensus gene-decision rule used by `map --splicing-state` reaches
+**99.945% precision at 91 bp** and
+**99.984% at 150 bp**. Correct unique recall is
+2.16 percentage points below piscem at 91 bp and 0.47 points
+above it at 150 bp, so these results do not establish zero accuracy/recall tradeoff.
+
+Each length has 360,000 positives: 90,000 source windows generated from genome/GTF
+without mapper code, each with four error conditions. Precision is correct unique source-gene
+calls divided by unique calls on positives; recall divides by all positives.
+These are read-level controlled scores before UMI resolution, not biological
+PBMC error rates. Optional USA resolution is not shown. Intergenic and random-DNA
+controls and per-error breakdowns are in the [full holdout report](experiments/2026-10-30-consensus/README.md).
+
+Separately, the [build/count optimization audit](experiments/2026-10-31-build-count/raw/validation.json)
+found byte-identical assignments and all seven count matrices on 10M real pairs
+before versus after those implementation changes. This checks output preservation
+within our conservative pipeline, not identity with competitor outputs.
+
+
 ![Mapping-and-counting throughput and peak resident memory at both input sizes](experiments/2026-11-01-large-scale/figures/throughput_memory.png)
 
 [Vector SVG](experiments/2026-11-01-large-scale/figures/throughput_memory.svg). Throughput uses **all input

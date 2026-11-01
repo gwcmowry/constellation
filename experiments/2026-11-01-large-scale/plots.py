@@ -89,6 +89,36 @@ GB denotes decimal disk size; GiB denotes binary memory size.
 '''
 
 
+def render_quality_section(figure_prefix='figures/', report_prefix='../'):
+    truth_root = ROOT/'experiments/2026-10-30-consensus/raw'
+    sources = [json.loads((truth_root/name).read_text()) for name in ('heldout-accuracy.json', 'heldout150-accuracy.json')]
+    ours = [d['constellation-consensus']['positive'] for d in sources]
+    gaps = [100*(d['constellation-consensus']['positive']['unique_recall']-d['piscem-forward']['positive']['unique_recall']) for d in sources]
+    return f'''### Mapping quality on known-source holdouts
+
+![Controlled holdout gene-assignment precision and correct unique recall at 91 bp and 150 bp]({figure_prefix}mapping_quality.png)
+
+[Sharing PNG]({figure_prefix}mapping_quality.png) · [Vector SVG]({figure_prefix}mapping_quality.svg).
+The same consensus gene-decision rule used by `map --splicing-state` reaches
+**{100*ours[0]['unique_precision']:.3f}% precision at 91 bp** and
+**{100*ours[1]['unique_precision']:.3f}% at 150 bp**. Correct unique recall is
+{abs(gaps[0]):.2f} percentage points below piscem at 91 bp and {gaps[1]:.2f} points
+above it at 150 bp, so these results do not establish zero accuracy/recall tradeoff.
+
+Each length has 360,000 positives: 90,000 source windows generated from genome/GTF
+without mapper code, each with four error conditions. Precision is correct unique source-gene
+calls divided by unique calls on positives; recall divides by all positives.
+These are read-level controlled scores before UMI resolution, not biological
+PBMC error rates. Optional USA resolution is not shown. Intergenic and random-DNA
+controls and per-error breakdowns are in the [full holdout report]({report_prefix}2026-10-30-consensus/README.md).
+
+Separately, the [build/count optimization audit]({report_prefix}2026-10-31-build-count/raw/validation.json)
+found byte-identical assignments and all seven count matrices on 10M real pairs
+before versus after those implementation changes. This checks output preservation
+within our conservative pipeline, not identity with competitor outputs.
+'''
+
+
 def update_root_readme():
     summary, _, rows = load_data()
     ours_500 = summary['cases']['500m-ours']
@@ -128,6 +158,8 @@ use exact UMIs with their native resolution rules; their statistical computation
 and mapping evidence are not identical.
 Competitor versions: piscem 0.24.0, alevin-fry 0.19.0, kallisto 0.52.0,
 bustools 0.45.1.
+
+{render_quality_section(prefix+'figures/', 'experiments/')}
 
 ![Mapping-and-counting throughput and peak resident memory at both input sizes]({prefix}figures/throughput_memory.png)
 
