@@ -55,8 +55,8 @@ preference, while mapping evidence still differs from the competitors.
 
 [Vector SVG](figures/index_build.svg). Prior measurements from this same
 Ryzen 9 7900X host, twelve physical cores, one fresh build per tool from the same
-prepared Ensembl 93 splici FASTA (k31). No builds or large read tests were rerun
-to make these figures. Reference preparation from genome/GTF is excluded.
+prepared Ensembl 93 splici FASTA (k31). Reference preparation from genome/GTF is
+excluded.
 
 | Builder | Build wall time (s) | Peak RSS (GiB) | Index size (GB) |
 |---|---:|---:|---:|
@@ -227,21 +227,21 @@ accuracy tests.
 
 ### Real-data count agreement
 
-![Count overlap with piscem and alevin-fry for spliced, unspliced and ambiguous counts, comparing default and optional USA modes](figures/count_agreement_simple.png)
+![Gene-by-cell count agreement with piscem and alevin-fry, showing raw-count Pearson correlations and count overlap](figures/real_data_concordance.png)
 
-[Sharing PNG](figures/count_agreement_simple.png) · [SVG](figures/count_agreement_simple.svg).
-Each bar answers: **how closely do the count values match for the same genes
-in the same cells?** Higher is closer; **100% means identical counts everywhere**.
-For example, counts of 10 versus 8 at one gene/cell give 80% overlap. The overall
-score sums the smaller counts and divides by the sum of the larger counts.
+[Sharing PNG](figures/real_data_concordance.png) · [SVG](figures/real_data_concordance.svg).
+These plots compare counts for the same genes in the same cells. The dashed
+line marks equal counts. Panel annotations show **Pearson correlation on raw
+counts** and **count overlap**. Counts are displayed on log-scaled axes so low
+and high counts are visible; full statistical definitions remain below.
 
 Both Constellation modes are compared with the same piscem/alevin-fry result
 from **500M PBMC read pairs**. Optional USA gives higher overlap in all three
 layers here. The default also corrects UMIs; USA and alevin-fry use exact UMIs,
 so the counting rules differ. This measures **agreement, not mapping accuracy**.
 
-[Detailed scatterplots and correlations (PNG)](figures/real_data_concordance.png) ·
-[Detailed SVG](figures/real_data_concordance.svg).
+[Alternative overlap bar chart (PNG)](figures/count_agreement_simple.png) ·
+[Bar chart SVG](figures/count_agreement_simple.svg).
 
 | Constellation mode | Spliced overlap | Unspliced overlap | Ambiguous overlap |
 |---|---:|---:|---:|
@@ -249,9 +249,7 @@ so the counting rules differ. This measures **agreement, not mapping accuracy**.
 | Optional USA | 95.8% | 90.8% | 89.8% |
 
 <details>
-<summary>Technical scatterplots and correlation definitions</summary>
-
-![Detailed gene-by-cell count concordance](figures/real_data_concordance.png)
+<summary>Technical definitions and full correlation results</summary>
 
 These density plots use the common 58,395-gene × 11,769-cell
 axes. Every entry nonzero in either compared state matrix is included, without
@@ -416,6 +414,9 @@ Add `--refresh` to rebuild bins and statistics from the retained 500M normalized
 Parquet matrices. It includes every nonzero-union entry, checks totals, full-matrix
 Pearson and weighted overlap against the earlier comparison, and records input
 hashes. The default rendering path needs only the committed binned data.
-It also writes the simpler 2000×1500 count-overlap bar chart used in the main
-README. Its six percentages and source hash are recorded in
+It also writes an alternative 2000×1500 count-overlap bar chart. Its six
+percentages and source hash are recorded in
 [simple-concordance-figure-data.json](raw/simple-concordance-figure-data.json).
+Figure annotations emphasize the main results; the agreement scatterplots show
+raw-count Pearson and overlap. Log1p correlations and full methodological details
+remain in the technical table and source records.

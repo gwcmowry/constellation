@@ -124,20 +124,20 @@ def render():
     fig = plt.figure(figsize=(12, 10), facecolor='white')
     fig.text(.055, .965, 'CONSTELLATION  /  REAL-DATA CONCORDANCE', fontsize=11, weight='bold', color='#087F8C')
     fig.text(.055, .92, 'Count agreement with piscem + alevin-fry', fontsize=24, weight='bold')
-    fig.text(.055, .881, '500M pairs · PBMC 10k v3 · 58,395 genes × 11,769 cells', fontsize=13, color='#526175')
+    fig.text(.055, .881, '500M read pairs · PBMC 10k v3', fontsize=13, color='#526175')
     vmax = max(max(max(row) for row in values['histogram']) for values in rows.values())
     ticks = [0, 1, 10, 100, 1000, 10000]
     tick_positions = np.log10(1+np.array(ticks))
     labels = ['0', '1', '10', '100', '1k', '10k']
     cmap = plt.get_cmap('viridis').copy(); cmap.set_bad('white')
     for i, (mode, title) in enumerate(MODES):
-        bottom = .55 if i == 0 else .18
-        fig.text(.11, bottom+.285, title, fontsize=13, weight='bold', color='#087F8C')
+        bottom = .515 if i == 0 else .135
+        fig.text(.10, bottom+.305, title, fontsize=13, weight='bold', color='#087F8C')
         for j, (state, name) in enumerate(STATES):
             record = rows[f'{mode}-{state}']
             hist = np.array(record['histogram'], dtype=np.int64)
             assert hist.sum() == record['nonzero_union']
-            ax = fig.add_axes([.11+.28*j, bottom, .20, .24])
+            ax = fig.add_axes([.10+.28*j, bottom, .22, .264])
             im = ax.imshow(np.ma.masked_equal(hist.T, 0), origin='lower', extent=[0, extent, 0, extent],
                            cmap=cmap, norm=LogNorm(vmin=1, vmax=vmax), interpolation='nearest', aspect='equal')
             ax.plot([0, extent], [0, extent], '--', linewidth=.8, color='#657180', alpha=.7)
@@ -145,20 +145,18 @@ def render():
             ax.set_yticks(tick_positions, labels)
             ax.tick_params(labelsize=8.5, length=3, pad=4)
             if i == 0: ax.set_title(name, fontsize=13, weight='bold', pad=10)
-            stats = (f"r(raw) = {record['nonzero_union_raw_pearson']:.4f}\n"
-                     f"r(log1p) = {record['nonzero_union_log1p_pearson']:.4f}\n"
-                     f"Count overlap = {record['weighted_jaccard']:.3f}")
+            stats = (f"Pearson r = {record['nonzero_union_raw_pearson']:.4f}\n"
+                     f"Overlap = {100*record['weighted_jaccard']:.1f}%")
             ax.text(.035, .96, stats, transform=ax.transAxes, va='top', fontsize=9.3,
                     linespacing=1.4, bbox=dict(facecolor='white', edgecolor='none', alpha=.90, pad=3))
-    cax = fig.add_axes([.925, .18, .012, .61])
+    cax = fig.add_axes([.925, .135, .012, .644])
     colorbar = fig.colorbar(im, cax=cax)
-    colorbar.set_label('Gene–cell entries per bin (log color scale)', fontsize=10, labelpad=8)
+    colorbar.set_label('Gene–cell entries per bin', fontsize=10, labelpad=8)
     colorbar.ax.tick_params(labelsize=8.5)
-    fig.text(.028, .49, 'Constellation molecules per gene–cell entry', rotation=90, va='center', fontsize=12)
-    fig.text(.49, .123, 'piscem + alevin-fry molecules per gene–cell entry', ha='center', fontsize=12)
-    fig.text(.055, .083, 'All nonzero-union entries shown; shared zeros excluded. Axes use log10(1 + count); dashed line is equality.', fontsize=9.3, color='#526175')
-    fig.text(.055, .057, 'r = Pearson over that union. Count overlap = Σmin / Σmax. Alevin-fry uses exact UMIs; counting policies differ.', fontsize=9.3, color='#526175')
-    fig.text(.055, .031, 'Agreement is not biological ground truth. Data & protocol: github.com/gwcmowry/constellation', fontsize=10, color='#526175')
+    fig.text(.028, .49, 'Constellation molecule counts', rotation=90, va='center', fontsize=12)
+    fig.text(.49, .075, 'piscem + alevin-fry molecule counts', ha='center', fontsize=12)
+    fig.text(.055, .025, 'Dashed line = equal counts', fontsize=9.5, color='#526175')
+    fig.text(.945, .025, 'github.com/gwcmowry/constellation', ha='right', fontsize=9.5, color='#526175')
     for extension in ('png', 'svg'):
         fig.savefig(HERE/f'figures/real_data_concordance.{extension}', dpi=200, facecolor='white',
                     metadata={'Date': None} if extension == 'svg' else {})
@@ -182,7 +180,7 @@ def render_simple():
     fig.text(.065, .955, 'CONSTELLATION  /  REAL-DATA AGREEMENT', fontsize=11, weight='bold', color='#087F8C')
     fig.text(.065, .90, 'How closely do the counts match?', fontsize=25, weight='bold')
     fig.text(.065, .852, 'Constellation vs piscem + alevin-fry · 500M read pairs', fontsize=13.5, color='#526175')
-    ax = fig.add_axes([.20, .30, .75, .43])
+    ax = fig.add_axes([.20, .22, .75, .51])
     positions = [0, 1.5, 3]
     settings = [('count', 'Conservative (default)', '#087F8C', -.19),
                 ('usa', 'USA (optional)', '#91CBCE', .19)]
@@ -204,20 +202,14 @@ def render_simple():
     ax.set_xticks([0, 25, 50, 75, 100])
     ax.xaxis.set_major_formatter(PercentFormatter(xmax=100, decimals=0))
     ax.tick_params(axis='x', length=4, pad=7, labelsize=11)
-    ax.set_xlabel('Count overlap · higher means closer agreement', fontsize=12, labelpad=12)
+    ax.set_xlabel('Count overlap', fontsize=12, labelpad=12)
     ax.grid(axis='x', color='#E6EBF0', linewidth=.8)
     fig.legend(handles=[Patch(facecolor=color, label=label) for _, label, color, _ in settings],
                loc='lower left', bbox_to_anchor=(.195, .765), ncol=2, frameon=False,
                fontsize=12, handlelength=1.6, columnspacing=2)
-    fig.text(.065, .185, '100% means identical counts for every gene in every cell.',
+    fig.text(.065, .08, '100% = identical counts',
              fontsize=14, weight='bold', color='#087F8C')
-    fig.text(.065, .139, 'Example for one gene in one cell: 10 vs 8 molecules → 80% overlap.',
-             fontsize=11, color='#526175')
-    fig.text(.065, .094, 'Default includes UMI correction. Optional USA and alevin-fry use exact UMIs.',
-             fontsize=10, color='#526175')
-    fig.text(.065, .061, 'This measures agreement, not mapping accuracy. Dataset: PBMC 10k v3.',
-             fontsize=10, color='#526175')
-    fig.text(.065, .026, 'Data & full protocol: github.com/gwcmowry/constellation', fontsize=9.5, color='#526175')
+    fig.text(.065, .026, 'github.com/gwcmowry/constellation', fontsize=9.5, color='#526175')
     for extension in ('png', 'svg'):
         fig.savefig(HERE/f'figures/count_agreement_simple.{extension}', dpi=200, facecolor='white',
                     metadata={'Date': None} if extension == 'svg' else {})

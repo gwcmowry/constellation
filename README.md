@@ -298,21 +298,21 @@ truth, and broader SOTA claims require more methods and independent datasets.
 
 ### Real-data count agreement
 
-![Count overlap with piscem and alevin-fry for spliced, unspliced and ambiguous counts, comparing default and optional USA modes](experiments/2026-11-01-large-scale/figures/count_agreement_simple.png)
+![Gene-by-cell count agreement with piscem and alevin-fry, showing raw-count Pearson correlations and count overlap](experiments/2026-11-01-large-scale/figures/real_data_concordance.png)
 
-[Sharing PNG](experiments/2026-11-01-large-scale/figures/count_agreement_simple.png) · [SVG](experiments/2026-11-01-large-scale/figures/count_agreement_simple.svg).
-Each bar answers: **how closely do the count values match for the same genes
-in the same cells?** Higher is closer; **100% means identical counts everywhere**.
-For example, counts of 10 versus 8 at one gene/cell give 80% overlap. The overall
-score sums the smaller counts and divides by the sum of the larger counts.
+[Sharing PNG](experiments/2026-11-01-large-scale/figures/real_data_concordance.png) · [SVG](experiments/2026-11-01-large-scale/figures/real_data_concordance.svg).
+These plots compare counts for the same genes in the same cells. The dashed
+line marks equal counts. Panel annotations show **Pearson correlation on raw
+counts** and **count overlap**. Counts are displayed on log-scaled axes so low
+and high counts are visible; full statistical definitions remain below.
 
 Both Constellation modes are compared with the same piscem/alevin-fry result
 from **500M PBMC read pairs**. Optional USA gives higher overlap in all three
 layers here. The default also corrects UMIs; USA and alevin-fry use exact UMIs,
 so the counting rules differ. This measures **agreement, not mapping accuracy**.
 
-[Detailed scatterplots and correlations (PNG)](experiments/2026-11-01-large-scale/figures/real_data_concordance.png) ·
-[Detailed SVG](experiments/2026-11-01-large-scale/figures/real_data_concordance.svg).
+[Alternative overlap bar chart (PNG)](experiments/2026-11-01-large-scale/figures/count_agreement_simple.png) ·
+[Bar chart SVG](experiments/2026-11-01-large-scale/figures/count_agreement_simple.svg).
 
 [Binned data, matrix hashes and correlation definitions](experiments/2026-11-01-large-scale/raw/concordance-figure-data.json).
 
@@ -323,8 +323,8 @@ so the counting rules differ. This measures **agreement, not mapping accuracy**.
 
 [Vector SVG](experiments/2026-11-01-large-scale/figures/index_build.svg). Prior measurements from this same
 Ryzen 9 7900X host, twelve physical cores, one fresh build per tool from the same
-prepared Ensembl 93 splici FASTA (k31). No builds or large read tests were rerun
-to make these figures. Reference preparation from genome/GTF is excluded.
+prepared Ensembl 93 splici FASTA (k31). Reference preparation from genome/GTF is
+excluded.
 
 | Builder | Build wall time (s) | Peak RSS (GiB) | Index size (GB) |
 |---|---:|---:|---:|

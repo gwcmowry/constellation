@@ -71,8 +71,8 @@ def render_build_section(figure_prefix='figures/', source_prefix='../2026-11-01-
 
 [Vector SVG]({figure_prefix}index_build.svg). Prior measurements from this same
 Ryzen 9 7900X host, twelve physical cores, one fresh build per tool from the same
-prepared Ensembl 93 splici FASTA (k31). No builds or large read tests were rerun
-to make these figures. Reference preparation from genome/GTF is excluded.
+prepared Ensembl 93 splici FASTA (k31). Reference preparation from genome/GTF is
+excluded.
 
 {build_tables(build, rows)}
 
@@ -123,21 +123,21 @@ def render_concordance_section(figure_prefix='figures/', data_prefix='raw/', inc
     data = json.loads((RAW/'concordance-figure-data.json').read_text())
     section = f'''### Real-data count agreement
 
-![Count overlap with piscem and alevin-fry for spliced, unspliced and ambiguous counts, comparing default and optional USA modes]({figure_prefix}count_agreement_simple.png)
+![Gene-by-cell count agreement with piscem and alevin-fry, showing raw-count Pearson correlations and count overlap]({figure_prefix}real_data_concordance.png)
 
-[Sharing PNG]({figure_prefix}count_agreement_simple.png) · [SVG]({figure_prefix}count_agreement_simple.svg).
-Each bar answers: **how closely do the count values match for the same genes
-in the same cells?** Higher is closer; **100% means identical counts everywhere**.
-For example, counts of 10 versus 8 at one gene/cell give 80% overlap. The overall
-score sums the smaller counts and divides by the sum of the larger counts.
+[Sharing PNG]({figure_prefix}real_data_concordance.png) · [SVG]({figure_prefix}real_data_concordance.svg).
+These plots compare counts for the same genes in the same cells. The dashed
+line marks equal counts. Panel annotations show **Pearson correlation on raw
+counts** and **count overlap**. Counts are displayed on log-scaled axes so low
+and high counts are visible; full statistical definitions remain below.
 
 Both Constellation modes are compared with the same piscem/alevin-fry result
 from **500M PBMC read pairs**. Optional USA gives higher overlap in all three
 layers here. The default also corrects UMIs; USA and alevin-fry use exact UMIs,
 so the counting rules differ. This measures **agreement, not mapping accuracy**.
 
-[Detailed scatterplots and correlations (PNG)]({figure_prefix}real_data_concordance.png) ·
-[Detailed SVG]({figure_prefix}real_data_concordance.svg).
+[Alternative overlap bar chart (PNG)]({figure_prefix}count_agreement_simple.png) ·
+[Bar chart SVG]({figure_prefix}count_agreement_simple.svg).
 
 '''
     if include_table:
@@ -147,9 +147,7 @@ so the counting rules differ. This measures **agreement, not mapping accuracy**.
             section += f'| {label} | {values[0]:.1f}% | {values[1]:.1f}% | {values[2]:.1f}% |\n'
         section += f'''
 <details>
-<summary>Technical scatterplots and correlation definitions</summary>
-
-![Detailed gene-by-cell count concordance]({figure_prefix}real_data_concordance.png)
+<summary>Technical definitions and full correlation results</summary>
 
 These density plots use the common {data['genes']:,}-gene × {data['cells']:,}-cell
 axes. Every entry nonzero in either compared state matrix is included, without
@@ -299,9 +297,9 @@ def make_figures():
 
     labels = [item[2] for item in WORKFLOWS]
     fig, axes = plt.subplots(1, 2, figsize=(14, 6.1))
-    fig.subplots_adjust(left=.235, right=.955, bottom=.24, top=.75, wspace=.36)
-    heading(fig, 'Mapping to splicing-state matrices',
-            'PBMC 10k v3 · 12 physical cores · prebuilt indexes · same compressed inputs')
+    fig.subplots_adjust(left=.235, right=.955, bottom=.17, top=.75, wspace=.36)
+    heading(fig, 'Mapping + counting runtime',
+            'PBMC 10k v3 · 12 physical cores · prebuilt indexes')
     for panel, (ax, size) in enumerate(zip(axes, (100, 500), strict=True)):
         data = rows[size]
         maximum = max(r['total'] for r in data)
@@ -316,16 +314,15 @@ def make_figures():
         ax.set_xlim(0, maximum * 1.30)
         style(ax)
     fig.legend(handles=[Patch(facecolor='#526175', label='Mapping'),
-                        Patch(facecolor='#E1E6EC', edgecolor='#526175', hatch='////', label='Complete counting pipeline')],
+                        Patch(facecolor='#E1E6EC', edgecolor='#526175', hatch='////', label='Counting')],
                loc='lower left', bbox_to_anchor=(.23, .80), ncol=2, frameon=False, fontsize=11)
-    fig.text(.04, .055, 'Independent linear time axes. One measured run per row; no index build or input preparation included.', fontsize=10, color='#526175')
-    fig.text(.04, .018, 'Conservative: directional UMI correction. USA: exact UMIs. Competitor resolution policies differ.', fontsize=10, color='#526175')
+    fig.text(.04, .025, 'github.com/gwcmowry/constellation', fontsize=10, color='#526175')
     save(fig, 'pipeline_runtime')
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 6.1))
-    fig.subplots_adjust(left=.235, right=.955, bottom=.24, top=.75, wspace=.36)
-    heading(fig, 'Throughput and memory as read volume grows',
-            'Complete native mapping + counting · same 12-core host · one measured run per size')
+    fig.subplots_adjust(left=.235, right=.955, bottom=.17, top=.75, wspace=.36)
+    heading(fig, 'Throughput and memory',
+            'Mapping + counting · 12 physical cores · prebuilt indexes')
     for panel, (ax, metric, title, unit) in enumerate(zip(axes,
             ('throughput', 'rss'), ('Throughput · higher is better', 'Peak RSS · lower is better'),
             ('Million input pairs / second', 'Peak resident memory (GiB)'), strict=True)):
@@ -344,18 +341,17 @@ def make_figures():
     fig.legend(handles=[Patch(facecolor='#D4DCE5', edgecolor='#526175', hatch='///', label='100M pairs'),
                         Patch(facecolor='#526175', label='500M pairs')],
                loc='lower left', bbox_to_anchor=(.23, .80), ncol=2, frameon=False, fontsize=11)
-    fig.text(.04, .055, 'Throughput = all input pairs / (mapping + counting wall time). Memory = maximum RSS of any native stage.', fontsize=10, color='#526175')
-    fig.text(.04, .018, 'Prebuilt indexes; construction is excluded. USA and conservative rows reuse the same mappings.', fontsize=10, color='#526175')
+    fig.text(.04, .025, 'github.com/gwcmowry/constellation', fontsize=10, color='#526175')
     save(fig, 'throughput_memory')
 
     fig, axes = plt.subplots(1, 3, figsize=(14, 5.1))
-    fig.subplots_adjust(left=.15, right=.96, bottom=.31, top=.73, wspace=.40)
-    heading(fig, 'A reusable index: build once per reference',
-            'Prior measurements on the same Ryzen 9 7900X · 12 physical cores · prepared splici FASTA · k31')
+    fig.subplots_adjust(left=.15, right=.96, bottom=.19, top=.73, wspace=.40)
+    heading(fig, 'Build the reference index once',
+            'Human splici reference · k31 · 12 physical cores')
     colors = [WORKFLOWS[i][3] for i in (0, 2, 3)]
     for panel, (ax, title, unit) in enumerate(zip(axes,
             ('Build wall time', 'Peak build memory', 'Final index size'),
-            ('Seconds', 'GiB', 'GB (decimal)'), strict=True)):
+            ('Seconds', 'GiB', 'GB'), strict=True)):
         values = [(build['build'][tool]['seconds'], build['build'][tool]['rss_gib'], build['index_bytes'][tool]/1e9)[panel] for tool in BUILD_NAMES]
         for y, (value, color) in enumerate(zip(values, colors, strict=True)):
             ax.barh(y, value, height=.55, color=color)
@@ -366,9 +362,7 @@ def make_figures():
         ax.set_xlim(0, max(values)*1.35)
         style(ax)
         ax.set_ylim(2.65, -.65)
-    fig.text(.04, .13, 'One saved fresh build per tool. No benchmarks rerun. Build cost is independent of read volume for a fixed reference/configuration.', fontsize=10, color='#526175')
-    fig.text(.04, .077, 'Index content differs: sparse gene/state keys (Constellation) versus denser target/path graphs (competitors).', fontsize=10, color='#526175')
-    fig.text(.04, .025, 'All builders start from the same prepared FASTA. Genome/GTF reference preparation is excluded.', fontsize=10, color='#526175')
+    fig.text(.04, .025, 'github.com/gwcmowry/constellation', fontsize=10, color='#526175')
     save(fig, 'index_build')
 
     sources = [RAW/'summary.json', RAW/'matrix-comparison.json', BUILD_RAW/'summary.json']

@@ -36,8 +36,8 @@ plt.rcParams.update({
 fig = plt.figure(figsize=(10, 7.5), facecolor='white')
 fig.text(.065, .955, 'CONSTELLATION  /  BENCHMARK', fontsize=11, weight='bold', color='#087F8C')
 fig.text(.065, .90, 'Read mapping + counting runtime', fontsize=25, weight='bold')
-fig.text(.065, .854, '100M → 500M read pairs · PBMC 10k v3 · lower is faster', fontsize=13.5, color='#526175')
-ax = fig.add_axes([.12, .29, .595, .495])
+fig.text(.065, .854, 'PBMC 10k v3 · 12 physical cores · prebuilt indexes', fontsize=13.5, color='#526175')
+ax = fig.add_axes([.12, .205, .595, .58])
 ax.set_xlim(50, 520)
 ax.set_ylim(0, 28)
 ax.set_xticks([100, 200, 300, 400, 500])
@@ -59,15 +59,9 @@ for key, name, color, marker in METHODS:
             weight='bold', va='center', linespacing=1.5, clip_on=False)
 
 speedup = DATA['speedups']['500']['piscem']['map_and_count']
-fig.text(.065, .151, f'{speedup:.2f}× faster than piscem + alevin-fry at 500M pairs',
+fig.text(.065, .073, f'{speedup:.2f}× faster than piscem + alevin-fry at 500M pairs',
          fontsize=14.5, color='#087F8C', weight='bold')
-fig.text(.065, .108, 'Ryzen 9 7900X · 12 physical cores · prebuilt splici indexes · one run per configuration',
-         fontsize=9.8, color='#526175')
-fig.text(.065, .080, 'Constellation: conservative + UMI correction. Competitor exact-UMI policies differ.',
-         fontsize=9.8, color='#526175')
-fig.text(.065, .052, 'Only 100M and 500M were measured here; lines connect observations. Index building excluded.',
-         fontsize=9.8, color='#526175')
-fig.text(.065, .023, 'Data & full protocol: github.com/gwcmowry/constellation',
+fig.text(.065, .025, 'github.com/gwcmowry/constellation',
          fontsize=9.8, color='#526175')
 
 for extension in ('png', 'svg'):

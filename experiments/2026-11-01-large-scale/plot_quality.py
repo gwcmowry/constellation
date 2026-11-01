@@ -67,22 +67,22 @@ plt.rcParams.update({
 fig = plt.figure(figsize=(10, 7.5), facecolor='white')
 fig.text(.065, .955, 'CONSTELLATION  /  VALIDATION', fontsize=11, weight='bold', color='#087F8C')
 fig.text(.065, .90, 'Mapping accuracy on controlled holdouts', fontsize=23, weight='bold')
-fig.text(.065, .854, 'Known source genes · 91 bp and 150 bp · 360,000 positive reads per length',
+fig.text(.065, .854, 'Known-source simulations · 360,000 positive reads per length',
          fontsize=12.5, color='#526175')
 
 for panel, (metric, left, title, definition, limits, ticks, decimals) in enumerate([
-    ('precision', .25, 'Unique-gene precision', 'Correct / unique calls · higher is better', (99.90, 100.00), [99.90, 99.95, 100.00], 3),
-    ('recall', .66, 'Correct unique recall', 'Correct / all positive reads · higher is better', (80, 92), [80, 85, 90], 2),
+    ('precision', .25, 'Unique-gene precision', 'Correct / unique calls', (99.90, 100.00), [99.90, 99.95, 100.00], 3),
+    ('recall', .66, 'Correct unique recall', 'Correct / all positive reads', (80, 92), [80, 85, 90], 2),
 ]):
     fig.text(left, .80, title, fontsize=14, weight='bold')
     fig.text(left, .772, definition, fontsize=9, color='#526175')
-    ax = fig.add_axes([left, .345, .245, .40])
+    ax = fig.add_axes([left, .22, .245, .525])
     ax.set_xlim(*limits)
     ax.set_ylim(6.7, -.7)
     ax.set_xticks(ticks)
     ax.set_yticks([r['y'] for r in rows], [f"{r['name']} · {r['length']} bp" for r in rows] if panel == 0 else [])
     if metric == 'precision': ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-    ax.set_xlabel(f'{metric.capitalize()} (%) · zoomed scale', fontsize=10, labelpad=10)
+    ax.set_xlabel(f'{metric.capitalize()} (%)', fontsize=11, labelpad=10)
     ax.grid(axis='x', color='#E6EBF0', linewidth=.8)
     ax.axhline(3, color='#E6EBF0', linewidth=.8)
     ax.tick_params(axis='y', length=0, pad=10)
@@ -92,26 +92,16 @@ for panel, (metric, left, title, definition, limits, ticks, decimals) in enumera
                    edgecolor='white', linewidth=1, zorder=3)
         ax.annotate(f"{r[metric]:.{decimals}f}%", (r[metric], r['y']),
                     xytext=(8, 0), textcoords='offset points', ha='left', va='center',
-                    fontsize=10.5, color=r['color'],
+                    fontsize=11.5, color=r['color'],
                     weight='bold' if r['name'] == 'Constellation' else 'normal',
                     annotation_clip=False)
     for tick, r in zip(ax.get_yticklabels(), rows):
         tick.set_color(r['color'])
         if r['name'] == 'Constellation': tick.set_weight('bold')
 
-fig.text(.065, .235, f"Constellation: {ours[0]['precision']:.3f}–{ours[1]['precision']:.3f}% unique-gene precision",
+fig.text(.065, .085, f"Constellation: {ours[0]['precision']:.3f}–{ours[1]['precision']:.3f}% unique-gene precision",
          fontsize=14, color='#087F8C', weight='bold')
-fig.text(.065, .198, f'91 bp recall: {abs(recall_difference[0]):.2f} pp below piscem. 150 bp: {recall_difference[1]:.2f} pp above.',
-         fontsize=11, color='#17283B')
-fig.text(.065, .155, 'Before vs after build/count optimization: 10M assignments + 7 matrices byte-identical.',
-         fontsize=10.5, color='#17283B')
-fig.text(.065, .109, 'Genome/GTF-derived truth: 90k source windows × 4 error conditions per length; same forward splici reference.',
-         fontsize=8.9, color='#526175')
-fig.text(.065, .081, 'Read-level consensus policy used by state mapping; before UMI resolution. Optional USA not shown.',
-         fontsize=8.9, color='#526175')
-fig.text(.065, .053, 'Precision uses positive reads only. Controlled scores are not biological PBMC error-rate estimates.',
-         fontsize=8.9, color='#526175')
-fig.text(.065, .025, 'Data & full protocol: github.com/gwcmowry/constellation', fontsize=9.5, color='#526175')
+fig.text(.065, .025, 'github.com/gwcmowry/constellation', fontsize=9.5, color='#526175')
 
 for extension in ('png', 'svg'):
     fig.savefig(HERE/f'figures/mapping_quality.{extension}', dpi=200, facecolor='white',
