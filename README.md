@@ -289,11 +289,37 @@ At 500M, 49.19 of
 The optional USA output has S/U/A Pearson correlations of
 **0.9992 / 0.9899 /
 0.9983** with piscem/alevin-fry at 500M,
-with weighted count overlap **0.9329**.
+computed on the full gene–cell matrices including shared zeros, with weighted
+count overlap **0.9329**.
 All six mapping runs processed the exact requested input counts and all 24
 state matrices passed validation. These measurements establish a lead among
 the tested configurations on this dataset; agreement is not biological ground
 truth, and broader SOTA claims require more methods and independent datasets.
+
+### Real-data count concordance
+
+![Gene-by-cell molecule-count agreement with piscem and alevin-fry, showing conservative and optional USA counting separately](experiments/2026-11-01-large-scale/figures/real_data_concordance.png)
+
+[Sharing PNG](experiments/2026-11-01-large-scale/figures/real_data_concordance.png) · [SVG](experiments/2026-11-01-large-scale/figures/real_data_concordance.svg).
+These density plots use the retained **500M-pair PBMC** matrices on the common
+58,395-gene × 11,769-cell axes. Every entry nonzero in either
+compared state matrix is included, without sampling or summing genes across
+cells. Shared zeros are excluded. The dashed line is equal counts; color shows
+the number of gene–cell entries in each log-scaled bin.
+
+Each panel reports Pearson correlation on raw counts and on `log1p` counts,
+plus weighted count overlap (`sum(min) / sum(max)`). Log counts reduce the
+influence of highly abundant entries and expose low-count discrepancies.
+These correlations have a different population from the full-matrix values
+that include shared zeros. The optional USA mode agrees more closely with
+native alevin-fry, while the conservative default also applies UMI correction.
+Both mapping evidence and counting policies contribute to the differences.
+
+This measures **agreement, not biological correctness**; it complements the
+known-source holdouts above. No mapping/counting run was repeated to create it.
+
+[Binned data, matrix hashes and correlation definitions](experiments/2026-11-01-large-scale/raw/concordance-figure-data.json).
+
 
 ### Index construction and first-sample cost
 

@@ -225,6 +225,39 @@ accuracy tests.
 [input and binary provenance](raw/provenance.json), and
 [paired-input validation](raw/input-validation.json).
 
+### Real-data count concordance
+
+![Gene-by-cell molecule-count agreement with piscem and alevin-fry, showing conservative and optional USA counting separately](figures/real_data_concordance.png)
+
+[Sharing PNG](figures/real_data_concordance.png) · [SVG](figures/real_data_concordance.svg).
+These density plots use the retained **500M-pair PBMC** matrices on the common
+58,395-gene × 11,769-cell axes. Every entry nonzero in either
+compared state matrix is included, without sampling or summing genes across
+cells. Shared zeros are excluded. The dashed line is equal counts; color shows
+the number of gene–cell entries in each log-scaled bin.
+
+Each panel reports Pearson correlation on raw counts and on `log1p` counts,
+plus weighted count overlap (`sum(min) / sum(max)`). Log counts reduce the
+influence of highly abundant entries and expose low-count discrepancies.
+These correlations have a different population from the full-matrix values
+that include shared zeros. The optional USA mode agrees more closely with
+native alevin-fry, while the conservative default also applies UMI correction.
+Both mapping evidence and counting policies contribute to the differences.
+
+This measures **agreement, not biological correctness**; it complements the
+known-source holdouts above. No mapping/counting run was repeated to create it.
+
+| Constellation mode | Layer | Raw-count r | Log1p-count r | Count overlap |
+|---|---|---:|---:|---:|
+| Conservative + UMI correction | S | 0.9019 | 0.9242 | 0.8787 |
+| Conservative + UMI correction | U | 0.9782 | 0.8640 | 0.8752 |
+| Conservative + UMI correction | A | 0.9973 | 0.7798 | 0.8287 |
+| USA, exact UMIs | S | 0.9992 | 0.9771 | 0.9582 |
+| USA, exact UMIs | U | 0.9844 | 0.8816 | 0.9082 |
+| USA, exact UMIs | A | 0.9983 | 0.8760 | 0.8979 |
+
+[Binned data, matrix hashes and correlation definitions](raw/concordance-figure-data.json).
+
 
 ## Protocol
 
@@ -355,3 +388,10 @@ audit. It derives plotted percentages from the saved integer counts, verifies
 the later state-mapping audit reproduces the same gene-call totals, and saves
 source hashes and definitions in [quality-figure-data.json](raw/quality-figure-data.json).
 No new accuracy or performance runs are needed to regenerate it.
+
+`plot_concordance.py` renders the 2400×2000 real-data count comparison from the
+saved bin counts in [concordance-figure-data.json](raw/concordance-figure-data.json).
+Add `--refresh` to rebuild bins and statistics from the retained 500M normalized
+Parquet matrices. It includes every nonzero-union entry, checks totals, full-matrix
+Pearson and weighted overlap against the earlier comparison, and records input
+hashes. The default rendering path needs only the committed binned data.

@@ -1,7 +1,7 @@
 """Write the final measured report after all six native workflows and comparisons."""
 import ast,json,subprocess
 from pathlib import Path
-from plots import render_build_section, render_quality_section, update_root_readme
+from plots import render_build_section, render_quality_section, render_concordance_section, update_root_readme
 ROOT=Path(__file__).resolve().parents[2];RAW=Path(__file__).parent/'raw'
 subprocess.run(['python3',str(RAW.parent/'summarize.py')],stdout=(RAW/'summary.log').open('w'),check=True)
 s=json.loads((RAW/'summary.json').read_text());assert len(s['cases'])==6
@@ -164,6 +164,7 @@ accuracy tests.
 [paired-input validation](raw/input-validation.json).
 
 '''
+text+=render_concordance_section()+'\n'
 p=RAW.parent/'README.md';body=p.read_text()
 if '<!-- RESULTS -->' in body:
  body=body.replace('<!-- RESULTS -->',text)
