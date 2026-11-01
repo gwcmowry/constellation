@@ -121,36 +121,56 @@ within our conservative pipeline, not identity with competitor outputs.
 
 def render_concordance_section(figure_prefix='figures/', data_prefix='raw/', include_table=True):
     data = json.loads((RAW/'concordance-figure-data.json').read_text())
-    section = f'''### Real-data count concordance
+    section = f'''### Real-data count agreement
 
-![Gene-by-cell molecule-count agreement with piscem and alevin-fry, showing conservative and optional USA counting separately]({figure_prefix}real_data_concordance.png)
+![Count overlap with piscem and alevin-fry for spliced, unspliced and ambiguous counts, comparing default and optional USA modes]({figure_prefix}count_agreement_simple.png)
 
-[Sharing PNG]({figure_prefix}real_data_concordance.png) · [SVG]({figure_prefix}real_data_concordance.svg).
-These density plots use the retained **500M-pair PBMC** matrices on the common
-{data['genes']:,}-gene × {data['cells']:,}-cell axes. Every entry nonzero in either
-compared state matrix is included, without sampling or summing genes across
-cells. Shared zeros are excluded. The dashed line is equal counts; color shows
-the number of gene–cell entries in each log-scaled bin.
+[Sharing PNG]({figure_prefix}count_agreement_simple.png) · [SVG]({figure_prefix}count_agreement_simple.svg).
+Each bar answers: **how closely do the count values match for the same genes
+in the same cells?** Higher is closer; **100% means identical counts everywhere**.
+For example, counts of 10 versus 8 at one gene/cell give 80% overlap. The overall
+score sums the smaller counts and divides by the sum of the larger counts.
 
-Each panel reports Pearson correlation on raw counts and on `log1p` counts,
-plus weighted count overlap (`sum(min) / sum(max)`). Log counts reduce the
-influence of highly abundant entries and expose low-count discrepancies.
-These correlations have a different population from the full-matrix values
-that include shared zeros. The optional USA mode agrees more closely with
-native alevin-fry, while the conservative default also applies UMI correction.
-Both mapping evidence and counting policies contribute to the differences.
+Both Constellation modes are compared with the same piscem/alevin-fry result
+from **500M PBMC read pairs**. Optional USA gives higher overlap in all three
+layers here. The default also corrects UMIs; USA and alevin-fry use exact UMIs,
+so the counting rules differ. This measures **agreement, not mapping accuracy**.
 
-This measures **agreement, not biological correctness**; it complements the
-known-source holdouts above. No mapping/counting run was repeated to create it.
+[Detailed scatterplots and correlations (PNG)]({figure_prefix}real_data_concordance.png) ·
+[Detailed SVG]({figure_prefix}real_data_concordance.svg).
 
 '''
     if include_table:
+        section += '| Constellation mode | Spliced overlap | Unspliced overlap | Ambiguous overlap |\n|---|---:|---:|---:|\n'
+        for mode, label in [('count', 'Conservative default'), ('usa', 'Optional USA')]:
+            values = [100*data['rows'][f'{mode}-{state}']['weighted_jaccard'] for state in 'SUA']
+            section += f'| {label} | {values[0]:.1f}% | {values[1]:.1f}% | {values[2]:.1f}% |\n'
+        section += f'''
+<details>
+<summary>Technical scatterplots and correlation definitions</summary>
+
+![Detailed gene-by-cell count concordance]({figure_prefix}real_data_concordance.png)
+
+These density plots use the common {data['genes']:,}-gene × {data['cells']:,}-cell
+axes. Every entry nonzero in either compared state matrix is included, without
+sampling or summing genes across cells. Shared zeros are excluded. The dashed
+line is equal counts; color shows the number of entries in each log-scaled bin.
+
+Pearson correlation is calculated on raw counts and `log1p` counts over that
+nonzero union. Log counts reduce the influence of highly abundant entries and
+expose low-count discrepancies. These have a different population from the
+full-matrix correlations that include shared zeros. Count overlap is the weighted
+Jaccard score, `sum(min) / sum(max)`; shared zeros contribute nothing to either sum.
+Both mapping evidence and counting policy contribute to differences. This is
+concordance rather than independent biological truth.
+
+'''
         section += '| Constellation mode | Layer | Raw-count r | Log1p-count r | Count overlap |\n|---|---|---:|---:|---:|\n'
         for mode, label in [('count', 'Conservative + UMI correction'), ('usa', 'USA, exact UMIs')]:
             for state in 'SUA':
                 row = data['rows'][f'{mode}-{state}']
                 section += f"| {label} | {state} | {row['nonzero_union_raw_pearson']:.4f} | {row['nonzero_union_log1p_pearson']:.4f} | {row['weighted_jaccard']:.4f} |\n"
-        section += '\n'
+        section += '\n</details>\n\n'
     section += f'[Binned data, matrix hashes and correlation definitions]({data_prefix}concordance-figure-data.json).\n'
     return section
 

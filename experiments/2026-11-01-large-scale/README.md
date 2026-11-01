@@ -225,27 +225,46 @@ accuracy tests.
 [input and binary provenance](raw/provenance.json), and
 [paired-input validation](raw/input-validation.json).
 
-### Real-data count concordance
+### Real-data count agreement
 
-![Gene-by-cell molecule-count agreement with piscem and alevin-fry, showing conservative and optional USA counting separately](figures/real_data_concordance.png)
+![Count overlap with piscem and alevin-fry for spliced, unspliced and ambiguous counts, comparing default and optional USA modes](figures/count_agreement_simple.png)
 
-[Sharing PNG](figures/real_data_concordance.png) · [SVG](figures/real_data_concordance.svg).
-These density plots use the retained **500M-pair PBMC** matrices on the common
-58,395-gene × 11,769-cell axes. Every entry nonzero in either
-compared state matrix is included, without sampling or summing genes across
-cells. Shared zeros are excluded. The dashed line is equal counts; color shows
-the number of gene–cell entries in each log-scaled bin.
+[Sharing PNG](figures/count_agreement_simple.png) · [SVG](figures/count_agreement_simple.svg).
+Each bar answers: **how closely do the count values match for the same genes
+in the same cells?** Higher is closer; **100% means identical counts everywhere**.
+For example, counts of 10 versus 8 at one gene/cell give 80% overlap. The overall
+score sums the smaller counts and divides by the sum of the larger counts.
 
-Each panel reports Pearson correlation on raw counts and on `log1p` counts,
-plus weighted count overlap (`sum(min) / sum(max)`). Log counts reduce the
-influence of highly abundant entries and expose low-count discrepancies.
-These correlations have a different population from the full-matrix values
-that include shared zeros. The optional USA mode agrees more closely with
-native alevin-fry, while the conservative default also applies UMI correction.
-Both mapping evidence and counting policies contribute to the differences.
+Both Constellation modes are compared with the same piscem/alevin-fry result
+from **500M PBMC read pairs**. Optional USA gives higher overlap in all three
+layers here. The default also corrects UMIs; USA and alevin-fry use exact UMIs,
+so the counting rules differ. This measures **agreement, not mapping accuracy**.
 
-This measures **agreement, not biological correctness**; it complements the
-known-source holdouts above. No mapping/counting run was repeated to create it.
+[Detailed scatterplots and correlations (PNG)](figures/real_data_concordance.png) ·
+[Detailed SVG](figures/real_data_concordance.svg).
+
+| Constellation mode | Spliced overlap | Unspliced overlap | Ambiguous overlap |
+|---|---:|---:|---:|
+| Conservative default | 87.9% | 87.5% | 82.9% |
+| Optional USA | 95.8% | 90.8% | 89.8% |
+
+<details>
+<summary>Technical scatterplots and correlation definitions</summary>
+
+![Detailed gene-by-cell count concordance](figures/real_data_concordance.png)
+
+These density plots use the common 58,395-gene × 11,769-cell
+axes. Every entry nonzero in either compared state matrix is included, without
+sampling or summing genes across cells. Shared zeros are excluded. The dashed
+line is equal counts; color shows the number of entries in each log-scaled bin.
+
+Pearson correlation is calculated on raw counts and `log1p` counts over that
+nonzero union. Log counts reduce the influence of highly abundant entries and
+expose low-count discrepancies. These have a different population from the
+full-matrix correlations that include shared zeros. Count overlap is the weighted
+Jaccard score, `sum(min) / sum(max)`; shared zeros contribute nothing to either sum.
+Both mapping evidence and counting policy contribute to differences. This is
+concordance rather than independent biological truth.
 
 | Constellation mode | Layer | Raw-count r | Log1p-count r | Count overlap |
 |---|---|---:|---:|---:|
@@ -255,6 +274,8 @@ known-source holdouts above. No mapping/counting run was repeated to create it.
 | USA, exact UMIs | S | 0.9992 | 0.9771 | 0.9582 |
 | USA, exact UMIs | U | 0.9844 | 0.8816 | 0.9082 |
 | USA, exact UMIs | A | 0.9983 | 0.8760 | 0.8979 |
+
+</details>
 
 [Binned data, matrix hashes and correlation definitions](raw/concordance-figure-data.json).
 
@@ -395,3 +416,6 @@ Add `--refresh` to rebuild bins and statistics from the retained 500M normalized
 Parquet matrices. It includes every nonzero-union entry, checks totals, full-matrix
 Pearson and weighted overlap against the earlier comparison, and records input
 hashes. The default rendering path needs only the committed binned data.
+It also writes the simpler 2000×1500 count-overlap bar chart used in the main
+README. Its six percentages and source hash are recorded in
+[simple-concordance-figure-data.json](raw/simple-concordance-figure-data.json).

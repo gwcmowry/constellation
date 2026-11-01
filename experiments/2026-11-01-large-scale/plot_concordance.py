@@ -13,6 +13,8 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
+from matplotlib.patches import Patch
+from matplotlib.ticker import PercentFormatter
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
@@ -164,9 +166,77 @@ def render():
     print('Rendered 2400×2000 real-data concordance PNG and SVG.')
 
 
+def render_simple():
+    """One agreement measure, with a full 0–100% axis and both count policies."""
+    data = json.loads(CACHE.read_text())
+    assert data['source_sha256'] == source_hashes(), 'Source summaries changed; rerun with --refresh'
+    plt.rcParams.update({
+        'font.family': 'DejaVu Sans', 'font.size': 12,
+        'text.color': '#17283B', 'axes.labelcolor': '#435069',
+        'xtick.color': '#435069', 'ytick.color': '#17283B',
+        'axes.edgecolor': '#CBD5DF', 'axes.spines.top': False,
+        'axes.spines.right': False, 'axes.spines.left': False, 'axes.axisbelow': True,
+        'svg.fonttype': 'none', 'svg.hashsalt': 'constellation-simple-count-agreement',
+    })
+    fig = plt.figure(figsize=(10, 7.5), facecolor='white')
+    fig.text(.065, .955, 'CONSTELLATION  /  REAL-DATA AGREEMENT', fontsize=11, weight='bold', color='#087F8C')
+    fig.text(.065, .90, 'How closely do the counts match?', fontsize=25, weight='bold')
+    fig.text(.065, .852, 'Constellation vs piscem + alevin-fry · 500M read pairs', fontsize=13.5, color='#526175')
+    ax = fig.add_axes([.20, .30, .75, .43])
+    positions = [0, 1.5, 3]
+    settings = [('count', 'Conservative (default)', '#087F8C', -.19),
+                ('usa', 'USA (optional)', '#91CBCE', .19)]
+    values = {}
+    for mode, label, color, offset in settings:
+        values[mode] = {}
+        for y, (state, _) in zip(positions, STATES, strict=True):
+            value = 100*data['rows'][f'{mode}-{state}']['weighted_jaccard']
+            assert 0 <= value <= 100
+            values[mode][state] = value
+            ax.barh(y+offset, 100, height=.31, color='#EEF2F5', zorder=2)
+            ax.barh(y+offset, value, height=.31, color=color, zorder=3)
+            ax.text(value-1.8, y+offset, f'{value:.1f}%', ha='right', va='center',
+                    color='white' if mode == 'count' else '#153C42', weight='bold', fontsize=12.5)
+    ax.set_xlim(0, 100)
+    ax.set_ylim(3.7, -.7)
+    ax.set_yticks(positions, [name for _, name in STATES])
+    ax.tick_params(axis='y', length=0, pad=12, labelsize=13)
+    ax.set_xticks([0, 25, 50, 75, 100])
+    ax.xaxis.set_major_formatter(PercentFormatter(xmax=100, decimals=0))
+    ax.tick_params(axis='x', length=4, pad=7, labelsize=11)
+    ax.set_xlabel('Count overlap · higher means closer agreement', fontsize=12, labelpad=12)
+    ax.grid(axis='x', color='#E6EBF0', linewidth=.8)
+    fig.legend(handles=[Patch(facecolor=color, label=label) for _, label, color, _ in settings],
+               loc='lower left', bbox_to_anchor=(.195, .765), ncol=2, frameon=False,
+               fontsize=12, handlelength=1.6, columnspacing=2)
+    fig.text(.065, .185, '100% means identical counts for every gene in every cell.',
+             fontsize=14, weight='bold', color='#087F8C')
+    fig.text(.065, .139, 'Example for one gene in one cell: 10 vs 8 molecules → 80% overlap.',
+             fontsize=11, color='#526175')
+    fig.text(.065, .094, 'Default includes UMI correction. Optional USA and alevin-fry use exact UMIs.',
+             fontsize=10, color='#526175')
+    fig.text(.065, .061, 'This measures agreement, not mapping accuracy. Dataset: PBMC 10k v3.',
+             fontsize=10, color='#526175')
+    fig.text(.065, .026, 'Data & full protocol: github.com/gwcmowry/constellation', fontsize=9.5, color='#526175')
+    for extension in ('png', 'svg'):
+        fig.savefig(HERE/f'figures/count_agreement_simple.{extension}', dpi=200, facecolor='white',
+                    metadata={'Date': None} if extension == 'svg' else {})
+    plt.close(fig)
+    (RAW/'simple-concordance-figure-data.json').write_text(json.dumps({
+        'source': 'raw/concordance-figure-data.json', 'source_sha256': digest(CACHE),
+        'metric': 'weighted Jaccard of matching gene-cell counts, expressed as a percentage',
+        'definition': '100 * sum(min(Constellation, alevin-fry)) / sum(max(Constellation, alevin-fry))',
+        'percentages': values, 'pairs': data['pairs'], 'genes': data['genes'], 'cells': data['cells'],
+        'reference': data['x'], 'output_pixels': [2000, 1500],
+        'matplotlib_version': matplotlib.__version__,
+    }, indent=2)+'\n')
+    print('Rendered simplified 2000×1500 count-overlap PNG and SVG.')
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--refresh', action='store_true', help='Recompute binned data from local Parquet matrices')
     args = parser.parse_args()
     if args.refresh or not CACHE.exists(): prepare()
     render()
+    render_simple()

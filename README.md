@@ -296,27 +296,23 @@ state matrices passed validation. These measurements establish a lead among
 the tested configurations on this dataset; agreement is not biological ground
 truth, and broader SOTA claims require more methods and independent datasets.
 
-### Real-data count concordance
+### Real-data count agreement
 
-![Gene-by-cell molecule-count agreement with piscem and alevin-fry, showing conservative and optional USA counting separately](experiments/2026-11-01-large-scale/figures/real_data_concordance.png)
+![Count overlap with piscem and alevin-fry for spliced, unspliced and ambiguous counts, comparing default and optional USA modes](experiments/2026-11-01-large-scale/figures/count_agreement_simple.png)
 
-[Sharing PNG](experiments/2026-11-01-large-scale/figures/real_data_concordance.png) · [SVG](experiments/2026-11-01-large-scale/figures/real_data_concordance.svg).
-These density plots use the retained **500M-pair PBMC** matrices on the common
-58,395-gene × 11,769-cell axes. Every entry nonzero in either
-compared state matrix is included, without sampling or summing genes across
-cells. Shared zeros are excluded. The dashed line is equal counts; color shows
-the number of gene–cell entries in each log-scaled bin.
+[Sharing PNG](experiments/2026-11-01-large-scale/figures/count_agreement_simple.png) · [SVG](experiments/2026-11-01-large-scale/figures/count_agreement_simple.svg).
+Each bar answers: **how closely do the count values match for the same genes
+in the same cells?** Higher is closer; **100% means identical counts everywhere**.
+For example, counts of 10 versus 8 at one gene/cell give 80% overlap. The overall
+score sums the smaller counts and divides by the sum of the larger counts.
 
-Each panel reports Pearson correlation on raw counts and on `log1p` counts,
-plus weighted count overlap (`sum(min) / sum(max)`). Log counts reduce the
-influence of highly abundant entries and expose low-count discrepancies.
-These correlations have a different population from the full-matrix values
-that include shared zeros. The optional USA mode agrees more closely with
-native alevin-fry, while the conservative default also applies UMI correction.
-Both mapping evidence and counting policies contribute to the differences.
+Both Constellation modes are compared with the same piscem/alevin-fry result
+from **500M PBMC read pairs**. Optional USA gives higher overlap in all three
+layers here. The default also corrects UMIs; USA and alevin-fry use exact UMIs,
+so the counting rules differ. This measures **agreement, not mapping accuracy**.
 
-This measures **agreement, not biological correctness**; it complements the
-known-source holdouts above. No mapping/counting run was repeated to create it.
+[Detailed scatterplots and correlations (PNG)](experiments/2026-11-01-large-scale/figures/real_data_concordance.png) ·
+[Detailed SVG](experiments/2026-11-01-large-scale/figures/real_data_concordance.svg).
 
 [Binned data, matrix hashes and correlation definitions](experiments/2026-11-01-large-scale/raw/concordance-figure-data.json).
 

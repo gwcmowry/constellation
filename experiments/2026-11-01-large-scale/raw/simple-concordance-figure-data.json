@@ -1,0 +1,27 @@
+{
+  "source": "raw/concordance-figure-data.json",
+  "source_sha256": "bd967b2cf80cb2135e404b9af08a2a0509e64a91a248e99d7921c1b2f6bc7c6c",
+  "metric": "weighted Jaccard of matching gene-cell counts, expressed as a percentage",
+  "definition": "100 * sum(min(Constellation, alevin-fry)) / sum(max(Constellation, alevin-fry))",
+  "percentages": {
+    "count": {
+      "S": 87.86681119617899,
+      "U": 87.52331261197803,
+      "A": 82.87348653859192
+    },
+    "usa": {
+      "S": 95.81743318869371,
+      "U": 90.82007169591661,
+      "A": 89.79005093788214
+    }
+  },
+  "pairs": 500000000,
+  "genes": 58395,
+  "cells": 11769,
+  "reference": "piscem + alevin-fry cr-like WTA / exact UMI",
+  "output_pixels": [
+    2000,
+    1500
+  ],
+  "matplotlib_version": "3.10.7"
+}
