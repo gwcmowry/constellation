@@ -1,0 +1,26 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-competitor-stages/raw/ours-ours-usa-3.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/target/release/constellation",
+    "count-splicing",
+    "--assignments",
+    "/home/grant/Desktop/programming/constellation/benchdata/splicing-2026-10-30/splicing.rad",
+    "--barcode-whitelist",
+    "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/barcodes.txt",
+    "--out-prefix",
+    "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/ours-ours-usa-3",
+    "--emit-metrics",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-competitor-stages/raw/ours-ours-usa-3.metrics.json",
+    "--resolution",
+    "usa",
+    "--no-correct-umis"
+  ],
+  "seconds": 1.4463529246859252,
+  "exit_code": 0
+}

@@ -1,0 +1,10 @@
+
+[index] k-mer length: 31
+[index] number of targets: 276,935
+[index] number of k-mers: 1,451,575,591
+[quant] running in paired-end mode
+[quant] will process sample 1: /home/grant/Desktop/programming/constellation/benchdata/pbmc_10k_v3/pbmc_10k_v3_100k_L001_R1.fastq.gz
+                               /home/grant/Desktop/programming/constellation/benchdata/pbmc_10k_v3/pbmc_10k_v3_100k_L001_R2.fastq.gz
+[quant] finding pseudoalignments for the reads ... done
+[quant] processed 100,000 reads, 87,741 reads pseudoaligned
+

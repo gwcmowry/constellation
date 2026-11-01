@@ -1,0 +1,100 @@
+--- a/crates/constellation-cli/src/cmd_map/packed.rs
++++ b/crates/constellation-cli/src/cmd_map/packed.rs
+@@ -365,6 +365,97 @@
+     use super::*;
+ 
+     #[test]
++    #[ignore = "input capacity diagnostic; requires CST_INPUT_R1, CST_INPUT_R2, CST_INPUT_JSON"]
++    fn input_capacity_diagnostic() -> Result<()> {
++        use std::hint::black_box;
++        use std::io::Read;
++
++        fn decode(path: &Path) -> Result<(u64, u64)> {
++            let input = BufReader::with_capacity(1 << 20, File::open(path)?);
++            let mut decoder = MultiGzDecoder::new(input);
++            let mut buffer = vec![0_u8; 1 << 20];
++            let mut bytes = 0_u64;
++            loop {
++                let count = decoder.read(&mut buffer)?;
++                if count == 0 { break; }
++                black_box(&buffer[..count]);
++                bytes += count as u64;
++            }
++            Ok((0, bytes))
++        }
++
++        fn parse(path: &Path, pack: bool, keep_quality: bool) -> Result<(u64, u64)> {
++            let mut reader = FastqStreamReader::open(path)?;
++            if !pack {
++                while reader.read_record()? { black_box(&reader.seq_buf); }
++                return Ok((reader.records_read, 0));
++            }
++            let mut slab = Slab::default();
++            let mut bytes = 0_u64;
++            loop {
++                slab.fill(&mut reader, 65_536, keep_quality)?;
++                if slab.offsets.is_empty() { break; }
++                bytes += slab.data.len() as u64;
++                black_box((&slab.data, &slab.offsets));
++            }
++            Ok((reader.records_read, bytes))
++        }
++
++        fn pipeline(r1: &Path, r2: &Path) -> Result<(u64, u64)> {
++            let mut reader = Pipeline::new(r1.to_owned(), r2.to_owned(), 65_536);
++            let mut records = 0_u64;
++            let mut bytes = 0_u64;
++            while let Some(batch) = reader.next_batch()? {
++                assert_eq!(batch.first_read, records);
++                records += batch.r2.offsets.len() as u64;
++                bytes += (batch.r1.data.len() + batch.r2.data.len()) as u64;
++                black_box((&batch.r1.data, &batch.r2.data));
++                reader.recycle(batch);
++            }
++            Ok((records, bytes))
++        }
++
++        fn measure(label: &str, mut run: impl FnMut() -> Result<(u64, u64)>) -> Result<serde_json::Value> {
++            let expected = run()?; // complete warmup
++            let mut seconds = Vec::new();
++            for _ in 0..3 {
++                let started = Instant::now();
++                assert_eq!(run()?, expected);
++                seconds.push(started.elapsed().as_secs_f64());
++            }
++            let row = serde_json::json!({"label": label, "records": expected.0,
++                "bytes": expected.1, "seconds": seconds});
++            println!("{row}");
++            Ok(row)
++        }
++
++        let r1 = PathBuf::from(std::env::var("CST_INPUT_R1")?);
++        let r2 = PathBuf::from(std::env::var("CST_INPUT_R2")?);
++        let raw1 = PathBuf::from(r1.to_str().unwrap().strip_suffix(".gz").unwrap());
++        let raw2 = PathBuf::from(r2.to_str().unwrap().strip_suffix(".gz").unwrap());
++        let mut rows = Vec::new();
++        rows.push(measure("R1_decode_only_gzip", || decode(&r1))?);
++        rows.push(measure("R2_decode_only_gzip", || decode(&r2))?);
++        rows.push(measure("paired_decode_only_gzip", || {
++            thread::scope(|scope| {
++                let left = scope.spawn(|| decode(&r1));
++                let right = decode(&r2)?;
++                Ok((0, left.join().unwrap()?.1 + right.1))
++            })
++        })?);
++        for (label, path, quality) in [("R1", &r1, false), ("R2", &r2, true)] {
++            rows.push(measure(&format!("{label}_parse_only_gzip"), || parse(path, false, quality))?);
++            rows.push(measure(&format!("{label}_slab_gzip"), || parse(path, true, quality))?);
++        }
++        rows.push(measure("paired_pipeline_gzip", || pipeline(&r1, &r2))?);
++        rows.push(measure("R1_slab_raw", || parse(&raw1, true, false))?);
++        rows.push(measure("R2_slab_raw", || parse(&raw2, true, true))?);
++        rows.push(measure("paired_pipeline_raw", || pipeline(&raw1, &raw2))?);
++        fs::write(std::env::var("CST_INPUT_JSON")?, serde_json::to_vec_pretty(&rows)?)?;
++        Ok(())
++    }
++
++    #[test]
+     fn slabs_recycle_and_cancel_on_errors() {
+         let dir = tempfile::tempdir().unwrap();
+         let left = dir.path().join("left.fq");

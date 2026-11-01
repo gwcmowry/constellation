@@ -1,3 +1,10 @@
+mod build;
+mod consensus;
+mod ptrhash_build;
+mod splicing;
+pub use consensus::EcConsensusScratch;
+pub use splicing::SplicingState;
+
 use crate::dna::{
     encode_acgt, iter_closed_syncmers_2bit, iter_kmers_2bit, reverse_complement, EncodedSeq, Kmer,
 };
@@ -617,7 +624,7 @@ pub struct EcGeneScore {
     pub unknown_score: u16,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct EcResolvedMapping {
     pub gene_id: Option<GeneId>,
     pub score: u16,
@@ -721,30 +728,37 @@ impl EcScoreScratch {
     }
 
     fn finish_resolved(&self, emit_top_gene_ids: bool) -> EcResolvedMapping {
+        let mut resolved = EcResolvedMapping::default();
+        self.resolve_into(emit_top_gene_ids, &mut resolved);
+        resolved
+    }
+
+    fn resolve_into(&self, emit_top_gene_ids: bool, resolved: &mut EcResolvedMapping) {
         let best_score = self
             .scores()
             .map(|score| score.total_score)
             .max()
             .unwrap_or(0);
         let gene_candidate_count = self.touched_gene_ids.len().min(u32::MAX as usize) as u32;
-        let top_gene_ids = if emit_top_gene_ids && best_score > 0 {
-            let mut top_scores = self
-                .scores()
-                .filter(|score| score.total_score == best_score)
-                .collect::<Vec<_>>();
-            top_scores.sort_unstable_by_key(|score| {
+        let mut top_gene_ids = std::mem::take(&mut resolved.top_gene_ids);
+        top_gene_ids.clear();
+        if emit_top_gene_ids && best_score > 0 {
+            top_gene_ids.extend(
+                self.scores()
+                    .filter(|s| s.total_score == best_score)
+                    .map(|s| s.gene_id),
+            );
+            top_gene_ids.sort_unstable_by_key(|&gene_id| {
+                let score = &self.scores[gene_id as usize];
                 (
                     std::cmp::Reverse(score.exon_score),
                     std::cmp::Reverse(score.intron_score),
                     score.gene_id,
                 )
             });
-            top_scores.into_iter().map(|score| score.gene_id).collect()
-        } else {
-            Vec::new()
-        };
+        }
 
-        let mut resolved = EcResolvedMapping {
+        *resolved = EcResolvedMapping {
             gene_id: None,
             score: best_score,
             best_score,
@@ -755,37 +769,36 @@ impl EcScoreScratch {
             top_gene_ids,
         };
         if best_score == 0 {
-            return resolved;
+            return;
         }
         if let Some(score) = self.unique_top_by(best_score, |score| score.exon_score) {
             resolved.gene_id = Some(score.gene_id);
             resolved.score = score.exon_score;
             resolved.has_exon_support = true;
-            return resolved;
+            return;
         }
         if let Some(score) = self.unique_top_by(best_score, |score| score.intron_score) {
             resolved.gene_id = Some(score.gene_id);
             resolved.score = score.intron_score;
             resolved.has_intron_support = true;
-            return resolved;
+            return;
         }
         if let Some(score) = self.unique_top_by(best_score, |score| score.unknown_score) {
             resolved.gene_id = Some(score.gene_id);
             resolved.score = score.unknown_score;
-            return resolved;
+            return;
         }
         if let Some(score) = self.unique_top_by(best_score, |score| score.total_score) {
             resolved.gene_id = Some(score.gene_id);
             resolved.has_exon_support = score.exon_score > 0;
             resolved.has_intron_support = score.intron_score > 0;
-            return resolved;
+            return;
         }
         for score in self.scores() {
             resolved.has_exon_support |= score.exon_score > 0;
             resolved.has_intron_support |= score.intron_score > 0;
             resolved.has_antisense_support |= score.antisense_score > 0;
         }
-        resolved
     }
 }
 
@@ -796,7 +809,7 @@ struct KmerGeneRecord {
     class_bits: u8,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct EcGeneTarget {
     gene_id: GeneId,
     class_bits: u8,
@@ -873,6 +886,7 @@ impl EcIndex {
             unique_temp_suffix()
         ));
 
+        let build_start = std::time::Instant::now();
         let mut reader = needletail::parse_fastx_file(fasta.as_ref())
             .map_err(|err| crate::index_build::BuildIndexError::Malformed(err.to_string()))?;
         while let Some(record) = reader.next() {
@@ -933,6 +947,8 @@ impl EcIndex {
             runs.push(flush_kmer_gene_run(&mut buffer, &run_prefix, runs.len())?);
         }
 
+        build_phase("generate_runs", build_start);
+        let merge_start = std::time::Instant::now();
         let mut ec_ids: BTreeMap<Vec<EcGeneTarget>, u32> = BTreeMap::new();
         let mut ec_offsets = vec![0_u32];
         let mut ec_gene_ids = Vec::new();
@@ -960,6 +976,7 @@ impl EcIndex {
             });
             Ok(())
         })?;
+        build_phase("merge_intern", merge_start);
         for run in runs {
             let _ = std::fs::remove_file(run);
         }
@@ -1055,7 +1072,9 @@ impl EcIndex {
     }
 
     pub fn save_mmap(&self, path: impl AsRef<Path>) -> Result<(), EcIndexError> {
-        let prefix_bits = if self.sampling.is_sampled() {
+        let prefix_bits = if self.kmers.is_empty() {
+            0
+        } else if self.sampling.is_sampled() {
             EC_SAMPLED_PREFIX_BITS
         } else {
             EC_PREFIX_BITS
@@ -1629,6 +1648,30 @@ impl LoadedEcIndex {
             stats.reads_with_gene_support = 1;
         }
         (mapping, stats)
+    }
+
+    /// Resolve into reusable output storage, including the optional tied-gene list.
+    #[allow(clippy::too_many_arguments)]
+    pub fn map_encoded_sparse_resolved_into(
+        &self,
+        encoded: &EncodedSeq,
+        search_reverse_complement: bool,
+        stride: u32,
+        max_gene_df: u32,
+        emit_top_gene_ids: bool,
+        scratch: &mut EcScoreScratch,
+        mapping: &mut EcResolvedMapping,
+    ) -> EcMappingStats {
+        let mut stats = self.accumulate_encoded_sparse_with_scratch(
+            encoded,
+            search_reverse_complement,
+            stride,
+            max_gene_df,
+            scratch,
+        );
+        scratch.resolve_into(emit_top_gene_ids, mapping);
+        stats.reads_with_gene_support = u64::from(mapping.best_score > 0);
+        stats
     }
 
     fn accumulate_encoded_sparse_with_scratch(
@@ -2946,6 +2989,12 @@ fn accumulate_ec_seq_dense(
     scratch: &mut EcScoreScratch,
     stats: &mut EcMappingStats,
 ) {
+    if let LoadedEcIndex::Mmap(mmap) = index {
+        if mmap.header_v9.is_some() {
+            accumulate_v9_prefetched(index, mmap, encoded, stride, max_gene_df, scratch, stats);
+            return;
+        }
+    }
     let use_lookup_hit = matches!(
         index,
         LoadedEcIndex::Mmap(mmap)
@@ -2983,6 +3032,66 @@ fn accumulate_ec_seq_dense(
             );
         }
     });
+}
+
+fn accumulate_v9_prefetched(
+    index: &LoadedEcIndex,
+    mmap: &MmapEcIndex,
+    encoded: &EncodedSeq,
+    stride: u32,
+    max_gene_df: u32,
+    scratch: &mut EcScoreScratch,
+    stats: &mut EcMappingStats,
+) {
+    let ptrhash = mmap.ptrhash.as_ref().expect("validated v9 PtrHash");
+    let slots = mmap.v9_slots();
+    let mut keys = [0_u64; 32];
+    let mut len = 0;
+    let mut consume = |keys: &[u64]| {
+        let mut positions = [0_usize; 32];
+        let mut n = 0;
+        // PtrHash's iterator implements fold/for_each, not next().
+        ptrhash.index_stream::<8, _>(keys).for_each(|position| {
+            positions[n] = position;
+            n += 1;
+            #[cfg(target_arch = "x86_64")]
+            unsafe {
+                // The loader checks max_index against this exact slot array.
+                std::arch::x86_64::_mm_prefetch(
+                    slots.as_ptr().add(position).cast(),
+                    std::arch::x86_64::_MM_HINT_T0,
+                );
+            }
+        });
+        stats.seed_lookups += keys.len() as u64;
+        for (&key, &position) in keys.iter().zip(&positions) {
+            let slot = slots[position];
+            if slot.kmer_code != key || slot.target_len == 0 {
+                continue;
+            }
+            let hit = EcLookupHit {
+                kmer_code: key,
+                gene_df: slot.gene_df as u32,
+                target_start: slot.target_start,
+                target_len: slot.target_len as u32,
+                ec_id: None,
+            };
+            index.visit_lookup_hit(hit, max_gene_df, stats, |gene, score, class| {
+                scratch.add(gene, score, class)
+            });
+        }
+    };
+    for_each_selected_kmer(encoded, index.k(), index.sampling(), stride, |kmer| {
+        keys[len] = kmer.code;
+        len += 1;
+        if len == keys.len() {
+            consume(&keys);
+            len = 0;
+        }
+    });
+    if len > 0 {
+        consume(&keys[..len]);
+    }
 }
 
 pub fn finish_ec_mapping(
@@ -3049,13 +3158,25 @@ fn add_to_gene_score(score: &mut EcGeneScore, seed_score: u16, class_bits: u8) {
     }
 }
 
+fn build_phase(label: &str, started: std::time::Instant) {
+    if std::env::var_os("CONSTELLATION_PROFILE_BUILD").is_some() {
+        eprintln!(
+            "build_phase\t{label}\t{:.6}",
+            started.elapsed().as_secs_f64()
+        );
+    }
+}
+
 fn flush_kmer_gene_run(
     buffer: &mut Vec<KmerGeneRecord>,
     prefix: &Path,
     run_id: usize,
 ) -> Result<PathBuf, EcIndexError> {
+    let started = std::time::Instant::now();
     buffer.sort_unstable();
     buffer.dedup();
+    build_phase("sort_run", started);
+    let started = std::time::Instant::now();
     let path = prefix.with_extension(format!("run{run_id}.bin"));
     let mut writer = BufWriter::new(File::create(&path)?);
     for record in buffer.iter().copied() {
@@ -3063,6 +3184,8 @@ fn flush_kmer_gene_run(
         write_u32(&mut writer, record.gene_id)?;
         writer.write_all(&[record.class_bits])?;
     }
+    writer.flush()?;
+    build_phase("write_run", started);
     buffer.clear();
     Ok(path)
 }
@@ -5067,6 +5190,41 @@ fn save_mmap_v9_from_mmap_v4(
         negatives_checked += 1;
     }
 
+    let targets = index.bytes(
+        v4.ec_targets_offset,
+        checked_mul_u64(
+            v4.num_ec_targets,
+            EC_V4_TARGET_WIDTH as u64,
+            "EC v9 targets",
+        )?,
+    )?;
+    write_ptrhash_index(
+        path,
+        index.k(),
+        index.sampling,
+        keys.len(),
+        &ptrhash,
+        &slots,
+        index.genes(),
+        index.gene_names(),
+        ec_offsets,
+        targets,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn write_ptrhash_index(
+    path: impl AsRef<Path>,
+    k: u8,
+    sampling: EcSampling,
+    num_kmers: usize,
+    ptrhash: &EcPtrHash,
+    slots: &[EcPtrHashSlot],
+    gene_metas: &[EcGeneMeta],
+    gene_names: &[u8],
+    ec_offsets: &[u32],
+    targets: &[u8],
+) -> Result<(), EcIndexError> {
     let header_len = std::mem::size_of::<EcMmapHeaderV9>() as u64;
     let ptrhash_offset = align_up(header_len, 64);
     let mut file = File::create(path)?;
@@ -5079,8 +5237,6 @@ fn save_mmap_v9_from_mmap_v4(
         .checked_sub(ptrhash_offset)
         .ok_or(EcIndexError::Truncated)?;
 
-    let gene_metas = index.genes();
-    let gene_names = index.gene_names();
     let genes_offset = align_up(ptrhash_end, 8);
     write_padding(&mut file, ptrhash_end, genes_offset)?;
     write_pod_slice(&mut file, gene_metas)?;
@@ -5095,35 +5251,27 @@ fn save_mmap_v9_from_mmap_v4(
     let ec_offsets_end = ec_offsets_offset + byte_len::<u32>(ec_offsets.len());
     let ec_targets_offset = align_up(ec_offsets_end, 4);
     write_padding(&mut file, ec_offsets_end, ec_targets_offset)?;
-    let targets = index.bytes(
-        v4.ec_targets_offset,
-        checked_mul_u64(
-            v4.num_ec_targets,
-            EC_V4_TARGET_WIDTH as u64,
-            "EC v9 targets",
-        )?,
-    )?;
     file.write_all(targets)?;
     let targets_end = ec_targets_offset + targets.len() as u64;
     let gene_names_offset = align_up(targets_end, 8);
     write_padding(&mut file, targets_end, gene_names_offset)?;
     file.write_all(gene_names)?;
 
-    let (sampling_marker, sampling_s) = match index.sampling {
+    let (sampling_marker, sampling_s) = match sampling {
         EcSampling::AllKmers => (0, 0),
         EcSampling::ClosedSyncmer { s } => (EC_V4_SAMPLING_MARKER, s as u32),
     };
     let header = EcMmapHeaderV9 {
         magic: EC_MMAP_MAGIC,
         version: EC_MMAP_VERSION_V9,
-        k: index.k() as u32,
+        k: k as u32,
         sampling_marker,
         sampling_s,
         num_genes: gene_metas.len() as u64,
-        num_kmers: keys.len() as u64,
+        num_kmers: num_kmers as u64,
         num_slots: slots.len() as u64,
         num_ec_offsets: ec_offsets.len() as u64,
-        num_ec_targets: v4.num_ec_targets,
+        num_ec_targets: (targets.len() / EC_V4_TARGET_WIDTH) as u64,
         ptrhash_offset,
         ptrhash_len,
         genes_offset,
@@ -6463,6 +6611,66 @@ mod tests {
         let v9_path = tempfile::NamedTempFile::new().unwrap();
         save_mmap_v9_from_mmap_v4(v9_path.path(), v4_mmap).unwrap();
         let v9 = LoadedEcIndex::load(v9_path.path()).unwrap();
+        let mut scratch = EcScoreScratch::new(v9.num_genes());
+        let mut reused = EcResolvedMapping::default();
+        let repeated = b"ACGTTGCATGTCGCATGATGCATGAGAGCT".repeat(10_000);
+        for sequence in [
+            repeated.as_slice(),
+            b"NNNN",
+            b"ACGTTGCATGTCGCATGATGCATGAGAGCT",
+            b"",
+            b"TTGACCGTACCGATGCTAGCTTACGGTACA",
+        ] {
+            let encoded = encode_acgt(sequence);
+            for reverse in [false, true] {
+                for max_df in [1, 256] {
+                    // The source v4 scalar path is independent of PtrHash batching/run folding.
+                    let (expected_mapping, expected_stats) =
+                        v4.map_encoded_sparse(&encoded, reverse, 12, max_df);
+                    for emit_top in [true, false] {
+                        let stats = v9.map_encoded_sparse_resolved_into(
+                            &encoded,
+                            reverse,
+                            12,
+                            max_df,
+                            emit_top,
+                            &mut scratch,
+                            &mut reused,
+                        );
+                        assert_eq!(stats, expected_stats);
+                        assert_eq!(
+                            (
+                                reused.gene_id,
+                                reused.score,
+                                reused.has_exon_support,
+                                reused.has_intron_support,
+                                reused.has_antisense_support
+                            ),
+                            reference_resolve_scores(
+                                &expected_mapping.gene_scores,
+                                expected_mapping.best_score
+                            )
+                        );
+                        assert_eq!(reused.best_score, expected_mapping.best_score);
+                        assert_eq!(
+                            reused.gene_candidate_count as usize,
+                            expected_mapping.gene_scores.len()
+                        );
+                        let expected_top: Vec<_> = expected_mapping
+                            .gene_scores
+                            .iter()
+                            .filter(|score| {
+                                emit_top
+                                    && expected_mapping.best_score > 0
+                                    && score.total_score == expected_mapping.best_score
+                            })
+                            .map(|score| score.gene_id)
+                            .collect();
+                        assert_eq!(reused.top_gene_ids, expected_top);
+                    }
+                }
+            }
+        }
         assert_eq!(v9.sampling(), index.sampling);
         assert!(matches!(
             &v9,

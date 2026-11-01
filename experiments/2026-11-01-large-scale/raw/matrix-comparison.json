@@ -1,0 +1,194 @@
+{
+  "100m-ours-count_vs_100m-piscem-count": {
+    "S": {
+      "a_total": 22300193,
+      "b_total": 24816270,
+      "nonzero_union": 10080507,
+      "l1": 2807843,
+      "l1_over_sum": 0.05959367111236682,
+      "weighted_jaccard": 0.8875159927110454,
+      "full_matrix_pearson": 0.895483691308877,
+      "gene_total_log1p_pearson": 0.9577706218385696
+    },
+    "U": {
+      "a_total": 16605351,
+      "b_total": 16573794,
+      "nonzero_union": 11283769,
+      "l1": 1695411,
+      "l1_over_sum": 0.05109869467703282,
+      "weighted_jaccard": 0.9027708911907008,
+      "full_matrix_pearson": 0.9799718143487497,
+      "gene_total_log1p_pearson": 0.9901752209041025
+    },
+    "A": {
+      "a_total": 6593250,
+      "b_total": 6581502,
+      "nonzero_union": 3568536,
+      "l1": 1096010,
+      "l1_over_sum": 0.08319018073357282,
+      "weighted_jaccard": 0.8463978307535365,
+      "full_matrix_pearson": 0.9950191670183655,
+      "gene_total_log1p_pearson": 0.9620231414934599
+    }
+  },
+  "100m-ours-usa_vs_100m-piscem-count": {
+    "S": {
+      "a_total": 23857375,
+      "b_total": 24816270,
+      "nonzero_union": 10125471,
+      "l1": 1384807,
+      "l1_over_sum": 0.028450858775832383,
+      "weighted_jaccard": 0.9446724001772967,
+      "full_matrix_pearson": 0.9975132209683563,
+      "gene_total_log1p_pearson": 0.9923162056982829
+    },
+    "U": {
+      "a_total": 16776425,
+      "b_total": 16573794,
+      "nonzero_union": 11287505,
+      "l1": 1564161,
+      "l1_over_sum": 0.04690107132429925,
+      "weighted_jaccard": 0.9104001846803523,
+      "full_matrix_pearson": 0.9817215184806268,
+      "gene_total_log1p_pearson": 0.9902252393250102
+    },
+    "A": {
+      "a_total": 7017638,
+      "b_total": 6581502,
+      "nonzero_union": 3615679,
+      "l1": 829752,
+      "l1_over_sum": 0.061015034774257786,
+      "weighted_jaccard": 0.8849874266159868,
+      "full_matrix_pearson": 0.9962806087965589,
+      "gene_total_log1p_pearson": 0.9919503688452298
+    }
+  },
+  "100m-kallisto-count_vs_100m-piscem-count": {
+    "S": {
+      "a_total": 23594884,
+      "b_total": 24816270,
+      "nonzero_union": 10033170,
+      "l1": 1349950,
+      "l1_over_sum": 0.027885102676957464,
+      "weighted_jaccard": 0.9457427632634517,
+      "full_matrix_pearson": 0.8986811986004666,
+      "gene_total_log1p_pearson": 0.9620633984829906
+    },
+    "U": {
+      "a_total": 16816413,
+      "b_total": 16573794,
+      "nonzero_union": 10863602,
+      "l1": 404449,
+      "l1_over_sum": 0.012112803014368853,
+      "weighted_jaccard": 0.9760643221224089,
+      "full_matrix_pearson": 0.9935859480125026,
+      "gene_total_log1p_pearson": 0.9979820492932017
+    },
+    "A": {
+      "a_total": 7897321,
+      "b_total": 6581502,
+      "nonzero_union": 3896390,
+      "l1": 1356683,
+      "l1_over_sum": 0.09370119380560146,
+      "weighted_jaccard": 0.8286530282013091,
+      "full_matrix_pearson": 0.7657828646277224,
+      "gene_total_log1p_pearson": 0.9342378163987378
+    }
+  },
+  "500m-ours-count_vs_500m-piscem-count": {
+    "S": {
+      "a_total": 60757620,
+      "b_total": 68503016,
+      "nonzero_union": 19851799,
+      "l1": 8348168,
+      "l1_over_sum": 0.06458399291799864,
+      "weighted_jaccard": 0.8786681119617898,
+      "full_matrix_pearson": 0.907351195732955,
+      "gene_total_log1p_pearson": 0.9535590946527811
+    },
+    "U": {
+      "a_total": 43459419,
+      "b_total": 44933518,
+      "nonzero_union": 21765835,
+      "l1": 5881141,
+      "l1_over_sum": 0.06653406029488533,
+      "weighted_jaccard": 0.8752331261197802,
+      "full_matrix_pearson": 0.9859648148420851,
+      "gene_total_log1p_pearson": 0.9903450346824679
+    },
+    "A": {
+      "a_total": 14166789,
+      "b_total": 15016685,
+      "nonzero_union": 6647170,
+      "l1": 2733098,
+      "l1_over_sum": 0.09365224990006331,
+      "weighted_jaccard": 0.8287348653859192,
+      "full_matrix_pearson": 0.9974205570447255,
+      "gene_total_log1p_pearson": 0.961619080184023
+    }
+  },
+  "500m-ours-usa_vs_500m-piscem-count": {
+    "S": {
+      "a_total": 66724728,
+      "b_total": 68503016,
+      "nonzero_union": 19984499,
+      "l1": 2888400,
+      "l1_over_sum": 0.021359522199823136,
+      "weighted_jaccard": 0.9581743318869371,
+      "full_matrix_pearson": 0.9991997726927356,
+      "gene_total_log1p_pearson": 0.9905260583463775
+    },
+    "U": {
+      "a_total": 45624679,
+      "b_total": 44933518,
+      "nonzero_union": 21836813,
+      "l1": 4356553,
+      "l1_over_sum": 0.04810777096191524,
+      "weighted_jaccard": 0.908200716959166,
+      "full_matrix_pearson": 0.9899369742915223,
+      "gene_total_log1p_pearson": 0.9906349419136855
+    },
+    "A": {
+      "a_total": 15836472,
+      "b_total": 15016685,
+      "nonzero_union": 6709759,
+      "l1": 1659777,
+      "l1_over_sum": 0.05379601834586976,
+      "weighted_jaccard": 0.8979005093788214,
+      "full_matrix_pearson": 0.9983459579945455,
+      "gene_total_log1p_pearson": 0.9909406380356375
+    }
+  },
+  "500m-kallisto-count_vs_500m-piscem-count": {
+    "S": {
+      "a_total": 65578812,
+      "b_total": 68503016,
+      "nonzero_union": 19859847,
+      "l1": 3790278,
+      "l1_over_sum": 0.028268394431495966,
+      "weighted_jaccard": 0.9450174787349661,
+      "full_matrix_pearson": 0.9084644411112609,
+      "gene_total_log1p_pearson": 0.9561006022973018
+    },
+    "U": {
+      "a_total": 46513256,
+      "b_total": 44933518,
+      "nonzero_union": 21152494,
+      "l1": 2024734,
+      "l1_over_sum": 0.02214112003557392,
+      "weighted_jaccard": 0.9566769801124851,
+      "full_matrix_pearson": 0.9849183778973298,
+      "gene_total_log1p_pearson": 0.9957714128647913
+    },
+    "A": {
+      "a_total": 18326990,
+      "b_total": 15016685,
+      "nonzero_union": 7366980,
+      "l1": 3522963,
+      "l1_over_sum": 0.105656110191813,
+      "weighted_jaccard": 0.8088807012996412,
+      "full_matrix_pearson": 0.7612914538659238,
+      "gene_total_log1p_pearson": 0.9248739936553475
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "ambiguous_including_conflict_unknown": 850393,
+  "barcode_corrected": 105634,
+  "barcode_exact": 7196224,
+  "barcode_rejected_rows": 555527,
+  "cells": 11769,
+  "compatible_both": 849400,
+  "conflicting_gene_groups": 2495,
+  "conflicting_state": 993,
+  "correct_umis": true,
+  "count_seconds": 7.603782165,
+  "invalid_barcode_rows": 0,
+  "mapped_valid_rows": 7301858,
+  "molecules_after_umi_correction": 5514020,
+  "molecules_before_umi_correction": 5525754,
+  "phase_seconds": {
+    "collapse": 2.448752903,
+    "ingest": 2.341381291,
+    "resolve": 1.8879898389999998,
+    "write": 0.925657462
+  },
+  "policy": "intersection of candidate genes within corrected barcode/exact UMI; skip unresolved/conflicting genes; deterministic one-hop directional UMI correction within cell/gene; intersect states across merged reads/UMIs",
+  "raw_barcode_umi_groups": 6564690,
+  "rows": 10000000,
+  "spliced": 2656486,
+  "unknown_state": 0,
+  "unresolved_gene_groups": 1036441,
+  "unspliced": 2007141
+}

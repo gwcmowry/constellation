@@ -1,0 +1,268 @@
+{
+  "microbenchmarks": {
+    "1": {
+      "encode": {
+        "checksum": 91000000,
+        "iterations_per_sample": 1,
+        "sample_seconds": [
+          0.512166525,
+          0.510564731,
+          0.510929228
+        ],
+        "seconds": [
+          0.512166525,
+          0.510564731,
+          0.510929228
+        ]
+      },
+      "hash_only": {
+        "checksum": 1346230920494020,
+        "iterations_per_sample": 3,
+        "sample_seconds": [
+          0.424163535,
+          0.417226099,
+          0.416724755
+        ],
+        "seconds": [
+          0.14138784499999998,
+          0.13907536633333334,
+          0.13890825166666668
+        ]
+      },
+      "lookup_api_preselected": {
+        "checksum": 8052799,
+        "iterations_per_sample": 1,
+        "sample_seconds": [
+          0.553973638,
+          0.544093643,
+          0.544503719
+        ],
+        "seconds": [
+          0.553973638,
+          0.544093643,
+          0.544503719
+        ]
+      },
+      "lookup_scalar_preselected": {
+        "checksum": 6379009488727480670,
+        "iterations_per_sample": 1,
+        "sample_seconds": [
+          0.323726979,
+          0.323323583,
+          0.333719083
+        ],
+        "seconds": [
+          0.323726979,
+          0.323323583,
+          0.333719083
+        ]
+      },
+      "lookup_stream_prefetch_preselected": {
+        "checksum": 6379009488727480670,
+        "iterations_per_sample": 3,
+        "sample_seconds": [
+          0.311037835,
+          0.311676878,
+          0.309429032
+        ],
+        "seconds": [
+          0.10367927833333333,
+          0.10389229266666666,
+          0.10314301066666666
+        ]
+      },
+      "map_encoded": {
+        "checksum": 824124818199246,
+        "iterations_per_sample": 1,
+        "sample_seconds": [
+          2.73503173,
+          2.7602578700000002,
+          2.798978847
+        ],
+        "seconds": [
+          2.73503173,
+          2.7602578700000002,
+          2.798978847
+        ]
+      },
+      "select_syncmers": {
+        "checksum": 318835931,
+        "iterations_per_sample": 1,
+        "sample_seconds": [
+          0.750070161,
+          0.749358189,
+          0.748882693
+        ],
+        "seconds": [
+          0.750070161,
+          0.749358189,
+          0.748882693
+        ]
+      }
+    },
+    "12": {
+      "encode": {
+        "checksum": 91000000,
+        "iterations_per_sample": 6,
+        "sample_seconds": [
+          0.263646741,
+          0.287435707,
+          0.268358381
+        ],
+        "seconds": [
+          0.043941123500000005,
+          0.04790595116666666,
+          0.04472639683333333
+        ]
+      },
+      "hash_only": {
+        "checksum": 1346230920494020,
+        "iterations_per_sample": 25,
+        "sample_seconds": [
+          0.364035018,
+          0.319474404,
+          0.35079615
+        ],
+        "seconds": [
+          0.01456140072,
+          0.01277897616,
+          0.014031845999999999
+        ]
+      },
+      "lookup_api_preselected": {
+        "checksum": 8052799,
+        "iterations_per_sample": 5,
+        "sample_seconds": [
+          0.25256995,
+          0.245109929,
+          0.23945316
+        ],
+        "seconds": [
+          0.050513989999999995,
+          0.0490219858,
+          0.047890632
+        ]
+      },
+      "lookup_scalar_preselected": {
+        "checksum": 6379009488727480670,
+        "iterations_per_sample": 10,
+        "sample_seconds": [
+          0.295923467,
+          0.29368667,
+          0.292430843
+        ],
+        "seconds": [
+          0.0295923467,
+          0.029368666999999998,
+          0.0292430843
+        ]
+      },
+      "lookup_stream_prefetch_preselected": {
+        "checksum": 6379009488727480670,
+        "iterations_per_sample": 20,
+        "sample_seconds": [
+          0.309721229,
+          0.261843191,
+          0.29832043
+        ],
+        "seconds": [
+          0.01548606145,
+          0.01309215955,
+          0.014916021500000001
+        ]
+      },
+      "map_encoded": {
+        "checksum": 824124818199246,
+        "iterations_per_sample": 2,
+        "sample_seconds": [
+          0.499213403,
+          0.505324917,
+          0.497939447
+        ],
+        "seconds": [
+          0.2496067015,
+          0.2526624585,
+          0.2489697235
+        ]
+      },
+      "select_syncmers": {
+        "checksum": 318835931,
+        "iterations_per_sample": 5,
+        "sample_seconds": [
+          0.339760377,
+          0.34039299,
+          0.344289449
+        ],
+        "seconds": [
+          0.0679520754,
+          0.068078598,
+          0.0688578898
+        ]
+      }
+    }
+  },
+  "trace": {
+    "absent_keys": 2190638,
+    "accepted_hits": 7546061,
+    "capped_hits": 506738,
+    "distinct_ec_gene_visits": 37956485,
+    "distinct_ecs_per_read_sum": 2269163,
+    "eligible_reads": 992365,
+    "gene_votes": 45610670,
+    "holdout_seed_occurrences": 5122303,
+    "hot_key_coverage": [
+      {
+        "keys": 1000,
+        "occurrences": 1362948
+      },
+      {
+        "keys": 10000,
+        "occurrences": 3182863
+      },
+      {
+        "keys": 100000,
+        "occurrences": 4653859
+      },
+      {
+        "keys": 1000000,
+        "occurrences": 7016869
+      }
+    ],
+    "hot_key_holdout_coverage": [
+      {
+        "holdout_occurrences": 683618,
+        "keys": 1000
+      },
+      {
+        "holdout_occurrences": 1592103,
+        "keys": 10000
+      },
+      {
+        "holdout_occurrences": 2234791,
+        "keys": 100000
+      },
+      {
+        "holdout_occurrences": 2691931,
+        "keys": 1000000
+      }
+    ],
+    "index_bytes": 4427647629,
+    "index_keys": 259516542,
+    "index_slots": 262137600,
+    "reads": 1000000,
+    "reads_with_one_distinct_accepted_ec": 445096,
+    "run_gene_visits": 38207244,
+    "same_ec_runs": 2395167,
+    "seed_occurrences": 10243437,
+    "singleton_keys": 3260039,
+    "singleton_target_hits": 5051742,
+    "slot_bytes": 4194201600,
+    "streaming_indices_verified": 10243437,
+    "supported_reads": 897302,
+    "target_bytes": 133827300,
+    "training_reads": 500000,
+    "unique_eligible_sequences": 726748,
+    "unique_eligible_sequences_within_65536_read_batches": 864010,
+    "unique_keys": 4226568
+  }
+}

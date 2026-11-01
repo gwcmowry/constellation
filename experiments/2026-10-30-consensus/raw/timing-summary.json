@@ -1,0 +1,106 @@
+{
+  "pbmc10m/constellation": {
+    "repeats": [
+      {
+        "wall": 3.0563970673829317,
+        "rss_kib": 4471244.0,
+        "cpu_seconds": 25.22,
+        "major_faults": 0.0
+      },
+      {
+        "wall": 2.835402750875801,
+        "rss_kib": 4471980.0,
+        "cpu_seconds": 25.450000000000003,
+        "major_faults": 0.0
+      },
+      {
+        "wall": 3.19958113739267,
+        "rss_kib": 4472084.0,
+        "cpu_seconds": 25.150000000000002,
+        "major_faults": 0.0
+      }
+    ],
+    "median_seconds": 3.0563970673829317,
+    "million_pairs_per_second": 3.2718261991275215,
+    "median_rss_gib": 4.264812469482422,
+    "median_cpu_seconds": 25.22
+  },
+  "pbmc10m/constellation-consensus": {
+    "repeats": [
+      {
+        "wall": 4.283208640292287,
+        "rss_kib": 4472028.0,
+        "cpu_seconds": 35.55,
+        "major_faults": 0.0
+      },
+      {
+        "wall": 4.404580834787339,
+        "rss_kib": 4471456.0,
+        "cpu_seconds": 35.519999999999996,
+        "major_faults": 0.0
+      },
+      {
+        "wall": 4.4280016790144145,
+        "rss_kib": 4471828.0,
+        "cpu_seconds": 35.29,
+        "major_faults": 0.0
+      }
+    ],
+    "median_seconds": 4.404580834787339,
+    "million_pairs_per_second": 2.270363599873135,
+    "median_rss_gib": 4.264667510986328,
+    "median_cpu_seconds": 35.519999999999996
+  },
+  "pbmc10m/piscem-forward": {
+    "repeats": [
+      {
+        "wall": 13.958013589959592,
+        "rss_kib": 3223480.0,
+        "cpu_seconds": 161.48,
+        "major_faults": 0.0
+      },
+      {
+        "wall": 14.000472798012197,
+        "rss_kib": 3227548.0,
+        "cpu_seconds": 162.09,
+        "major_faults": 0.0
+      },
+      {
+        "wall": 13.87685275496915,
+        "rss_kib": 3225212.0,
+        "cpu_seconds": 160.58,
+        "major_faults": 0.0
+      }
+    ],
+    "median_seconds": 13.958013589959592,
+    "million_pairs_per_second": 0.7164343218001517,
+    "median_rss_gib": 3.0758018493652344,
+    "median_cpu_seconds": 161.48
+  },
+  "pbmc10m/kallisto-forward": {
+    "repeats": [
+      {
+        "wall": 85.79188874177635,
+        "rss_kib": 14820956.0,
+        "cpu_seconds": 594.75,
+        "major_faults": 0.0
+      },
+      {
+        "wall": 85.51638428401202,
+        "rss_kib": 14821604.0,
+        "cpu_seconds": 594.77,
+        "major_faults": 0.0
+      },
+      {
+        "wall": 85.68239042675123,
+        "rss_kib": 14821812.0,
+        "cpu_seconds": 594.17,
+        "major_faults": 0.0
+      }
+    ],
+    "median_seconds": 85.68239042675123,
+    "million_pairs_per_second": 0.11671009585743142,
+    "median_rss_gib": 14.13498306274414,
+    "median_cpu_seconds": 594.75
+  }
+}

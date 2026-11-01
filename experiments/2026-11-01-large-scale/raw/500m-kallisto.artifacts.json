@@ -1,0 +1,50 @@
+{
+  "removed_scratch_root": "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-kallisto",
+  "files": [
+    {
+      "path": "sorted.bus",
+      "bytes": 5692721041
+    },
+    {
+      "path": "counts.ambiguous.mtx",
+      "bytes": 93726660
+    },
+    {
+      "path": "corrected.bus",
+      "bytes": 11676320273
+    },
+    {
+      "path": "counts.genes.txt",
+      "bytes": 934320
+    },
+    {
+      "path": "counts.mtx",
+      "bytes": 242133180
+    },
+    {
+      "path": "counts.2.mtx",
+      "bytes": 269806534
+    },
+    {
+      "path": "counts.barcodes.txt",
+      "bytes": 200073
+    },
+    {
+      "path": "map/matrix.ec",
+      "bytes": 142698197
+    },
+    {
+      "path": "map/run_info.json",
+      "bytes": 857
+    },
+    {
+      "path": "map/output.bus",
+      "bytes": 12515242865
+    },
+    {
+      "path": "map/transcripts.txt",
+      "bytes": 4653551
+    }
+  ],
+  "bytes": 30638437551
+}

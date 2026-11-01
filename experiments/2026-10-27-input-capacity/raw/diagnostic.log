@@ -1,0 +1,17 @@
+
+running 1 test
+test cmd_map::packed::tests::input_capacity_diagnostic ... {"bytes":1154400627,"label":"R1_decode_only_gzip","records":0,"seconds":[0.623093477,0.621453372,0.62057321]}
+{"bytes":2414400627,"label":"R2_decode_only_gzip","records":0,"seconds":[1.5954405710000001,1.595724559,1.599513784]}
+{"bytes":3568801254,"label":"paired_decode_only_gzip","records":0,"seconds":[1.6064061920000001,1.605065744,1.600648294]}
+{"bytes":0,"label":"R1_parse_only_gzip","records":10000000,"seconds":[1.115734916,1.115617916,1.115033192]}
+{"bytes":280000000,"label":"R1_slab_gzip","records":10000000,"seconds":[1.185272756,1.186608173,1.185315156]}
+{"bytes":0,"label":"R2_parse_only_gzip","records":10000000,"seconds":[2.168001436,2.148441833,2.149117516]}
+{"bytes":1820000000,"label":"R2_slab_gzip","records":10000000,"seconds":[2.2607031859999998,2.268042699,2.2573389170000002]}
+{"bytes":2100000000,"label":"paired_pipeline_gzip","records":10000000,"seconds":[2.312958722,2.299495364,2.3055289]}
+{"bytes":280000000,"label":"R1_slab_raw","records":10000000,"seconds":[0.62050348,0.617418398,0.62725044]}
+{"bytes":1820000000,"label":"R2_slab_raw","records":10000000,"seconds":[0.759055666,0.758255552,0.76627385]}
+{"bytes":2100000000,"label":"paired_pipeline_raw","records":10000000,"seconds":[0.798390119,0.795716564,0.796951162]}
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 60.15s
+

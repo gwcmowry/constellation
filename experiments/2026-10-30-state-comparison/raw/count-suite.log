@@ -1,0 +1,19 @@
+piscem converted 8668767 7754302
+piscem-common-corrected counted
+piscem-common-exact-umi counted
+ours-exact-umi counted
+Traceback (most recent call last):
+  File "/home/grant/Desktop/programming/constellation/experiments/2026-10-30-state-comparison/compare_counts.py", line 168, in <module>
+    summarize()
+    ~~~~~~~~~^^
+  File "/home/grant/Desktop/programming/constellation/experiments/2026-10-30-state-comparison/compare_counts.py", line 152, in summarize
+    status=native.group_by('status').aggregate([('status','count')]).to_pylist()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "pyarrow/table.pxi", line 6659, in pyarrow.lib.TableGroupBy.aggregate
+  File "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/venv/lib/python3.13/site-packages/pyarrow/acero.py", line 419, in _group_by
+    return decl.to_table(use_threads=use_threads)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pyarrow/_acero.pyx", line 633, in pyarrow._acero.Declaration.to_table
+  File "pyarrow/error.pxi", line 155, in pyarrow.lib.pyarrow_internal_check_status
+  File "pyarrow/error.pxi", line 92, in pyarrow.lib.check_status
+pyarrow.lib.ArrowNotImplementedError: Unifying differing dictionaries

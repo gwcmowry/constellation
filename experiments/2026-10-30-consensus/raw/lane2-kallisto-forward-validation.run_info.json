@@ -1,0 +1,14 @@
+{
+	"n_targets": 276935,
+	"n_bootstraps": 0,
+	"n_processed": 1000000,
+	"n_pseudoaligned": 779261,
+	"n_unique": 350935,
+	"p_pseudoaligned": 77.9,
+	"p_unique": 35.1,
+	"kallisto_version": "0.52.0",
+	"index_version": 13,
+	"k-mer length": 31,
+	"start_time": "Fri Oct 30 08:09:53 2026",
+	"call": "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/tools/kallisto/kallisto bus -i /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/kallisto-splici.idx -x 10xv3 --fr-stranded -t 12 -o /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/lane2-kallisto-forward -n /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/lane2_R1.fastq.gz /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/lane2_R2.fastq.gz"
+}

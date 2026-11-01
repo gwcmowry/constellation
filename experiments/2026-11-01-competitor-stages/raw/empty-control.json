@@ -1,0 +1,22 @@
+{
+  "bus_records": 0,
+  "same_ecmap": "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/pbmc10m-kallisto-forward/matrix.ec",
+  "same_split_list": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/intronic-targets.txt",
+  "zero_count_output_shapes": {
+    ".mtx": [
+      0,
+      58395,
+      0
+    ],
+    ".2.mtx": [
+      0,
+      58395,
+      0
+    ],
+    ".ambiguous.mtx": [
+      0,
+      58395,
+      0
+    ]
+  }
+}

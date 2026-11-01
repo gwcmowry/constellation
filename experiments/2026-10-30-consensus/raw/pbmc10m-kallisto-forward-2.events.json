@@ -1,0 +1,222 @@
+[
+  {
+    "seconds": 0.0026489696465432644,
+    "text": "\n"
+  },
+  {
+    "seconds": 35.286707462742925,
+    "text": "[index] k-mer length: 31"
+  },
+  {
+    "seconds": 35.28672042302787,
+    "text": "\n"
+  },
+  {
+    "seconds": 51.00873002177104,
+    "text": "[index] number of targets: 276,935\n[index] number of k-mers: "
+  },
+  {
+    "seconds": 51.097131565678865,
+    "text": "1,451,575,591\n"
+  },
+  {
+    "seconds": 51.12141367606819,
+    "text": "[quant] running in paired-end mode\n[quant] will process sample 1: /home/grant/Desktop/programming/constellation/benchdata/throughput-2026-10-27/pbmc10m_R1.fastq.gz\n                               /home/grant/Desktop/programming/constellation/benchdata/throughput-2026-10-27/pbmc10m_R2.fastq.gz\n[quant] finding pseudoalignments for the reads ..."
+  },
+  {
+    "seconds": 55.67528739385307,
+    "text": "\r[progress] 1M reads processed (79.2% mapped)             "
+  },
+  {
+    "seconds": 58.095717563759536,
+    "text": "\r"
+  },
+  {
+    "seconds": 58.09976347675547,
+    "text": "[progress] 2M reads processed (79.0% mapped)             "
+  },
+  {
+    "seconds": 60.44640367478132,
+    "text": "\r"
+  },
+  {
+    "seconds": 60.44642249494791,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 60.44643020397052,
+    "text": "3"
+  },
+  {
+    "seconds": 60.446436224039644,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 60.446442623622715,
+    "text": " ("
+  },
+  {
+    "seconds": 60.44645624374971,
+    "text": "78.6"
+  },
+  {
+    "seconds": 60.44646219396964,
+    "text": "% mapped)             "
+  },
+  {
+    "seconds": 62.719875543843955,
+    "text": "\r"
+  },
+  {
+    "seconds": 62.7198957526125,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 62.71990692289546,
+    "text": "4"
+  },
+  {
+    "seconds": 62.7199140926823,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 62.71992059284821,
+    "text": " ("
+  },
+  {
+    "seconds": 62.71993375290185,
+    "text": "78.4"
+  },
+  {
+    "seconds": 62.719939813017845,
+    "text": "% mapped)             "
+  },
+  {
+    "seconds": 66.43167624995112,
+    "text": "\r"
+  },
+  {
+    "seconds": 66.43169635999948,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 66.43170524993911,
+    "text": "5"
+  },
+  {
+    "seconds": 66.43171234987676,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 66.43171894969419,
+    "text": " ("
+  },
+  {
+    "seconds": 66.43173203989863,
+    "text": "78.3"
+  },
+  {
+    "seconds": 66.43174484884366,
+    "text": "% mapped)             "
+  },
+  {
+    "seconds": 68.75926742702723,
+    "text": "\r"
+  },
+  {
+    "seconds": 68.75928676687181,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 68.75929462676868,
+    "text": "6"
+  },
+  {
+    "seconds": 68.75930127687752,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 68.75930798705667,
+    "text": " ("
+  },
+  {
+    "seconds": 68.75932094687596,
+    "text": "78.2"
+  },
+  {
+    "seconds": 68.7593268668279,
+    "text": "% mapped)             "
+  },
+  {
+    "seconds": 70.98732095770538,
+    "text": "\r"
+  },
+  {
+    "seconds": 70.98734019789845,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 70.9873484079726,
+    "text": "7"
+  },
+  {
+    "seconds": 70.98735470790416,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 70.98736198805273,
+    "text": " ("
+  },
+  {
+    "seconds": 70.98737516766414,
+    "text": "78.1"
+  },
+  {
+    "seconds": 70.98738110763952,
+    "text": "% mapped)             "
+  },
+  {
+    "seconds": 73.36538568465039,
+    "text": "\r"
+  },
+  {
+    "seconds": 73.36540438467637,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 73.36541241500527,
+    "text": "8"
+  },
+  {
+    "seconds": 73.36541911493987,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 73.3654257147573,
+    "text": " ("
+  },
+  {
+    "seconds": 73.36543806362897,
+    "text": "78.1"
+  },
+  {
+    "seconds": 73.36544411396608,
+    "text": "% mapped)             "
+  },
+  {
+    "seconds": 76.80046218261123,
+    "text": "\r[progress] 9M reads processed ("
+  },
+  {
+    "seconds": 76.80047672288492,
+    "text": "78.0% mapped)             "
+  },
+  {
+    "seconds": 77.77188563765958,
+    "text": " done\n[quant] processed 10,000,000 reads, 7,799,361 reads pseudoaligned\n"
+  },
+  {
+    "seconds": 78.29587273485959,
+    "text": "\n"
+  }
+]

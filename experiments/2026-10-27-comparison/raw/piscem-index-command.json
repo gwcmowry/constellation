@@ -1,0 +1,22 @@
+[
+  "/usr/bin/time",
+  "-v",
+  "-o",
+  "experiments/2026-10-27-comparison/raw/piscem-index.time",
+  "benchdata/comparison-2026-10-27/tools/piscem-x86_64-unknown-linux-gnu/piscem",
+  "build",
+  "-s",
+  "benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/roers_ref.fa",
+  "-k",
+  "31",
+  "-m",
+  "19",
+  "-t",
+  "12",
+  "-o",
+  "benchdata/comparison-2026-10-27/piscem-splici",
+  "-w",
+  "benchdata/comparison-2026-10-27/piscem-work",
+  "--ram-limit-gib",
+  "24"
+]

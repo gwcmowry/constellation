@@ -1,0 +1,2 @@
+{"run": "workers-none-warmup", "wall_seconds": 2.634346867, "reads_per_second": 3796007.323586822, "mapping_seconds": 2.3975567380000005, "fastq_load_seconds": 0.18944273199999992, "write_seconds": 0.0}
+{"run": "workers-none-1", "wall_seconds": 2.643967889, "reads_per_second": 3782194.194416709, "mapping_seconds": 2.422185517, "fastq_load_seconds": 0.17669732400000013, "write_seconds": 0.0}

@@ -1,0 +1,26 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-31-build-count/raw/fast-map-2.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/target/release/constellation",
+    "map",
+    "--splicing-state",
+    "--index",
+    "/home/grant/Desktop/programming/constellation/benchdata/build-count-2026-10-31/fast-build-3.ecidx",
+    "--r1",
+    "/home/grant/Desktop/programming/constellation/benchdata/throughput-2026-10-27/pbmc10m_R1.fastq.gz",
+    "--r2",
+    "/home/grant/Desktop/programming/constellation/benchdata/throughput-2026-10-27/pbmc10m_R2.fastq.gz",
+    "--out",
+    "/home/grant/Desktop/programming/constellation/benchdata/build-count-2026-10-31/fast-map.rad",
+    "--emit-metrics",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-31-build-count/raw/fast-map-2.metrics.json"
+  ],
+  "seconds": 4.3305406789295375,
+  "exit_code": 0
+}

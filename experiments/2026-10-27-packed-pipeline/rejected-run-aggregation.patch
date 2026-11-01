@@ -1,0 +1,78 @@
+--- a/crates/constellation-core/src/ec_index.rs
++++ b/crates/constellation-core/src/ec_index.rs
+@@ -1496,15 +1496,26 @@
+         hit: EcLookupHit,
+         max_gene_df: u32,
+         stats: &mut EcMappingStats,
++        visit: impl FnMut(GeneId, u16, u8),
++    ) {
++        self.visit_lookup_run(hit, 1, max_gene_df, stats, visit);
++    }
++
++    fn visit_lookup_run(
++        &self,
++        hit: EcLookupHit,
++        multiplicity: u16,
++        max_gene_df: u32,
++        stats: &mut EcMappingStats,
+         mut visit: impl FnMut(GeneId, u16, u8),
+     ) {
+         if hit.gene_df > max_gene_df {
+-            stats.seeds_skipped_high_gene_df += 1;
++            stats.seeds_skipped_high_gene_df += multiplicity as u64;
+             return;
+         }
+-        stats.seeds_found += 1;
+-        stats.ec_hits += 1;
+-        let seed_score = self.seed_score(hit.gene_df);
++        stats.seeds_found += multiplicity as u64;
++        stats.ec_hits += multiplicity as u64;
++        let seed_score = self.seed_score(hit.gene_df).saturating_mul(multiplicity);
+         let mut gene_votes = 0_u64;
+         match self {
+             Self::Owned(index) => {
+@@ -1546,7 +1557,7 @@
+                 }
+             }
+         }
+-        stats.gene_votes += gene_votes;
++        stats.gene_votes += gene_votes * multiplicity as u64;
+     }
+ 
+     pub fn map_read_sparse(
+@@ -3051,6 +3062,7 @@
+             }
+         });
+         stats.seed_lookups += keys.len() as u64;
++        let mut pending: Option<(EcLookupHit, u16)> = None;
+         for (&key, &position) in keys.iter().zip(&positions) {
+             let slot = slots[position];
+             if slot.kmer_code != key || slot.target_len == 0 {
+@@ -3063,7 +3075,26 @@
+                 target_len: slot.target_len as u32,
+                 ec_id: None,
+             };
+-            index.visit_lookup_hit(hit, max_gene_df, stats, |gene, score, class| {
++            if let Some((previous, count)) = &mut pending {
++                if previous.target_start == hit.target_start
++                    && previous.target_len == hit.target_len
++                    && previous.gene_df == hit.gene_df
++                {
++                    *count += 1;
++                    continue;
++                }
++                index.visit_lookup_run(
++                    *previous,
++                    *count,
++                    max_gene_df,
++                    stats,
++                    |gene, score, class| scratch.add(gene, score, class),
++                );
++            }
++            pending = Some((hit, 1));
++        }
++        if let Some((hit, count)) = pending {
++            index.visit_lookup_run(hit, count, max_gene_df, stats, |gene, score, class| {
+                 scratch.add(gene, score, class)
+             });
+         }

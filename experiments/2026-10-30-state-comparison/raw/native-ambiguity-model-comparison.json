@@ -1,0 +1,105 @@
+{
+  "prefer_ambiguity_totals": {
+    "S": 2946628.0,
+    "U": 1993275.0,
+    "A": 961264.0
+  },
+  "comparisons": {
+    "ours_exact_umi_vs_af_prefer_ambiguity": {
+      "S": {
+        "a_total": 2661927.0,
+        "b_total": 2946628.0,
+        "l1": 349851.0,
+        "l1_over_sum": 0.06237809917171179,
+        "weighted_jaccard": 0.8825689286698489,
+        "full_matrix_pearson": 0.900437713549032,
+        "gene_total_log1p_pearson": 0.9670735430463098,
+        "nonzero_union": 2016123
+      },
+      "U": {
+        "a_total": 2011089.0,
+        "b_total": 1993275.0,
+        "l1": 198274.0,
+        "l1_over_sum": 0.049514479702644415,
+        "weighted_jaccard": 0.9056430746592973,
+        "full_matrix_pearson": 0.958654171521544,
+        "gene_total_log1p_pearson": 0.9895854346585345,
+        "nonzero_union": 1921332
+      },
+      "A": {
+        "a_total": 852738.0,
+        "b_total": 961264.0,
+        "l1": 260458.0,
+        "l1_over_sum": 0.14358198061523636,
+        "weighted_jaccard": 0.7488907956769473,
+        "full_matrix_pearson": 0.9539550291389242,
+        "gene_total_log1p_pearson": 0.9490938969257501,
+        "nonzero_union": 744789
+      }
+    },
+    "piscem_common_exact_umi_vs_af_prefer_ambiguity": {
+      "S": {
+        "a_total": 2803971.0,
+        "b_total": 2946628.0,
+        "l1": 167229.0,
+        "l1_over_sum": 0.029080274941793022,
+        "weighted_jaccard": 0.9434829805800371,
+        "full_matrix_pearson": 0.9112857908655576,
+        "gene_total_log1p_pearson": 0.9707786305222647,
+        "nonzero_union": 2001653
+      },
+      "U": {
+        "a_total": 1993952.0,
+        "b_total": 1993275.0,
+        "l1": 825.0,
+        "l1_over_sum": 0.00020691071764913308,
+        "weighted_jaccard": 0.999586264171079,
+        "full_matrix_pearson": 0.9998289933317801,
+        "gene_total_log1p_pearson": 0.9999871188088877,
+        "nonzero_union": 1823433
+      },
+      "A": {
+        "a_total": 804998.0,
+        "b_total": 961264.0,
+        "l1": 156274.0,
+        "l1_over_sum": 0.088477247429883,
+        "weighted_jaccard": 0.8374293121169123,
+        "full_matrix_pearson": 0.9707982436254926,
+        "gene_total_log1p_pearson": 0.9541496451276144,
+        "nonzero_union": 684586
+      }
+    },
+    "piscem_native_af_vs_af_prefer_ambiguity": {
+      "S": {
+        "a_total": 2959526.0,
+        "b_total": 2946628.0,
+        "l1": 12898.0,
+        "l1_over_sum": 0.002183823855591981,
+        "weighted_jaccard": 0.9956418696777795,
+        "full_matrix_pearson": 0.9994613007501788,
+        "gene_total_log1p_pearson": 0.9999613504445095,
+        "nonzero_union": 2001924
+      },
+      "U": {
+        "a_total": 1994063.0,
+        "b_total": 1993275.0,
+        "l1": 788.0,
+        "l1_over_sum": 0.00019762558378547292,
+        "weighted_jaccard": 0.999604826928738,
+        "full_matrix_pearson": 0.9998366750976245,
+        "gene_total_log1p_pearson": 0.9999873460041176,
+        "nonzero_union": 1823463
+      },
+      "A": {
+        "a_total": 841163.0,
+        "b_total": 961264.0,
+        "l1": 120101.0,
+        "l1_over_sum": 0.06663293437126719,
+        "weighted_jaccard": 0.8750592969257145,
+        "full_matrix_pearson": 0.9769226635274929,
+        "gene_total_log1p_pearson": 0.9889926910652933,
+        "nonzero_union": 684583
+      }
+    }
+  }
+}

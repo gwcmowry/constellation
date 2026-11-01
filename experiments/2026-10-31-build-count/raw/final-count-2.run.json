@@ -1,0 +1,23 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-31-build-count/raw/final-count-2.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/target/release/constellation",
+    "count-splicing",
+    "--assignments",
+    "/home/grant/Desktop/programming/constellation/benchdata/splicing-2026-10-30/splicing.rad",
+    "--barcode-whitelist",
+    "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/barcodes.txt",
+    "--out-prefix",
+    "/home/grant/Desktop/programming/constellation/benchdata/build-count-2026-10-31/final-count-2",
+    "--emit-metrics",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-31-build-count/raw/final-count-2.metrics.json"
+  ],
+  "seconds": 1.5301980911754072,
+  "exit_code": 0
+}

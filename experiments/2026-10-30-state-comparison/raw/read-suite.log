@@ -1,0 +1,4 @@
+real1m {'ours_vs_piscem': 0.9863621245731966, 'ours_vs_kallisto': 0.9863104390910644, 'piscem_vs_kallisto': 0.9999499073285578}
+lane2 {'ours_vs_piscem': 0.9861143794848625, 'ours_vs_kallisto': 0.9860771248227485, 'piscem_vs_kallisto': 0.9999564629281833}
+heldout {'ours_vs_piscem': 0.9671455073796195, 'ours_vs_kallisto': 0.9671264367816091, 'piscem_vs_kallisto': 0.9999841615270822}
+heldout150 {'ours_vs_piscem': 0.9801694524240672, 'ours_vs_kallisto': 0.9801497381636375, 'piscem_vs_kallisto': 0.9999812416173478}

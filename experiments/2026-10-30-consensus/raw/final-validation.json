@@ -1,0 +1,62 @@
+{
+  "default_output_byte_identical": true,
+  "default_output_sha256": "b7c5b5ad39e5b2bca42cf253d1d9e10ef9ac5e120f752384681a14fe4cb3b99a",
+  "default_output_bytes": 369461060,
+  "repeat_assignment_metrics_identical": {
+    "constellation": {
+      "num_reads": 10000000,
+      "unique_gene_rate": 0.7850747,
+      "ambiguous_gene_rate": 0.094951,
+      "same_gene_multitranscript_rate": 0.0,
+      "multi_gene_ambiguous_rate": 0.094951,
+      "antisense_gene_rate": 0.0,
+      "gene_countable_rate": 0.7850747,
+      "exon_target_assignment_rate": 0.535731,
+      "intron_target_assignment_rate": 0.3973241,
+      "gene_body_target_assignment_rate": 0.0,
+      "mixed_target_assignment_rate": 0.0530294,
+      "unknown_target_assignment_rate": 0.0,
+      "rescued_assignment_rate": 0.0,
+      "low_complexity_rate": 0.0062775,
+      "low_quality_rate": 0.0010084,
+      "unmapped_rate": 0.1126884
+    },
+    "constellation-consensus": {
+      "num_reads": 10000000,
+      "unique_gene_rate": 0.6603986,
+      "ambiguous_gene_rate": 0.1253399,
+      "same_gene_multitranscript_rate": 0.0,
+      "multi_gene_ambiguous_rate": 0.1253399,
+      "antisense_gene_rate": 0.0,
+      "gene_countable_rate": 0.6603986,
+      "exon_target_assignment_rate": 0.5222116,
+      "intron_target_assignment_rate": 0.56377,
+      "gene_body_target_assignment_rate": 0.0,
+      "mixed_target_assignment_rate": 0.3002431,
+      "unknown_target_assignment_rate": 0.0,
+      "rescued_assignment_rate": 0.0,
+      "low_complexity_rate": 0.0062775,
+      "low_quality_rate": 0.0010084,
+      "unmapped_rate": 0.2069756
+    },
+    "piscem-forward": {
+      "num_mapped": 8668767,
+      "num_reads": 10000000
+    },
+    "kallisto-forward": {
+      "n_processed": 10000000,
+      "n_pseudoaligned": 7799361
+    }
+  },
+  "binaries": {
+    "target/release/constellation": "816cf4d27b0c4d80adbfce20a47672647cbee4ae5aa24922727e45baae756c56",
+    "benchdata/throughput-2026-10-27/constellation.optimized": "445049ec19db1d5b2f7ab830de7c3f85c1d1ade35364f3c98a011aba701a8736"
+  },
+  "tests_passed": 82,
+  "format_check_passed": true,
+  "clippy": "passed with existing warnings",
+  "platform": "Linux-6.17.0-23-generic-x86_64-with-glibc2.39",
+  "python": "3.13.9",
+  "git_head": "3c3fd49b0496a3463df4a0e0b32d52dd3123ed71",
+  "python_scripts_parse": 8
+}

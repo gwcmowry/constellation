@@ -1,0 +1,10 @@
+{"seconds": 1.7298014988191426, "line": "partition time: 0.760376s"}
+{"seconds": 3.9312910898588598, "line": "partition time: 0.766979s"}
+{"seconds": 6.166363921947777, "line": "partition time: 0.759924s"}
+{"seconds": 8.365205574780703, "line": "partition time: 0.765338s"}
+{"seconds": 10.589944035746157, "line": "partition time: 0.764832s"}
+{"seconds": 12.616963070817292, "line": "partition time: 0.333633s"}
+{"seconds": 13.385479431599379, "line": "Read in 364885007 BUS records"}
+{"seconds": 13.385517770890146, "line": "reading time 1.29424s"}
+{"seconds": 13.385530340950936, "line": "sorting time 44.3769s"}
+{"seconds": 13.385546730831265, "line": "writing time 0s"}

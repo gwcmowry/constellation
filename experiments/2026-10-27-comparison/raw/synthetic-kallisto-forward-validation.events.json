@@ -1,0 +1,38 @@
+[
+  {
+    "seconds": 0.002349862828850746,
+    "text": "\n"
+  },
+  {
+    "seconds": 35.201735948678106,
+    "text": "[index] k-mer length: "
+  },
+  {
+    "seconds": 35.201750428881496,
+    "text": "31\n"
+  },
+  {
+    "seconds": 51.13915334362537,
+    "text": "[index] number of targets: 276,935\n[index] number of k-mers: "
+  },
+  {
+    "seconds": 51.22818740690127,
+    "text": "1,451,575,591\n"
+  },
+  {
+    "seconds": 51.228629131801426,
+    "text": "[quant] running in paired-end mode\n[quant] will process sample 1: /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/synthetic_R1.fastq.gz\n"
+  },
+  {
+    "seconds": 51.22863341169432,
+    "text": "                               /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/synthetic_R2.fastq.gz\n[quant] finding pseudoalignments for the reads ..."
+  },
+  {
+    "seconds": 52.79183213785291,
+    "text": " done\n[quant] processed 420,000 reads, 350,120 reads pseudoaligned\n"
+  },
+  {
+    "seconds": 52.99607525393367,
+    "text": "\n"
+  }
+]

@@ -1,0 +1,39 @@
+{
+  "tool": "kallisto-forward",
+  "corpus": "pbmc10m",
+  "repeat": 2,
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-30-consensus/raw/pbmc10m-kallisto-forward-2.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/tools/kallisto/kallisto",
+    "bus",
+    "-i",
+    "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/kallisto-splici.idx",
+    "-x",
+    "10xv3",
+    "--fr-stranded",
+    "-t",
+    "12",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/pbmc10m-kallisto-forward",
+    "/home/grant/Desktop/programming/constellation/benchdata/throughput-2026-10-27/pbmc10m_R1.fastq.gz",
+    "/home/grant/Desktop/programming/constellation/benchdata/throughput-2026-10-27/pbmc10m_R2.fastq.gz"
+  ],
+  "environment": {
+    "RAYON_NUM_THREADS": "12",
+    "OMP_NUM_THREADS": "12"
+  },
+  "process_wall_seconds": 85.51638428401202,
+  "pairs": 10000000,
+  "pairs_per_second": 116936.65586688726,
+  "exit_code": 0,
+  "pseudoalignment_loop_seconds": 26.650471961591393,
+  "before_pseudoalignment_seconds": 51.12141367606819,
+  "after_pseudoalignment_seconds": 7.74449864635244,
+  "executable_sha256": "9000fd5afc1fb9f07cb4cf6513a4d932bcb086079982d0740843016a07178fa1"
+}

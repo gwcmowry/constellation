@@ -1,0 +1,28 @@
+{
+  "libradicl_version": "0.21.0",
+  "crate_sha256": "40907e891295ef42ada0dc9823b3eb37757cf88fb5a6cc8f186881386cfa72a2",
+  "crate_checksum_matches_alevin_fry_cargo_lock": true,
+  "alevin_fry_default_memory_budget_bytes": 2147483648,
+  "source_observation": "collate_with_memory_limit caps record-count planning at 2 GiB when using --memory-limit; single_collation also caps tuning_budget at 2 GiB. Raising --memory-limit above 2 GiB would not change these particular settings. No larger-memory timing was run.",
+  "source_files": [
+    "benchdata/state-comparison-2026-10-30/COMBINE-lab-alevin-fry-8e11e51/src/collate.rs",
+    "benchdata/large-scale-2026-11-01/tools/libradicl-0.21.0/src/single_collation.rs"
+  ],
+  "observed_phases": {
+    "100m": {
+      "scatter_seconds": 0.49,
+      "gather_seconds": 0.47
+    },
+    "500m": {
+      "scatter_seconds": 6.07,
+      "gather_seconds": 41.33
+    }
+  },
+  "both_runs": {
+    "collation_mode": "optimized",
+    "spool_files": 11,
+    "gather_workers": 10,
+    "flush_threshold_kib": 256
+  },
+  "limitation": "Phase and I/O counters localize the slowdown to gather, but do not isolate its root cause. Both sizes use spooling; no mode transition is established."
+}

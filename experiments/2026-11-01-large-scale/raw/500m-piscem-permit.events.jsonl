@@ -1,0 +1,9 @@
+{"seconds": 0.010173803195357323, "line": "2026-11-01 06:27:00 INFO record type is standard short read single-cell RNA-seq"}
+{"seconds": 0.010217682924121618, "line": "2026-11-01 06:27:00 INFO paired: false, ref_count: 276,935, num_chunks: 30,518"}
+{"seconds": 0.010227143298834562, "line": "2026-11-01 06:27:00 INFO read 3 file-level tags"}
+{"seconds": 0.010240613017231226, "line": "2026-11-01 06:27:00 INFO read 2 read-level tags"}
+{"seconds": 0.010248523205518723, "line": "2026-11-01 06:27:00 INFO read 1 alignment-level tags"}
+{"seconds": 0.010257062036544085, "line": "2026-11-01 06:27:00 INFO File-level tag values TagMap { keys: [TagDesc { name: \"cblen\", typeid: Int(U16), role: None }, TagDesc { name: \"ulen\", typeid: Int(U16), role: None }, TagDesc { name: \"known_rad_type\", typeid: String, role: None }], dat: [U16(16), U16(12), String(\"sc_rna_basic\")] }"}
+{"seconds": 5.051649298053235, "line": "2026-11-01 06:27:06 INFO observed 433,899,835 reads (388,894,477 orientation consistent) in 30,518 chunks --- max ambiguity read occurs in 983 refs"}
+{"seconds": 5.292748823296279, "line": "2026-11-01 06:27:06 INFO filtering selected 11769 retained barcode targets"}
+{"seconds": 6.031466348096728, "line": "2026-11-01 06:27:06 INFO total number of distinct corrected barcodes : 475,055"}

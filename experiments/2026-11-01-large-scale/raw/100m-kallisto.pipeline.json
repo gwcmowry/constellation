@@ -1,0 +1,159 @@
+{
+  "pairs": 100000000,
+  "tool": "kallisto",
+  "steps": {
+    "map": {
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/100m-kallisto-map.time",
+        "taskset",
+        "-c",
+        "0-11",
+        "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/tools/kallisto/kallisto",
+        "bus",
+        "-i",
+        "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/kallisto-splici.idx",
+        "-x",
+        "10xv3",
+        "--fr-stranded",
+        "-t",
+        "12",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-kallisto/map",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/small_R1.fastq.gz",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/small_R2.fastq.gz"
+      ],
+      "seconds": 314.42215679585934,
+      "exit_code": 0,
+      "sampled_peak_rss_bytes": 15338520576,
+      "memory_guard_gib": 46,
+      "stopped_by_memory_guard": false
+    },
+    "correct": {
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/100m-kallisto-correct.time",
+        "taskset",
+        "-c",
+        "0-11",
+        "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/tools/bustools/bustools",
+        "correct",
+        "-w",
+        "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/barcodes.txt",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-kallisto/corrected.bus",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-kallisto/map/output.bus"
+      ],
+      "seconds": 12.006371546071023,
+      "exit_code": 0,
+      "sampled_peak_rss_bytes": 16650240,
+      "memory_guard_gib": 46,
+      "stopped_by_memory_guard": false
+    },
+    "sort": {
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/100m-kallisto-sort.time",
+        "taskset",
+        "-c",
+        "0-11",
+        "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/tools/bustools/bustools",
+        "sort",
+        "-t",
+        "12",
+        "-m",
+        "2G",
+        "-T",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-kallisto/sort-tmp",
+        "--no-flags",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-kallisto/sorted.bus",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-kallisto/corrected.bus"
+      ],
+      "seconds": 13.7853321461007,
+      "exit_code": 0,
+      "sampled_peak_rss_bytes": 2154074112,
+      "memory_guard_gib": 46,
+      "stopped_by_memory_guard": false
+    },
+    "count": {
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/100m-kallisto-count.time",
+        "taskset",
+        "-c",
+        "0-11",
+        "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/tools/bustools/bustools",
+        "count",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-kallisto/counts",
+        "-g",
+        "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/t2g.tsv",
+        "-e",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-kallisto/map/matrix.ec",
+        "-t",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-kallisto/map/transcripts.txt",
+        "--genecounts",
+        "--umi-gene",
+        "--split",
+        "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/intronic-targets.txt",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-kallisto/sorted.bus"
+      ],
+      "seconds": 66.28557455958799,
+      "exit_code": 0,
+      "sampled_peak_rss_bytes": 370282496,
+      "memory_guard_gib": 46,
+      "stopped_by_memory_guard": false
+    }
+  },
+  "count_policy": {
+    "count": "gene UMI split, exact UMIs"
+  },
+  "matrix_totals": {
+    "count": {
+      "S": {
+        "total": 23594884,
+        "nonzero": 9518156,
+        "sha256_canonical_arrays": "8b792f0b83769534606a1a17f1a80dcdf301197d7749acfa0711d3c45d837ca2",
+        "genes_with_counts": 23373,
+        "cells_with_counts": 11769
+      },
+      "U": {
+        "total": 16816413,
+        "nonzero": 10805690,
+        "sha256_canonical_arrays": "fb23f8ad85e0b4bb692d46e16a9092346e8b34d852591ec32da7a054b7c4200b",
+        "genes_with_counts": 24654,
+        "cells_with_counts": 11769
+      },
+      "A": {
+        "total": 7897321,
+        "nonzero": 3879947,
+        "sha256_canonical_arrays": "797d06498431df4c2a27ed692646e2ac4a5ea124ccc4352de88d209ea2b1e802",
+        "genes_with_counts": 18854,
+        "cells_with_counts": 11768
+      },
+      "total": 48308618,
+      "barcodes": 11769,
+      "genes": 58395
+    }
+  },
+  "index_warmup": {
+    "seconds": 0.8543060310184956,
+    "bytes": 6012587383,
+    "files": [
+      "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/kallisto-splici.idx"
+    ],
+    "included_in_mapping_time": false
+  },
+  "count_seconds": 92.07727825175971,
+  "map_seconds": 314.42215679585934,
+  "pipeline_seconds": 406.49943504761904
+}

@@ -1,0 +1,117 @@
+{
+  "input_reads": 420000,
+  "eligible_reads": 420000,
+  "tools": {
+    "ours": {
+      "S": 185981,
+      "A": 41826,
+      "multi_gene": 30611,
+      "unmapped": 67915,
+      "C": 63,
+      "U": 93604
+    },
+    "piscem": {
+      "S": 192121,
+      "A": 35610,
+      "multi_gene": 28432,
+      "unmapped": 71607,
+      "U": 92230
+    },
+    "kallisto": {
+      "S": 192111,
+      "A": 35613,
+      "multi_gene": 28531,
+      "unmapped": 71343,
+      "U": 92402
+    }
+  },
+  "comparisons": {
+    "ours_vs_piscem": {
+      "reads": 420000,
+      "exact_gene_state_sets": 402572,
+      "a_mapped": 352085,
+      "b_mapped": 348393,
+      "both_mapped": 345895,
+      "exact_sets_both_mapped": 337155,
+      "same_nonempty_gene_set": 343849,
+      "same_unique_gene": 316431,
+      "same_state_same_unique_gene": 310156,
+      "state_agreement_given_same_unique_gene": 0.9801694524240672,
+      "confusion_same_unique_gene": {
+        "A->A": 35058,
+        "A->S": 5845,
+        "A->U": 430,
+        "S->S": 184670,
+        "U->U": 90428
+      },
+      "confusion_all_shared_genes": {
+        "A->A": 41341,
+        "A->S": 6918,
+        "A->U": 546,
+        "S->S": 214950,
+        "U->U": 124171
+      }
+    },
+    "ours_vs_kallisto": {
+      "reads": 420000,
+      "exact_gene_state_sets": 402348,
+      "a_mapped": 352085,
+      "b_mapped": 348657,
+      "both_mapped": 345961,
+      "exact_sets_both_mapped": 337129,
+      "same_nonempty_gene_set": 343836,
+      "same_unique_gene": 316419,
+      "same_state_same_unique_gene": 310138,
+      "state_agreement_given_same_unique_gene": 0.9801497381636375,
+      "confusion_same_unique_gene": {
+        "A->A": 35061,
+        "A->S": 5843,
+        "A->U": 433,
+        "C->S": 1,
+        "C->U": 2,
+        "S->S": 184650,
+        "S->U": 2,
+        "U->U": 90427
+      },
+      "confusion_all_shared_genes": {
+        "A->A": 41342,
+        "A->S": 6916,
+        "A->U": 555,
+        "C->S": 1,
+        "C->U": 2,
+        "S->A": 1,
+        "S->S": 214943,
+        "S->U": 3,
+        "U->U": 124304
+      }
+    },
+    "piscem_vs_kallisto": {
+      "reads": 420000,
+      "exact_gene_state_sets": 419436,
+      "a_mapped": 348393,
+      "b_mapped": 348657,
+      "both_mapped": 348347,
+      "exact_sets_both_mapped": 348139,
+      "same_nonempty_gene_set": 348150,
+      "same_unique_gene": 319857,
+      "same_state_same_unique_gene": 319851,
+      "state_agreement_given_same_unique_gene": 0.9999812416173478,
+      "confusion_same_unique_gene": {
+        "A->A": 35603,
+        "A->U": 1,
+        "S->A": 2,
+        "S->S": 192088,
+        "U->A": 3,
+        "U->U": 92160
+      },
+      "confusion_all_shared_genes": {
+        "A->A": 41961,
+        "A->U": 6,
+        "S->A": 2,
+        "S->S": 222494,
+        "U->A": 3,
+        "U->U": 130069
+      }
+    }
+  }
+}

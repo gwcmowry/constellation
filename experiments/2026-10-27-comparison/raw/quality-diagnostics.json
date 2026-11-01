@@ -1,0 +1,48 @@
+{
+  "synthetic_error_attribution": {
+    "wrong_unique": 3182,
+    "wrong_unique_source_in_score_ties": 2255,
+    "wrong_unique_source_absent_from_score_ties": 927,
+    "wrong_unique_exact": 546,
+    "wrong_unique_exact_alternative_in_both_competitor_sets": 498,
+    "wrong_unique_exact_source_unique_in_both_competitors": 23
+  },
+  "conservative_tie_diagnostic": {
+    "positive_reads": 360000,
+    "unique": 314666,
+    "correct_unique": 313856,
+    "source_retained_in_score_ties": 351288,
+    "intergenic_reads": 30000,
+    "intergenic_unique": 2998,
+    "unique_precision": 0.9974258420039025,
+    "unique_recall": 0.8718222222222223,
+    "description": "Offline diagnostic only: treat every multiple-total-score tie as ambiguous, ignoring exon/intron tie resolution. Not a new timed mapper or tuned production change."
+  },
+  "consensus_unique_exact_source_stratum": {
+    "constellation": {
+      "positive_reads": 298880,
+      "unique": 290543,
+      "correct_unique": 289700,
+      "unique_precision": 0.9970985361891355,
+      "unique_recall": 0.9692853319057816
+    },
+    "piscem": {
+      "positive_reads": 298880,
+      "unique": 286750,
+      "correct_unique": 286668,
+      "unique_precision": 0.9997140366172624,
+      "unique_recall": 0.9591407922912205
+    },
+    "kallisto": {
+      "positive_reads": 298880,
+      "unique": 286788,
+      "correct_unique": 286682,
+      "unique_precision": 0.9996303889981449,
+      "unique_recall": 0.9591876338329764
+    }
+  },
+  "real_disagreement_attribution": {
+    "constellation_unique_disagrees_with_both_same_unique": 20930,
+    "consensus_gene_present_in_constellation_score_ties": 1542
+  }
+}

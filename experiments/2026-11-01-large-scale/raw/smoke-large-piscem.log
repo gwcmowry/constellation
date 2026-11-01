@@ -1,0 +1,12 @@
+2026-11-01T10:48:51.608219Z  INFO piscem_rs::cli::map_scrna: Protocol: chromium_v3 (bc_len=16, umi_len=12)
+2026-11-01T10:48:51.608276Z  INFO piscem_rs::cli::map_scrna: Loading prebuilt Tiny index artifacts /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem.tdct and /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem.tct
+2026-11-01T10:48:51.608295Z  INFO piscem_rs::index::reference_index: Loading TinyDictionary from /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem.tdct
+2026-11-01T10:48:51.608330Z  INFO piscem_rs::index::reference_index:   k=31, 11 strings
+2026-11-01T10:48:51.608331Z  INFO piscem_rs::index::reference_index: Loading TinyContigTable from /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem.tct
+2026-11-01T10:48:51.608341Z  INFO piscem_rs::index::reference_index:   11 contigs, inline-single-ref fraction = 90.91%
+2026-11-01T10:48:51.608410Z  INFO piscem_rs::index::reference_index: Loaded reference signatures from /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem.sigs.json
+2026-11-01T10:48:51.608415Z  INFO piscem_rs::cli::map_scrna: Index loaded: k=31, 10 refs (0.00s)
+2026-11-01T10:48:51.608574Z  INFO piscem_rs::io::calibrate: using the serial decoder: 12 threads for 2 gzip input(s) is below the 8 threads per input needed before parallel decoding adds concurrency the serial path does not already have
+2026-11-01T10:48:51.608659Z  INFO piscem_rs::cli::map_scrna: thread execution plan requested_budget=12 effective_budget=12 mapping_threads=12 decode_slots=0 allocation=Serial
+2026-11-01T10:48:51.620451Z  INFO piscem_rs::io::threads: consumer measurement components modeled_busy_seconds=0.007733525 callback_setup_seconds=0.000152118 excluded_output_seconds=5.2549e-5 wall_seconds=0.011786556 budget=12 modeled_utilization=0.054677584925288326 excluded_output_fraction=0.006749101023185754
+2026-11-01T10:48:51.620472Z  INFO piscem_rs::cli::map_scrna: Mapped 181/10000 reads (1.8%), 0 poisoned, 0.0s

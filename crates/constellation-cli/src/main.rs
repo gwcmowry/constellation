@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::{ArgAction, Parser, Subcommand, ValueEnum};
+use std::num::NonZeroUsize;
 use std::path::PathBuf;
 
 mod cmd_bench_report;
@@ -7,26 +8,39 @@ mod cmd_build_target;
 mod cmd_count;
 mod cmd_index;
 mod cmd_map;
+mod cmd_quant;
 mod cmd_simulate;
+mod splicing_io;
 
 #[derive(Debug, Parser)]
-#[command(name = "constellation")]
-#[command(about = "Cache-aware RNA-seq/scRNA-seq mapper prototype")]
+#[command(name = "constellation", version)]
+#[command(about = "Fast gene and splicing-state mapping/counting for 10x 3' v3 reads")]
 struct Cli {
+    /// Rayon workers; otherwise use RAYON_NUM_THREADS or the available CPU count.
+    /// Input/output helper threads are additional; this does not set CPU affinity.
+    #[arg(short = 't', long, global = true)]
+    threads: Option<NonZeroUsize>,
     #[command(subcommand)]
     command: Commands,
 }
 
 #[derive(Debug, Subcommand)]
 enum Commands {
+    /// Build a legacy positional index (not used by the current gene-EC mapper).
     Index(IndexArgs),
+    /// Build a gene/state index; recommended: --format ptrhash --syncmer-s 20.
     IndexEc(IndexEcArgs),
     ConvertEcIndex(ConvertEcIndexArgs),
     InspectIndex(InspectIndexArgs),
     Simulate(SimulateArgs),
     BuildTranscriptomeTarget(BuildTranscriptomeTargetArgs),
+    /// Map paired FASTQs to gene assignments; --splicing-state retains S/U evidence.
     Map(MapArgs),
+    /// Map and count a sample into gene-by-cell splicing-state matrices.
+    Quant(QuantArgs),
     Count(CountArgs),
+    /// Resolve gene/splicing compatibility through UMI counting from CSTRAD2.
+    CountSplicing(SplicingCountArgs),
     BenchReport(BenchReportArgs),
 }
 
@@ -52,13 +66,22 @@ struct IndexEcArgs {
     t2g_map: Option<PathBuf>,
     #[arg(long, default_value_t = 31)]
     k: u8,
-    /// Build a closed-syncmer sampled v4 index using this s-mer length.
+    /// Build a closed-syncmer sampled index using this s-mer length.
     #[arg(long)]
     syncmer_s: Option<u8>,
     #[arg(long, value_enum, default_value_t = EcIndexFormatArg::Mmap)]
     format: EcIndexFormatArg,
+    /// Partitioned parallel construction, or the lower-memory streaming builder.
+    #[arg(long, value_enum, default_value_t = EcBuildModeArg::Partitioned)]
+    build_mode: EcBuildModeArg,
     #[arg(long)]
     out: PathBuf,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum EcBuildModeArg {
+    Partitioned,
+    Streaming,
 }
 
 #[derive(Debug, Parser)]
@@ -71,6 +94,8 @@ struct ConvertEcIndexArgs {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 enum EcIndexFormatArg {
+    /// Build the fast exact PtrHash lookup directly (no intermediate index).
+    Ptrhash,
     Mmap,
     Legacy,
 }
@@ -215,6 +240,13 @@ enum LibraryStrandArg {
 
 #[derive(Debug, Parser)]
 struct MapArgs {
+    /// Preserve per-gene S/U compatibility. Enables forward-strand consensus mapping.
+    #[arg(long)]
+    splicing_state: bool,
+    /// Require agreement of at least two distinct matched seeds; preserve cross-gene ties.
+    /// Uses forward-strand read-at-a-time mapping; score is supporting seed count.
+    #[arg(long)]
+    gene_ec_consensus: bool,
     #[arg(long)]
     index: PathBuf,
     #[arg(long, hide = true)]
@@ -379,8 +411,84 @@ struct CountArgs {
     out_prefix: PathBuf,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum SplicingResolutionArg {
+    Intersection,
+    Usa,
+}
+impl SplicingResolutionArg {
+    fn label(self) -> &'static str {
+        match self {
+            Self::Intersection => "intersection",
+            Self::Usa => "usa",
+        }
+    }
+}
+
+#[derive(Debug, Parser)]
+struct SplicingCountArgs {
+    /// CSTRAD2 produced by map --splicing-state (plain, gzip, or zstd).
+    #[arg(long)]
+    assignments: PathBuf,
+    #[arg(long)]
+    barcode_whitelist: Option<PathBuf>,
+    #[arg(long = "no-correct-barcodes", action = ArgAction::SetFalse, default_value_t = true)]
+    correct_barcodes: bool,
+    #[arg(long = "no-correct-umis", action = ArgAction::SetFalse, default_value_t = true)]
+    correct_umis: bool,
+    /// Molecule resolver; usa applies alevin-fry cr-like/WTA spliced tie preference.
+    /// Currently requires --no-correct-umis.
+    #[arg(long, value_enum, default_value_t = SplicingResolutionArg::Intersection)]
+    resolution: SplicingResolutionArg,
+    #[arg(long)]
+    emit_metrics: Option<PathBuf>,
+    #[arg(long)]
+    out_prefix: PathBuf,
+}
+
+#[derive(Debug, Parser)]
+struct QuantArgs {
+    /// Reusable gene-EC index with spliced/intronic reference annotations.
+    #[arg(long)]
+    index: PathBuf,
+    #[arg(long)]
+    r1: PathBuf,
+    #[arg(long)]
+    r2: PathBuf,
+    /// Accepted cell barcodes, one per line; plain or gzip, optional -1 suffix.
+    /// This workflow uses the supplied cells; it does not perform cell calling.
+    #[arg(long, alias = "barcodes")]
+    barcode_whitelist: PathBuf,
+    /// Create a new output directory; an existing path is never overwritten.
+    #[arg(short = 'o', long)]
+    out_dir: PathBuf,
+    #[arg(long, default_value = "tenx-3p-v3")]
+    chemistry: String,
+    /// Conservative intersection by default; usa automatically uses exact UMIs.
+    #[arg(long, value_enum, default_value_t = SplicingResolutionArg::Intersection)]
+    resolution: SplicingResolutionArg,
+    /// Disable directional UMI correction for intersection (implicit with usa).
+    #[arg(long)]
+    no_correct_umis: bool,
+    /// Accept only exact whitelist barcodes.
+    #[arg(long)]
+    no_correct_barcodes: bool,
+    /// Retain assignments.cstrad2 after successful counting for later re-counting.
+    #[arg(long)]
+    keep_assignments: bool,
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
+    // Quant launches the same native stages in separate processes, so mapping
+    // memory is released before counting. Only its children need worker pools.
+    if !matches!(&cli.command, Commands::Quant(_)) {
+        if let Some(threads) = cli.threads {
+            rayon::ThreadPoolBuilder::new()
+                .num_threads(threads.get())
+                .build_global()?;
+        }
+    }
     match cli.command {
         Commands::Index(args) => cmd_index::run_index(args),
         Commands::IndexEc(args) => cmd_index::run_index_ec(args),
@@ -391,7 +499,9 @@ fn main() -> Result<()> {
             cmd_build_target::run_build_transcriptome_target(args)
         }
         Commands::Map(args) => cmd_map::run_map(args),
+        Commands::Quant(args) => cmd_quant::run(args, cli.threads),
         Commands::Count(args) => cmd_count::run_count(args),
+        Commands::CountSplicing(args) => cmd_count::splicing::run(args),
         Commands::BenchReport(args) => cmd_bench_report::run_bench_report(args),
     }
 }

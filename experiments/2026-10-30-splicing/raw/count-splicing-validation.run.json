@@ -1,0 +1,25 @@
+{
+  "label": "count-splicing",
+  "repeat": "validation",
+  "seconds": 7.8613611361943185,
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-30-splicing/raw/count-splicing-validation.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/target/release/constellation",
+    "count-splicing",
+    "--assignments",
+    "/home/grant/Desktop/programming/constellation/benchdata/splicing-2026-10-30/splicing.rad",
+    "--barcode-whitelist",
+    "/home/grant/Desktop/programming/constellation/benchdata/pbmc_10k_v3/filtered_feature_bc_matrix/barcodes.tsv.gz",
+    "--out-prefix",
+    "/home/grant/Desktop/programming/constellation/benchdata/splicing-2026-10-30/counts",
+    "--emit-metrics",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-30-splicing/raw/count.metrics.json"
+  ],
+  "exit_code": 0
+}

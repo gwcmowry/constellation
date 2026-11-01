@@ -1,0 +1,20 @@
+[
+  {
+    "seconds": 1.3153528333641589,
+    "small_thresh": 100,
+    "tiny_cell_resolved_count": 474,
+    "matrix_matches_control": true
+  },
+  {
+    "seconds": 1.2803276916965842,
+    "small_thresh": 100,
+    "tiny_cell_resolved_count": 474,
+    "matrix_matches_control": true
+  },
+  {
+    "seconds": 1.3064723056741059,
+    "small_thresh": 100,
+    "tiny_cell_resolved_count": 474,
+    "matrix_matches_control": true
+  }
+]

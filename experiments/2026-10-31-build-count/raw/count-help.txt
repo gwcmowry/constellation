@@ -1,0 +1,21 @@
+Resolve gene/splicing compatibility through UMI counting from CSTRAD2
+
+Usage: constellation count-splicing [OPTIONS] --assignments <ASSIGNMENTS> --out-prefix <OUT_PREFIX>
+
+Options:
+      --assignments <ASSIGNMENTS>
+          CSTRAD2 produced by map --splicing-state (plain, gzip, or zstd)
+      --barcode-whitelist <BARCODE_WHITELIST>
+          
+      --no-correct-barcodes
+          
+      --no-correct-umis
+          
+      --resolution <RESOLUTION>
+          Molecule resolver; usa applies alevin-fry cr-like/WTA spliced tie preference. Currently requires --no-correct-umis [default: intersection] [possible values: intersection, usa]
+      --emit-metrics <EMIT_METRICS>
+          
+      --out-prefix <OUT_PREFIX>
+          
+  -h, --help
+          Print help

@@ -1,0 +1,23 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-31-build-count/raw/pipeline-fast-count.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/target/release/constellation",
+    "count-splicing",
+    "--assignments",
+    "/home/grant/Desktop/programming/constellation/benchdata/build-count-2026-10-31/pipeline-fast.rad",
+    "--barcode-whitelist",
+    "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/barcodes.txt",
+    "--out-prefix",
+    "/home/grant/Desktop/programming/constellation/benchdata/build-count-2026-10-31/pipeline-fast-count",
+    "--emit-metrics",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-31-build-count/raw/pipeline-fast-count.metrics.json"
+  ],
+  "seconds": 1.5980039308778942,
+  "exit_code": 0
+}

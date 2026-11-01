@@ -1,0 +1,100 @@
+{
+  "cacheline-ef-1.1.0": [],
+  "epserde-0.13.1": [
+    {
+      "path": "epserde-0.13.1/LICENSE-Apache-2.0",
+      "source": "https://raw.githubusercontent.com/vigna/epserde-rs/d76c36d4cc31f77bd23a493bacdbeac5547c0da2/LICENSE-Apache-2.0",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "revision_from_crate": true
+    }
+  ],
+  "epserde-derive-0.13.1": [
+    {
+      "path": "epserde-derive-0.13.1/LICENSE-Apache-2.0",
+      "source": "https://raw.githubusercontent.com/vigna/epserde-rs/d76c36d4cc31f77bd23a493bacdbeac5547c0da2/LICENSE-Apache-2.0",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "revision_from_crate": true
+    }
+  ],
+  "fxhash-0.2.1": [],
+  "impl-tools-lib-0.11.4": [
+    {
+      "path": "impl-tools-lib-0.11.4/COPYRIGHT",
+      "source": "https://raw.githubusercontent.com/kas-gui/impl-tools/644334a67e90a703502c07849d716c1ae8e1660a/COPYRIGHT",
+      "sha256": "593cb7b83882c9a417e6c61148781bc9eb0327e0996ad6b4783ea5db1ffe487d",
+      "revision_from_crate": true
+    },
+    {
+      "path": "impl-tools-lib-0.11.4/LICENSE",
+      "source": "https://raw.githubusercontent.com/kas-gui/impl-tools/644334a67e90a703502c07849d716c1ae8e1660a/LICENSE",
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "revision_from_crate": true
+    }
+  ],
+  "maligned-0.2.1": [],
+  "mem_dbg-0.3.4": [
+    {
+      "path": "mem_dbg-0.3.4/LICENSE-Apache-2.0",
+      "source": "https://raw.githubusercontent.com/zommiommy/mem_dbg/056d120a46e5de475d38577cda806e80ccdacc05/LICENSE-Apache-2.0",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "revision_from_crate": true
+    },
+    {
+      "path": "mem_dbg-0.3.4/LICENSE-LGPL-2.1-or-later",
+      "source": "https://raw.githubusercontent.com/zommiommy/mem_dbg/056d120a46e5de475d38577cda806e80ccdacc05/LICENSE-LGPL-2.1-or-later",
+      "sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551",
+      "revision_from_crate": true
+    }
+  ],
+  "mem_dbg-0.4.4": [
+    {
+      "path": "mem_dbg-0.4.4/LICENSE-Apache-2.0",
+      "source": "https://raw.githubusercontent.com/zommiommy/mem_dbg-rs/2fc4d91e391ccd58c5e20d401f07709197042307/LICENSE-Apache-2.0",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "revision_from_crate": true
+    },
+    {
+      "path": "mem_dbg-0.4.4/LICENSE-MIT",
+      "source": "https://raw.githubusercontent.com/zommiommy/mem_dbg-rs/2fc4d91e391ccd58c5e20d401f07709197042307/LICENSE-MIT",
+      "sha256": "ac35f6021362d05b3f1b8a24cca017eabf4b957fd710e41bbc02ffdccfc12e0a",
+      "revision_from_crate": true
+    }
+  ],
+  "mem_dbg-derive-0.2.1": [
+    {
+      "path": "mem_dbg-derive-0.2.1/LICENSE-Apache-2.0",
+      "source": "https://raw.githubusercontent.com/zommiommy/mem_dbg/056d120a46e5de475d38577cda806e80ccdacc05/LICENSE-Apache-2.0",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "revision_from_crate": true
+    },
+    {
+      "path": "mem_dbg-derive-0.2.1/LICENSE-LGPL-2.1-or-later",
+      "source": "https://raw.githubusercontent.com/zommiommy/mem_dbg/056d120a46e5de475d38577cda806e80ccdacc05/LICENSE-LGPL-2.1-or-later",
+      "sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551",
+      "revision_from_crate": true
+    }
+  ],
+  "mem_dbg-derive-0.3.4": [
+    {
+      "path": "mem_dbg-derive-0.3.4/LICENSE-Apache-2.0",
+      "source": "https://raw.githubusercontent.com/zommiommy/mem_dbg-rs/2fc4d91e391ccd58c5e20d401f07709197042307/LICENSE-Apache-2.0",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "revision_from_crate": true
+    },
+    {
+      "path": "mem_dbg-derive-0.3.4/LICENSE-MIT",
+      "source": "https://raw.githubusercontent.com/zommiommy/mem_dbg-rs/2fc4d91e391ccd58c5e20d401f07709197042307/LICENSE-MIT",
+      "sha256": "ac35f6021362d05b3f1b8a24cca017eabf4b957fd710e41bbc02ffdccfc12e0a",
+      "revision_from_crate": true
+    }
+  ],
+  "prefetch-index-0.2.1": [],
+  "ptr_hash-2.0.2": [
+    {
+      "path": "ptr_hash-2.0.2/LICENSE",
+      "source": "https://raw.githubusercontent.com/RagnarGrootKoerkamp/ptrhash/052258696d2374420d18df2491d3a23cce04a7e2/LICENSE",
+      "sha256": "3d3c7af53722a7a2255659f2f20632bfa8de40819de9229ebb5fdee2c3fb73a4",
+      "revision_from_crate": true
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "gene_projection_checks": {
+    "real1m/ours": true,
+    "real1m/piscem": true,
+    "real1m/kallisto": true,
+    "lane2/ours": true,
+    "lane2/piscem": true,
+    "lane2/kallisto": true,
+    "heldout/ours": true,
+    "heldout/piscem": true,
+    "heldout/kallisto": true,
+    "heldout150/ours": true,
+    "heldout150/piscem": true,
+    "heldout150/kallisto": true
+  },
+  "total_read_rows_checked": 8520000,
+  "native_accepted_read_count_matches_common_counter": true,
+  "native_exact_barcode_umi_group_count_matches_common_counter": true,
+  "default_native_assigned_molecule_rows_match_matrix": true,
+  "alternative_native_assigned_molecule_rows_match_matrix": true,
+  "no_unexpected_index_classification_results": true,
+  "all_normalized_counts_positive_finite_integers": true,
+  "production_binary_sha256": "c4384c0e5968910c7d35cc89921acc6763e0de93dbfe48bbafb207f9926d65b4",
+  "alevin_fry_binary_sha256": "abf41dcb624965abd8763c7eeba0ccfe2ef4f77572a1ef773494ec08fa1e7661"
+}

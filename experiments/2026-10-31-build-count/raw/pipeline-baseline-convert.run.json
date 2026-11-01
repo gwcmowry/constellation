@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-31-build-count/raw/pipeline-baseline-convert.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/benchdata/build-count-2026-10-31/constellation.instrumented",
+    "convert-ec-index",
+    "--index",
+    "/home/grant/Desktop/programming/constellation/benchdata/build-count-2026-10-31/pipeline-baseline-build.ecidx",
+    "--out",
+    "/home/grant/Desktop/programming/constellation/benchdata/build-count-2026-10-31/pipeline-baseline-final.ecidx"
+  ],
+  "seconds": 60.05584223102778,
+  "exit_code": 0
+}

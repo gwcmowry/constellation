@@ -1,0 +1,36 @@
+piscem converted 8668767 7754302
+piscem-common-corrected counted
+piscem-common-exact-umi counted
+ours-exact-umi counted
+{
+  "ours_corrected": {
+    "S": 2656486.0,
+    "U": 2007141.0,
+    "A": 850393.0,
+    "total": 5514020.0
+  },
+  "ours_exact_umi": {
+    "S": 2661927.0,
+    "U": 2011089.0,
+    "A": 852738.0,
+    "total": 5525754.0
+  },
+  "piscem_common_corrected": {
+    "S": 2797507.0,
+    "U": 1989631.0,
+    "A": 802337.0,
+    "total": 5589475.0
+  },
+  "piscem_common_exact_umi": {
+    "S": 2803971.0,
+    "U": 1993952.0,
+    "A": 804998.0,
+    "total": 5602921.0
+  },
+  "piscem_native_af": {
+    "S": 2959526.0,
+    "U": 1994063.0,
+    "A": 841163.0,
+    "total": 5794752.0
+  }
+}

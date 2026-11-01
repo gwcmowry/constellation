@@ -1,0 +1,80 @@
+{
+  "pbmc10m/constellation": {
+    "repeats": [
+      {
+        "wall": 3.0423557618632913,
+        "rss_kib": 4471556.0,
+        "cpu_seconds": 25.450000000000003,
+        "major_faults": 0.0
+      },
+      {
+        "wall": 2.967043077107519,
+        "rss_kib": 4471520.0,
+        "cpu_seconds": 25.39,
+        "major_faults": 0.0
+      },
+      {
+        "wall": 3.296983868815005,
+        "rss_kib": 4472092.0,
+        "cpu_seconds": 25.19,
+        "major_faults": 0.0
+      }
+    ],
+    "median_seconds": 3.0423557618632913,
+    "million_pairs_per_second": 3.2869265735955544,
+    "median_rss_gib": 4.264408111572266,
+    "median_cpu_seconds": 25.39
+  },
+  "pbmc10m/piscem": {
+    "repeats": [
+      {
+        "wall": 13.952308826614171,
+        "rss_kib": 3223820.0,
+        "cpu_seconds": 161.91,
+        "major_faults": 0.0
+      },
+      {
+        "wall": 13.88866925984621,
+        "rss_kib": 3223312.0,
+        "cpu_seconds": 160.98999999999998,
+        "major_faults": 0.0
+      },
+      {
+        "wall": 13.888510863296688,
+        "rss_kib": 3223128.0,
+        "cpu_seconds": 160.77,
+        "major_faults": 0.0
+      }
+    ],
+    "median_seconds": 13.88866925984621,
+    "million_pairs_per_second": 0.7200113857496186,
+    "median_rss_gib": 3.0739898681640625,
+    "median_cpu_seconds": 160.98999999999998
+  },
+  "pbmc10m/kallisto": {
+    "repeats": [
+      {
+        "wall": 82.93362392438576,
+        "rss_kib": 14844884.0,
+        "cpu_seconds": 555.24,
+        "major_faults": 0.0
+      },
+      {
+        "wall": 83.26635818835348,
+        "rss_kib": 14839408.0,
+        "cpu_seconds": 555.54,
+        "major_faults": 0.0
+      },
+      {
+        "wall": 82.44498076522723,
+        "rss_kib": 14845028.0,
+        "cpu_seconds": 550.9200000000001,
+        "major_faults": 0.0
+      }
+    ],
+    "median_seconds": 82.93362392438576,
+    "million_pairs_per_second": 0.12057835563917285,
+    "median_rss_gib": 14.157184600830078,
+    "median_cpu_seconds": 555.24
+  }
+}

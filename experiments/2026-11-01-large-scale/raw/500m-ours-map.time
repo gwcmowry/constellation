@@ -1,0 +1,23 @@
+	Command being timed: "taskset -c 0-11 /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/constellation.frozen map --splicing-state --index /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/constellation.ecidx --r1 /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/large_R1.fastq.gz --r2 /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/large_R2.fastq.gz --out /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-ours/map.cstrad2 --emit-metrics /home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/500m-ours-map.metrics.json"
+	User time (seconds): 1986.70
+	System time (seconds): 17.64
+	Percent of CPU this job got: 765%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 4:21.79
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 4474836
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 126
+	Minor (reclaiming a frame) page faults: 108583
+	Voluntary context switches: 641371
+	Involuntary context switches: 2699068
+	Swaps: 0
+	File system inputs: 113076656
+	File system outputs: 33940888
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

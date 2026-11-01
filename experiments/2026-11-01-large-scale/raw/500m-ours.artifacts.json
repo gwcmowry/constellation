@@ -1,0 +1,82 @@
+{
+  "removed_scratch_root": "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-ours",
+  "files": [
+    {
+      "path": "usa_features.tsv",
+      "bytes": 2207900
+    },
+    {
+      "path": "count_ambiguous.mtx",
+      "bytes": 75679079
+    },
+    {
+      "path": "count_unknown.mtx",
+      "bytes": 63
+    },
+    {
+      "path": "usa_unknown.mtx",
+      "bytes": 63
+    },
+    {
+      "path": "map.cstrad2",
+      "bytes": 17377706433
+    },
+    {
+      "path": "count_conflicting.mtx",
+      "bytes": 2579905
+    },
+    {
+      "path": "usa_barcodes.tsv",
+      "bytes": 200073
+    },
+    {
+      "path": "usa_unspliced.mtx",
+      "bytes": 267954202
+    },
+    {
+      "path": "count_features.tsv",
+      "bytes": 2207900
+    },
+    {
+      "path": "count_matrix.mtx",
+      "bytes": 480094351
+    },
+    {
+      "path": "count_unspliced.mtx",
+      "bytes": 264946106
+    },
+    {
+      "path": "usa_ambiguous.mtx",
+      "bytes": 83363786
+    },
+    {
+      "path": "usa_matrix.mtx",
+      "bytes": 501441239
+    },
+    {
+      "path": "count_barcodes.tsv",
+      "bytes": 200073
+    },
+    {
+      "path": "usa_conflicting.mtx",
+      "bytes": 333190
+    },
+    {
+      "path": "usa_compatible_both.mtx",
+      "bytes": 83108550
+    },
+    {
+      "path": "usa_spliced.mtx",
+      "bytes": 250645797
+    },
+    {
+      "path": "count_spliced.mtx",
+      "bytes": 235209523
+    },
+    {
+      "path": "count_compatible_both.mtx",
+      "bytes": 73495526
+    }
+  ],
+  "bytes": 19701373759
+}

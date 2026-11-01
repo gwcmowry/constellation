@@ -1,0 +1,29 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/500m-kallisto-map.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/tools/kallisto/kallisto",
+    "bus",
+    "-i",
+    "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/kallisto-splici.idx",
+    "-x",
+    "10xv3",
+    "--fr-stranded",
+    "-t",
+    "12",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-kallisto/map",
+    "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/large_R1.fastq.gz",
+    "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/large_R2.fastq.gz"
+  ],
+  "seconds": 1303.07038214989,
+  "exit_code": 0,
+  "sampled_peak_rss_bytes": 15528943616,
+  "memory_guard_gib": 46,
+  "stopped_by_memory_guard": false
+}

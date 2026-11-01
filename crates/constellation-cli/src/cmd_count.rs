@@ -1,4 +1,5 @@
 use crate::CountArgs;
+pub mod splicing;
 use anyhow::{anyhow, Context, Result};
 use constellation_core::index::{IndexAccess, LoadedIndex};
 use flate2::read::MultiGzDecoder;
@@ -51,7 +52,7 @@ struct CountMetrics {
 }
 
 #[derive(Debug)]
-struct BarcodeCorrector {
+pub(crate) struct BarcodeCorrector {
     whitelist: FxHashSet<u64>,
 }
 
@@ -437,7 +438,7 @@ fn write_outputs(
     Ok(())
 }
 
-fn load_barcode_whitelist(path: &Path) -> Result<BarcodeCorrector> {
+pub(crate) fn load_barcode_whitelist(path: &Path) -> Result<BarcodeCorrector> {
     let mut whitelist = FxHashSet::default();
     for line in read_lines_maybe_gz(path)? {
         let barcode = line?;

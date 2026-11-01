@@ -1,0 +1,8 @@
+{"seconds": 0.019338139332830906, "line": "2026-11-01 06:27:07 INFO paired : false, ref_count : 276,935, num_chunks : 30,518"}
+{"seconds": 0.019352799281477928, "line": "2026-11-01 06:27:07 INFO read 3 file-level tags"}
+{"seconds": 0.019359448924660683, "line": "2026-11-01 06:27:07 INFO read 2 read-level tags"}
+{"seconds": 0.019367529079318047, "line": "2026-11-01 06:27:07 INFO read 1 alignemnt-level tags"}
+{"seconds": 0.019373309332877398, "line": "2026-11-01 06:27:07 INFO File-level tag values TagMap { keys: [TagDesc { name: \"cblen\", typeid: Int(U16), role: None }, TagDesc { name: \"ulen\", typeid: Int(U16), role: None }, TagDesc { name: \"known_rad_type\", typeid: String, role: None }], dat: [U16(16), U16(12), String(\"sc_rna_basic\")] }"}
+{"seconds": 0.019493747036904097, "line": "2026-11-01 06:27:07 INFO short read single-cell without poisition"}
+{"seconds": 47.889067695941776, "line": "2026-11-01 06:27:54 INFO Optimized single-barcode collation: 362,883,086 records in 6.07s scatter, 11,769 chunks in 41.33s gather (11 spool files, 10 gather workers, 256 KiB flush threshold)"}
+{"seconds": 47.88916766503826, "line": "2026-11-01 06:27:54 INFO Wrote collated chunk index /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-piscem/collation/map.collated.rad.chunkidx (11769 chunks, from gather)"}

@@ -1,0 +1,198 @@
+[
+  {
+    "seconds": 0.0026221578009426594,
+    "text": "\n"
+  },
+  {
+    "seconds": 35.56151448562741,
+    "text": "[index] k-mer length: "
+  },
+  {
+    "seconds": 35.56152584590018,
+    "text": "31\n"
+  },
+  {
+    "seconds": 51.58383834268898,
+    "text": "[index] number of targets: 276,935\n[index] number of k-mers: "
+  },
+  {
+    "seconds": 51.67433247901499,
+    "text": "1,451,575,591\n"
+  },
+  {
+    "seconds": 51.67476102570072,
+    "text": "[quant] running in paired-end mode\n[quant] will process sample 1: /home/grant/Desktop/programming/constellation/benchdata/throughput-2026-10-27/pbmc10m_R1.fastq.gz\n"
+  },
+  {
+    "seconds": 51.67476618569344,
+    "text": "                               /home/grant/Desktop/programming/constellation/benchdata/throughput-2026-10-27/pbmc10m_R2.fastq.gz\n[quant] finding pseudoalignments for the reads ..."
+  },
+  {
+    "seconds": 55.721139535773546,
+    "text": "\r[progress] 1M reads processed (88.5% mapped)             "
+  },
+  {
+    "seconds": 57.976812245789915,
+    "text": "\r"
+  },
+  {
+    "seconds": 57.976831395644695,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 57.9768400946632,
+    "text": "2"
+  },
+  {
+    "seconds": 57.97684610495344,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 57.97685200488195,
+    "text": " ("
+  },
+  {
+    "seconds": 57.976864494848996,
+    "text": "88.2"
+  },
+  {
+    "seconds": 57.976870184764266,
+    "text": "% mapped)             "
+  },
+  {
+    "seconds": 60.029346389696,
+    "text": "\r"
+  },
+  {
+    "seconds": 60.029365609865636,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 60.02937437966466,
+    "text": "3"
+  },
+  {
+    "seconds": 60.02938028983772,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 60.02938610967249,
+    "text": " ("
+  },
+  {
+    "seconds": 60.029401858802885,
+    "text": "87.8"
+  },
+  {
+    "seconds": 60.02940746862441,
+    "text": "% mapped)             "
+  },
+  {
+    "seconds": 62.12820805096999,
+    "text": "\r"
+  },
+  {
+    "seconds": 62.12823050096631,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 62.128240081015974,
+    "text": "4"
+  },
+  {
+    "seconds": 62.1282481206581,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 62.12825548090041,
+    "text": " ("
+  },
+  {
+    "seconds": 62.128266570623964,
+    "text": "87.5"
+  },
+  {
+    "seconds": 62.128272289875895,
+    "text": "% mapped)             "
+  },
+  {
+    "seconds": 65.21100909588858,
+    "text": "\r[progress] 5M reads processed ("
+  },
+  {
+    "seconds": 65.21102189598605,
+    "text": "87.4% mapped)             "
+  },
+  {
+    "seconds": 67.25164420995861,
+    "text": "\r[progress] 6M reads processed ("
+  },
+  {
+    "seconds": 67.25165740959346,
+    "text": "87.3% mapped)             "
+  },
+  {
+    "seconds": 69.24214658979326,
+    "text": "\r[progress] 7M reads processed (87.3% mapped)             "
+  },
+  {
+    "seconds": 71.3384855138138,
+    "text": "\r"
+  },
+  {
+    "seconds": 71.33850431395695,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 71.3385117338039,
+    "text": "8"
+  },
+  {
+    "seconds": 71.33851762395352,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 71.33852348383516,
+    "text": " ("
+  },
+  {
+    "seconds": 71.33853592257947,
+    "text": "87.2"
+  },
+  {
+    "seconds": 71.33854184299707,
+    "text": "% mapped)             "
+  },
+  {
+    "seconds": 74.3858161335811,
+    "text": "\r"
+  },
+  {
+    "seconds": 74.38583407364786,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 74.38584147393703,
+    "text": "9"
+  },
+  {
+    "seconds": 74.3858463135548,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 74.38629001984373,
+    "text": " (87.1% mapped)             "
+  },
+  {
+    "seconds": 75.1784892110154,
+    "text": " done\n[quant] processed "
+  },
+  {
+    "seconds": 75.17850162088871,
+    "text": "10,000,000 reads, 8,711,362 reads pseudoaligned\n"
+  },
+  {
+    "seconds": 75.81481912499294,
+    "text": "\n"
+  }
+]

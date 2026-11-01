@@ -1,0 +1,23 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-30-state-comparison/raw/ours-exact-umi.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/target/release/constellation",
+    "count-splicing",
+    "--assignments",
+    "/home/grant/Desktop/programming/constellation/benchdata/splicing-2026-10-30/splicing.rad",
+    "--barcode-whitelist",
+    "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/barcodes.txt",
+    "--out-prefix",
+    "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/ours-exact-umi",
+    "--emit-metrics",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-30-state-comparison/raw/ours-exact-umi.metrics.json",
+    "--no-correct-umis"
+  ],
+  "seconds": 7.698007251136005
+}

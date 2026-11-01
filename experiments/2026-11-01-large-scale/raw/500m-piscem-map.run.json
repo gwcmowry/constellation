@@ -1,0 +1,30 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/500m-piscem-map.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/tools/piscem-x86_64-unknown-linux-gnu/piscem",
+    "map-sc",
+    "-i",
+    "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici",
+    "-g",
+    "chromium_v3",
+    "-t",
+    "12",
+    "-1",
+    "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/large_R1.fastq.gz",
+    "-2",
+    "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/large_R2.fastq.gz",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-piscem/map"
+  ],
+  "seconds": 680.6865104753524,
+  "exit_code": 0,
+  "sampled_peak_rss_bytes": 3535360000,
+  "memory_guard_gib": 46,
+  "stopped_by_memory_guard": false
+}

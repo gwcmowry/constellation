@@ -1,0 +1,106 @@
+{"seconds": 0.002873743884265423, "line": ""}
+{"seconds": 35.232966313138604, "line": "[index] k-mer length: 31"}
+{"seconds": 51.057538371067494, "line": "[index] number of targets: 276,935"}
+{"seconds": 51.147075408138335, "line": "[index] number of k-mers: 1,451,575,591"}
+{"seconds": 51.14737768517807, "line": "[quant] running in paired-end mode"}
+{"seconds": 51.147405293770134, "line": "[quant] will process sample 1: /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/small_R1.fastq.gz"}
+{"seconds": 51.14742430392653, "line": "                               /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/small_R2.fastq.gz"}
+{"seconds": 55.681732825003564, "line": "[quant] finding pseudoalignments for the reads ..."}
+{"seconds": 58.10449692700058, "line": "[progress] 1M reads processed (79.2% mapped)"}
+{"seconds": 60.56459656404331, "line": "[progress] 2M reads processed (79.0% mapped)"}
+{"seconds": 62.88850837294012, "line": "[progress] 3M reads processed (78.6% mapped)"}
+{"seconds": 66.34203828684986, "line": "[progress] 4M reads processed (78.4% mapped)"}
+{"seconds": 68.74056844878942, "line": "[progress] 5M reads processed (78.3% mapped)"}
+{"seconds": 71.05540276877582, "line": "[progress] 6M reads processed (78.2% mapped)"}
+{"seconds": 73.53520351881161, "line": "[progress] 7M reads processed (78.1% mapped)"}
+{"seconds": 76.71310682501644, "line": "[progress] 8M reads processed (78.1% mapped)"}
+{"seconds": 79.24741346715018, "line": "[progress] 9M reads processed (78.0% mapped)"}
+{"seconds": 81.76514104381204, "line": "[progress] 10M reads processed (78.0% mapped)"}
+{"seconds": 84.16995103377849, "line": "[progress] 11M reads processed (78.0% mapped)"}
+{"seconds": 87.12411867687479, "line": "[progress] 12M reads processed (78.0% mapped)"}
+{"seconds": 89.44623930379748, "line": "[progress] 13M reads processed (78.2% mapped)"}
+{"seconds": 92.25014565279707, "line": "[progress] 14M reads processed (78.2% mapped)"}
+{"seconds": 94.71478494815528, "line": "[progress] 15M reads processed (78.3% mapped)"}
+{"seconds": 97.56398280290887, "line": "[progress] 16M reads processed (78.3% mapped)"}
+{"seconds": 99.85190720204264, "line": "[progress] 17M reads processed (78.4% mapped)"}
+{"seconds": 102.80380503088236, "line": "[progress] 18M reads processed (78.4% mapped)"}
+{"seconds": 105.38718827813864, "line": "[progress] 19M reads processed (78.5% mapped)"}
+{"seconds": 107.85829373914748, "line": "[progress] 20M reads processed (78.5% mapped)"}
+{"seconds": 110.20093663688749, "line": "[progress] 21M reads processed (78.5% mapped)"}
+{"seconds": 113.35359716787934, "line": "[progress] 22M reads processed (78.5% mapped)"}
+{"seconds": 115.6863047578372, "line": "[progress] 23M reads processed (78.4% mapped)"}
+{"seconds": 118.11079949792475, "line": "[progress] 24M reads processed (78.4% mapped)"}
+{"seconds": 120.74112447816879, "line": "[progress] 25M reads processed (78.4% mapped)"}
+{"seconds": 123.88132854178548, "line": "[progress] 27M reads processed (78.5% mapped)"}
+{"seconds": 126.11528104683384, "line": "[progress] 28M reads processed (78.5% mapped)"}
+{"seconds": 128.62866157991812, "line": "[progress] 29M reads processed (78.5% mapped)"}
+{"seconds": 130.984473480843, "line": "[progress] 30M reads processed (78.6% mapped)"}
+{"seconds": 134.2589195240289, "line": "[progress] 31M reads processed (78.6% mapped)"}
+{"seconds": 136.73437681701034, "line": "[progress] 32M reads processed (78.6% mapped)"}
+{"seconds": 139.12505820207298, "line": "[progress] 33M reads processed (78.7% mapped)"}
+{"seconds": 141.40665978379548, "line": "[progress] 34M reads processed (78.7% mapped)"}
+{"seconds": 144.6386030120775, "line": "[progress] 35M reads processed (78.7% mapped)"}
+{"seconds": 147.3279561251402, "line": "[progress] 36M reads processed (78.7% mapped)"}
+{"seconds": 149.6938054068014, "line": "[progress] 37M reads processed (78.7% mapped)"}
+{"seconds": 151.8575885212049, "line": "[progress] 38M reads processed (78.7% mapped)"}
+{"seconds": 155.03606144199148, "line": "[progress] 39M reads processed (78.7% mapped)"}
+{"seconds": 157.88445629598573, "line": "[progress] 40M reads processed (78.7% mapped)"}
+{"seconds": 160.17963495478034, "line": "[progress] 41M reads processed (78.6% mapped)"}
+{"seconds": 162.51782603980973, "line": "[progress] 42M reads processed (78.6% mapped)"}
+{"seconds": 165.59867757186294, "line": "[progress] 43M reads processed (78.6% mapped)"}
+{"seconds": 168.27882353495806, "line": "[progress] 44M reads processed (78.6% mapped)"}
+{"seconds": 170.5473976638168, "line": "[progress] 45M reads processed (78.6% mapped)"}
+{"seconds": 172.79902313277125, "line": "[progress] 46M reads processed (78.6% mapped)"}
+{"seconds": 175.71164869517088, "line": "[progress] 47M reads processed (78.6% mapped)"}
+{"seconds": 178.4219740810804, "line": "[progress] 48M reads processed (78.6% mapped)"}
+{"seconds": 180.61372754303738, "line": "[progress] 49M reads processed (78.6% mapped)"}
+{"seconds": 183.2417118321173, "line": "[progress] 50M reads processed (78.6% mapped)"}
+{"seconds": 185.89167064707726, "line": "[progress] 51M reads processed (78.6% mapped)"}
+{"seconds": 189.0359989060089, "line": "[progress] 53M reads processed (78.6% mapped)"}
+{"seconds": 191.25950521184132, "line": "[progress] 54M reads processed (78.6% mapped)"}
+{"seconds": 193.50087032606825, "line": "[progress] 55M reads processed (78.6% mapped)"}
+{"seconds": 196.32357101188973, "line": "[progress] 56M reads processed (78.6% mapped)"}
+{"seconds": 199.21009008400142, "line": "[progress] 57M reads processed (78.6% mapped)"}
+{"seconds": 201.56798114813864, "line": "[progress] 58M reads processed (78.6% mapped)"}
+{"seconds": 204.05762823298573, "line": "[progress] 59M reads processed (78.6% mapped)"}
+{"seconds": 206.72593431686983, "line": "[progress] 60M reads processed (78.5% mapped)"}
+{"seconds": 209.3047288628295, "line": "[progress] 61M reads processed (78.5% mapped)"}
+{"seconds": 211.8243815349415, "line": "[progress] 62M reads processed (78.6% mapped)"}
+{"seconds": 214.65045731514692, "line": "[progress] 63M reads processed (78.6% mapped)"}
+{"seconds": 217.50744920084253, "line": "[progress] 64M reads processed (78.6% mapped)"}
+{"seconds": 219.93044963292778, "line": "[progress] 65M reads processed (78.6% mapped)"}
+{"seconds": 222.33926691114902, "line": "[progress] 66M reads processed (78.6% mapped)"}
+{"seconds": 225.1545335240662, "line": "[progress] 67M reads processed (78.6% mapped)"}
+{"seconds": 227.8921864819713, "line": "[progress] 68M reads processed (78.6% mapped)"}
+{"seconds": 230.4099312038161, "line": "[progress] 69M reads processed (78.6% mapped)"}
+{"seconds": 232.83135342411697, "line": "[progress] 70M reads processed (78.6% mapped)"}
+{"seconds": 235.69660891406238, "line": "[progress] 71M reads processed (78.6% mapped)"}
+{"seconds": 238.0156742958352, "line": "[progress] 72M reads processed (78.6% mapped)"}
+{"seconds": 240.91089842189103, "line": "[progress] 73M reads processed (78.6% mapped)"}
+{"seconds": 243.46537936618552, "line": "[progress] 74M reads processed (78.6% mapped)"}
+{"seconds": 246.10639636218548, "line": "[progress] 75M reads processed (78.6% mapped)"}
+{"seconds": 248.4145825081505, "line": "[progress] 76M reads processed (78.6% mapped)"}
+{"seconds": 251.18424527486786, "line": "[progress] 77M reads processed (78.6% mapped)"}
+{"seconds": 254.0290313558653, "line": "[progress] 79M reads processed (78.6% mapped)"}
+{"seconds": 256.5142844892107, "line": "[progress] 80M reads processed (78.6% mapped)"}
+{"seconds": 258.9387702369131, "line": "[progress] 81M reads processed (78.6% mapped)"}
+{"seconds": 261.840224201791, "line": "[progress] 82M reads processed (78.6% mapped)"}
+{"seconds": 264.3859623721801, "line": "[progress] 83M reads processed (78.7% mapped)"}
+{"seconds": 266.9775855508633, "line": "[progress] 84M reads processed (78.7% mapped)"}
+{"seconds": 269.46150938794017, "line": "[progress] 85M reads processed (78.7% mapped)"}
+{"seconds": 272.23345678299665, "line": "[progress] 86M reads processed (78.7% mapped)"}
+{"seconds": 275.0424177967943, "line": "[progress] 87M reads processed (78.7% mapped)"}
+{"seconds": 277.620136405807, "line": "[progress] 88M reads processed (78.7% mapped)"}
+{"seconds": 280.12173955282196, "line": "[progress] 89M reads processed (78.7% mapped)"}
+{"seconds": 282.7580632129684, "line": "[progress] 90M reads processed (78.7% mapped)"}
+{"seconds": 285.67367669800296, "line": "[progress] 91M reads processed (78.7% mapped)"}
+{"seconds": 288.31402370799333, "line": "[progress] 92M reads processed (78.6% mapped)"}
+{"seconds": 290.6437799599953, "line": "[progress] 93M reads processed (78.6% mapped)"}
+{"seconds": 292.97587695298716, "line": "[progress] 94M reads processed (78.6% mapped)"}
+{"seconds": 295.97428306704387, "line": "[progress] 95M reads processed (78.6% mapped)"}
+{"seconds": 298.5770379528403, "line": "[progress] 96M reads processed (78.6% mapped)"}
+{"seconds": 301.00466779619455, "line": "[progress] 97M reads processed (78.6% mapped)"}
+{"seconds": 303.1108320681378, "line": "[progress] 98M reads processed (78.6% mapped)"}
+{"seconds": 305.8373809028417, "line": "[progress] 99M reads processed (78.6% mapped)              done"}
+{"seconds": 305.8374197529629, "line": "[quant] processed 100,000,000 reads, 78,609,017 reads pseudoaligned"}
+{"seconds": 307.03816688619554, "line": ""}

@@ -1,0 +1,31 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/500m-kallisto-count.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/tools/bustools/bustools",
+    "count",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-kallisto/counts",
+    "-g",
+    "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/t2g.tsv",
+    "-e",
+    "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-kallisto/map/matrix.ec",
+    "-t",
+    "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-kallisto/map/transcripts.txt",
+    "--genecounts",
+    "--umi-gene",
+    "--split",
+    "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/intronic-targets.txt",
+    "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-kallisto/sorted.bus"
+  ],
+  "seconds": 145.47055207984522,
+  "exit_code": 0,
+  "sampled_peak_rss_bytes": 708079616,
+  "memory_guard_gib": 46,
+  "stopped_by_memory_guard": false
+}

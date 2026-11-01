@@ -1,5 +1,22 @@
 # Failed and superseded performance paths
 
+The 2026-10-30 quality experiment first required three distinct matched seeds
+spanning at least k/2 start positions, with gene-set intersection. On development
+positives this reached 99.977% precision but only 80.068% correct unique recall.
+It was not retained for the 91bp workload; the two-seed rule recovered recall
+while maintaining approximately 99.95% precision and was tested on fresh holdouts.
+Raw results: `experiments/2026-10-30-consensus/raw/strict-development-*`.
+Revisit the stricter rule only for a changed read-length/error model or an explicit
+preference for further abstention.
+
+The 2026-10-27 packed pipeline retained bounded within-read v9 prefetching,
+which differs from the global v4 grouping below. A further exact aggregation
+of repeated EC payloads did not improve runtime (2.888 s versus 2.852 s for
+its immediate no-output control, single measured runs after warmup), and was
+removed. Raw measurements and the rejected patch are in
+`experiments/2026-10-27-packed-pipeline/`. Revisit aggregation only with a changed
+cost model, such as avoiding index probes through verified sequence traversal.
+
 This is the authoritative negative-results ledger. Treat every row as **do not
 retry** unless the underlying premise changes and the new experiment states that
 change explicitly. Raw results from the 2026-08-02 audits are in

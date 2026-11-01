@@ -1,0 +1,10 @@
+
+[index] k-mer length: 31
+[index] number of targets: 276,935
+[index] number of k-mers: 1,451,575,591
+[quant] running in paired-end mode
+[quant] will process sample 1: /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/lane2_R1.fastq.gz
+                               /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/lane2_R2.fastq.gz
+[quant] finding pseudoalignments for the reads ...[progress] 1M reads processed (77.9% mapped)              done
+[quant] processed 1,000,000 reads, 779,261 reads pseudoaligned
+

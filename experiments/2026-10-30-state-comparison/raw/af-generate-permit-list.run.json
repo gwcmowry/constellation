@@ -1,0 +1,26 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "experiments/2026-10-30-state-comparison/raw/af-generate-permit-list.time",
+    "benchdata/state-comparison-2026-10-30/alevin-fry-x86_64-unknown-linux-gnu/alevin-fry",
+    "generate-permit-list",
+    "-i",
+    "benchdata/comparison-2026-10-27/pbmc10m-piscem-forward",
+    "-o",
+    "benchdata/state-comparison-2026-10-30/af-collation",
+    "-d",
+    "fw",
+    "-t",
+    "12",
+    "--valid-bc",
+    "benchdata/state-comparison-2026-10-30/barcodes.txt",
+    "--cell-bc-correction",
+    "unique",
+    "--cell-bc-neighborhood",
+    "hamming-1"
+  ],
+  "seconds": 0.3108714269474149,
+  "exit_code": 0
+}

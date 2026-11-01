@@ -1,0 +1,69 @@
+{
+  "heldout": {
+    "counts": {
+      "positives": 360000,
+      "intersection_assigned": 306820,
+      "intersection_correct": 306652,
+      "usa_assigned": 315375,
+      "usa_correct": 314294,
+      "additional_correct": 7642,
+      "additional_wrong_source_gene": 913,
+      "intergenic_n": 30000,
+      "intergenic_intersection_assigned": 965,
+      "intergenic_usa_assigned": 1038,
+      "random_n": 30000,
+      "random_intersection_assigned": 0,
+      "random_usa_assigned": 0,
+      "intersection_precision": 0.9994524476891988,
+      "intersection_recall": 0.8518111111111111,
+      "usa_precision": 0.996572334522394,
+      "usa_recall": 0.8730388888888889
+    },
+    "additional_by_origin": {
+      "mature": {
+        "correct": 6147
+      },
+      "junction": {
+        "correct": 486,
+        "wrong_source_gene": 4
+      },
+      "intronic": {
+        "wrong_source_gene": 909,
+        "correct": 1009
+      }
+    }
+  },
+  "heldout150": {
+    "counts": {
+      "positives": 360000,
+      "intersection_assigned": 320368,
+      "intersection_correct": 320317,
+      "usa_assigned": 327371,
+      "usa_correct": 326610,
+      "additional_correct": 6293,
+      "additional_wrong_source_gene": 710,
+      "intergenic_n": 30000,
+      "intergenic_intersection_assigned": 1106,
+      "intergenic_usa_assigned": 1137,
+      "random_n": 30000,
+      "random_intersection_assigned": 0,
+      "random_usa_assigned": 0,
+      "intersection_precision": 0.9998408080707186,
+      "intersection_recall": 0.8897694444444444,
+      "usa_precision": 0.9976754202418663,
+      "usa_recall": 0.90725
+    },
+    "additional_by_origin": {
+      "mature": {
+        "correct": 5105
+      },
+      "junction": {
+        "correct": 403
+      },
+      "intronic": {
+        "correct": 785,
+        "wrong_source_gene": 710
+      }
+    }
+  }
+}

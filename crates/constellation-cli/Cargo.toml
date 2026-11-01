@@ -16,7 +16,7 @@ path = "src/main.rs"
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 constellation-core = { path = "../constellation-core" }
-flate2 = "1"
+flate2 = { version = "1", default-features = false, features = ["zlib-rs"] }
 rayon = "1"
 rustc-hash = "2"
 serde_json = "1"

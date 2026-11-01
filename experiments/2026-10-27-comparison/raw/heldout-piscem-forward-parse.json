@@ -1,0 +1,83 @@
+{
+  "version": 2,
+  "nrefs": 276935,
+  "nchunks": 24,
+  "tags": [
+    [
+      [
+        "cblen",
+        2,
+        [
+          0,
+          []
+        ]
+      ],
+      [
+        "ulen",
+        2,
+        [
+          0,
+          []
+        ]
+      ],
+      [
+        "known_rad_type",
+        8,
+        [
+          0,
+          []
+        ]
+      ]
+    ],
+    [
+      [
+        "b",
+        3,
+        [
+          1,
+          [
+            0,
+            16
+          ]
+        ]
+      ],
+      [
+        "u",
+        3,
+        [
+          2,
+          [
+            12
+          ]
+        ]
+      ]
+    ],
+    [
+      [
+        "compressed_ori_refid",
+        3,
+        [
+          4,
+          []
+        ]
+      ]
+    ]
+  ],
+  "file_values": {
+    "cblen": 16,
+    "ulen": 12,
+    "known_rad_type": "sc_rna_basic"
+  },
+  "header_start": 14,
+  "chunk_count_offset": 4930509,
+  "chunks_offset": 4930619,
+  "records": 351049,
+  "returned_gene_sets": 350044,
+  "unique_gene": 315836,
+  "unique_calls_from_multiple_score_ties": 0,
+  "assignment_type_counts": {
+    "1": 315836,
+    "2": 34208,
+    "0": 69956
+  }
+}

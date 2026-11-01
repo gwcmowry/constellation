@@ -1,0 +1,26 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/500m-ours-count.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/constellation.frozen",
+    "count-splicing",
+    "--assignments",
+    "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-ours/map.cstrad2",
+    "--barcode-whitelist",
+    "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/barcodes.txt",
+    "--out-prefix",
+    "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-ours/count",
+    "--emit-metrics",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/500m-ours-count.metrics.json"
+  ],
+  "seconds": 60.4573173080571,
+  "exit_code": 0,
+  "sampled_peak_rss_bytes": 14906114048,
+  "memory_guard_gib": 46,
+  "stopped_by_memory_guard": false
+}

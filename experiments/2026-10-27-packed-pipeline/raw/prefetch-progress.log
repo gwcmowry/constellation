@@ -1,0 +1,2 @@
+{"run": "prefetch-none-warmup", "wall_seconds": 4.3217385010000005, "reads_per_second": 2313883.6368017443, "mapping_seconds": 2.753997079999999, "fastq_load_seconds": 1.5011590270000013, "write_seconds": 0.0}
+{"run": "prefetch-none-1", "wall_seconds": 4.196432315, "reads_per_second": 2382976.5975863235, "mapping_seconds": 2.7035675860000006, "fastq_load_seconds": 1.4346007369999996, "write_seconds": 0.0}

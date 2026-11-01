@@ -1,0 +1,26 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-31-build-count/raw/piscem-usa.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/target/release/constellation",
+    "count-splicing",
+    "--assignments",
+    "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/piscem-common-counter.cstrad2",
+    "--barcode-whitelist",
+    "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/barcodes.txt",
+    "--out-prefix",
+    "/home/grant/Desktop/programming/constellation/benchdata/build-count-2026-10-31/piscem-usa",
+    "--emit-metrics",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-31-build-count/raw/piscem-usa.metrics.json",
+    "--resolution",
+    "usa",
+    "--no-correct-umis"
+  ],
+  "seconds": 1.3990323403850198,
+  "exit_code": 0
+}

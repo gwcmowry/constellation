@@ -1,0 +1,143 @@
+{
+  "renderer": "matplotlib",
+  "matplotlib_version": "3.10.7",
+  "source_sha256": {
+    "experiments/2026-11-01-large-scale/raw/summary.json": "317f56dc277297c4dea8df6256953918c02833265ad865cc897a4e5d7c27a823",
+    "experiments/2026-11-01-large-scale/raw/matrix-comparison.json": "df9a0a65ea63423e56191eed21b00a0c32cd552b67121d3f1403fc1a688efac3",
+    "experiments/2026-11-01-competitor-stages/raw/summary.json": "35aa09f093f317a7a55cc438817cebadf7c02855e90a0af30e624fb2648ec95b"
+  },
+  "figures": [
+    "experiments/2026-11-01-large-scale/figures/pipeline_runtime.png",
+    "experiments/2026-11-01-large-scale/figures/pipeline_runtime.svg",
+    "experiments/2026-11-01-large-scale/figures/throughput_memory.png",
+    "experiments/2026-11-01-large-scale/figures/throughput_memory.svg",
+    "experiments/2026-11-01-large-scale/figures/index_build.png",
+    "experiments/2026-11-01-large-scale/figures/index_build.svg"
+  ],
+  "rows": {
+    "100": [
+      {
+        "tool": "ours",
+        "mode": "count",
+        "label": "Constellation \u00b7 conservative",
+        "color": "#087F8C",
+        "mapping": 44.698509173002094,
+        "counting": 13.279297107830644,
+        "total": 57.97780628083274,
+        "rss": 4.266929626464844,
+        "throughput": 1.7247979255306811,
+        "build_plus_pipeline": 82.36796436272562
+      },
+      {
+        "tool": "ours",
+        "mode": "usa",
+        "label": "Constellation \u00b7 USA",
+        "color": "#087F8C",
+        "mapping": 44.698509173002094,
+        "counting": 11.899804490152746,
+        "total": 56.59831366315484,
+        "rss": 4.266929626464844,
+        "throughput": 1.7668370933302098,
+        "build_plus_pipeline": 80.98847174504772
+      },
+      {
+        "tool": "piscem",
+        "mode": "count",
+        "label": "piscem + alevin-fry",
+        "color": "#3D64AE",
+        "mapping": 136.08688875008374,
+        "counting": 4.9300720896571875,
+        "total": 141.01696083974093,
+        "rss": 3.1163787841796875,
+        "throughput": 0.7091345566129825,
+        "build_plus_pipeline": 331.7314536278136
+      },
+      {
+        "tool": "kallisto",
+        "mode": "count",
+        "label": "kallisto + bustools",
+        "color": "#B56A29",
+        "mapping": 314.42215679585934,
+        "counting": 92.07727825175971,
+        "total": 406.49943504761904,
+        "rss": 14.28232192993164,
+        "throughput": 0.2460028019184961,
+        "build_plus_pipeline": 1505.8756754938513
+      }
+    ],
+    "500": [
+      {
+        "tool": "ours",
+        "mode": "count",
+        "label": "Constellation \u00b7 conservative",
+        "color": "#087F8C",
+        "mapping": 261.79297132138163,
+        "counting": 60.4573173080571,
+        "total": 322.2502886294387,
+        "rss": 14.288436889648438,
+        "throughput": 1.5515889904289855,
+        "build_plus_pipeline": 346.6404467113316
+      },
+      {
+        "tool": "ours",
+        "mode": "usa",
+        "label": "Constellation \u00b7 USA",
+        "color": "#087F8C",
+        "mapping": 261.79297132138163,
+        "counting": 52.921633364167064,
+        "total": 314.7146046855487,
+        "rss": 14.805545806884766,
+        "throughput": 1.5887410134638704,
+        "build_plus_pipeline": 339.10476276744157
+      },
+      {
+        "tool": "piscem",
+        "mode": "count",
+        "label": "piscem + alevin-fry",
+        "color": "#3D64AE",
+        "mapping": 680.6865104753524,
+        "counting": 61.96283892262727,
+        "total": 742.6493493979797,
+        "rss": 3.301380157470703,
+        "throughput": 0.6732652501551633,
+        "build_plus_pipeline": 933.3638421860524
+      },
+      {
+        "tool": "kallisto",
+        "mode": "count",
+        "label": "kallisto + bustools",
+        "color": "#B56A29",
+        "mapping": 1303.07038214989,
+        "counting": 230.71083315974101,
+        "total": 1533.781215309631,
+        "rss": 14.502593994140625,
+        "throughput": 0.32599173533303627,
+        "build_plus_pipeline": 2633.1574557558633
+      }
+    ]
+  },
+  "builds": {
+    "ours": {
+      "seconds": 24.390158081892878,
+      "cpu_seconds": 139.29000000000002,
+      "rss_gib": 14.17630386352539
+    },
+    "piscem": {
+      "seconds": 190.71449278807268,
+      "cpu_seconds": 1266.3300000000002,
+      "rss_gib": 7.4009552001953125
+    },
+    "kallisto": {
+      "seconds": 1099.3762404462323,
+      "cpu_seconds": 6054.8099999999995,
+      "rss_gib": 38.945831298828125
+    }
+  },
+  "index_bytes": {
+    "ours": 4427647629,
+    "piscem": 2976434264,
+    "kallisto": 6012587383
+  },
+  "native_benchmarks_rerun": false,
+  "build_plus_pipeline_is_sum_of_separate_measurements": true
+}

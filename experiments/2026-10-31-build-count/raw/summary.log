@@ -1,0 +1,150 @@
+{
+  "baseline_build": {
+    "seconds": {
+      "median": 185.0467217070982,
+      "min": 184.6958545972593,
+      "max": 185.80827783513814
+    },
+    "rss_gib": {
+      "median": 9.836746215820312,
+      "min": 9.765724182128906,
+      "max": 9.852043151855469
+    },
+    "cpu_seconds": {
+      "median": 210.16,
+      "min": 209.95,
+      "max": 211.28
+    }
+  },
+  "fast_build": {
+    "seconds": {
+      "median": 24.40697622904554,
+      "min": 24.37157597206533,
+      "max": 24.570588524919003
+    },
+    "rss_gib": {
+      "median": 14.349090576171875,
+      "min": 14.288768768310547,
+      "max": 14.378665924072266
+    },
+    "cpu_seconds": {
+      "median": 139.12,
+      "min": 138.86,
+      "max": 139.34
+    }
+  },
+  "baseline_count": {
+    "seconds": {
+      "median": 7.88110026018694,
+      "min": 7.819475365802646,
+      "max": 7.928125632926822
+    },
+    "rss_gib": {
+      "median": 1.1735038757324219,
+      "min": 1.173370361328125,
+      "max": 1.1735115051269531
+    },
+    "cpu_seconds": {
+      "median": 7.87,
+      "min": 7.8,
+      "max": 7.91
+    }
+  },
+  "fast_count": {
+    "seconds": {
+      "median": 1.5375002180226147,
+      "min": 1.5301980911754072,
+      "max": 1.7081337398849428
+    },
+    "rss_gib": {
+      "median": 0.4765586853027344,
+      "min": 0.461578369140625,
+      "max": 0.48735809326171875
+    },
+    "cpu_seconds": {
+      "median": 2.48,
+      "min": 2.4,
+      "max": 2.6
+    }
+  },
+  "baseline_map": {
+    "seconds": {
+      "median": 4.781968659255654,
+      "min": 4.715990878175944,
+      "max": 5.247967499308288
+    },
+    "rss_gib": {
+      "median": 4.2664794921875,
+      "min": 4.266078948974609,
+      "max": 4.266765594482422
+    },
+    "cpu_seconds": {
+      "median": 38.79,
+      "min": 38.64,
+      "max": 40.29
+    }
+  },
+  "fast_map": {
+    "seconds": {
+      "median": 4.384793679695576,
+      "min": 4.3305406789295375,
+      "max": 4.460962271783501
+    },
+    "rss_gib": {
+      "median": 4.267200469970703,
+      "min": 4.2669677734375,
+      "max": 4.267314910888672
+    },
+    "cpu_seconds": {
+      "median": 36.220000000000006,
+      "min": 36.169999999999995,
+      "max": 36.849999999999994
+    }
+  },
+  "speedups": {
+    "build": 7.581714341446491,
+    "map": 1.0905800839385564,
+    "count": 5.125918141542026
+  },
+  "sum_of_stage_medians": {
+    "baseline": 197.70979062654078,
+    "fast": 30.32927012676373
+  },
+  "prebuilt_fastq_to_matrix_sum_of_medians": {
+    "baseline": 12.663068919442594,
+    "fast": 5.922293897718191
+  },
+  "full_pipeline": {
+    "baseline": {
+      "seconds": 196.01715333666652,
+      "includes": [
+        "reference_FASTA_to_index",
+        "index_conversion_if_needed",
+        "paired_FASTQ_to_CSTRAD2",
+        "CSTRAD2_to_all_count_matrices"
+      ],
+      "excludes": [
+        "reference_preparation",
+        "compilation",
+        "downloads"
+      ],
+      "policy": "intersection_with_directional_UMI_correction"
+    },
+    "fast": {
+      "seconds": 30.760061314795166,
+      "includes": [
+        "reference_FASTA_to_index",
+        "index_conversion_if_needed",
+        "paired_FASTQ_to_CSTRAD2",
+        "CSTRAD2_to_all_count_matrices"
+      ],
+      "excludes": [
+        "reference_preparation",
+        "compilation",
+        "downloads"
+      ],
+      "policy": "intersection_with_directional_UMI_correction"
+    }
+  },
+  "index_bytes": 4427647629
+}

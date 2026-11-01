@@ -1,0 +1,8 @@
+{
+  "sorted_bus_sha256": "d7cdd76a91c3d86dacbd558ba4aab98a59552e6ad1f5fb9b379ac28e5d81eaea",
+  "streamed_output_sha256": {
+    "bus-stream-1": "d7cdd76a91c3d86dacbd558ba4aab98a59552e6ad1f5fb9b379ac28e5d81eaea",
+    "bus-stream-2": "d7cdd76a91c3d86dacbd558ba4aab98a59552e6ad1f5fb9b379ac28e5d81eaea",
+    "bus-stream-3": "d7cdd76a91c3d86dacbd558ba4aab98a59552e6ad1f5fb9b379ac28e5d81eaea"
+  }
+}

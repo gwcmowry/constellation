@@ -1,0 +1,262 @@
+[
+  {
+    "seconds": 0.0024429881013929844,
+    "text": "\n"
+  },
+  {
+    "seconds": 35.549205114133656,
+    "text": "[index] k-mer length: "
+  },
+  {
+    "seconds": 35.54921677336097,
+    "text": "31\n"
+  },
+  {
+    "seconds": 51.399183818139136,
+    "text": "[index] number of targets: 276,935\n[index] number of k-mers: "
+  },
+  {
+    "seconds": 51.48824433796108,
+    "text": "1,451,575,591\n"
+  },
+  {
+    "seconds": 51.51850381027907,
+    "text": "[quant] running in paired-end mode\n[quant] will process sample 1: "
+  },
+  {
+    "seconds": 51.51850915001705,
+    "text": "/home/grant/Desktop/programming/constellation/benchdata/throughput-2026-10-27/pbmc10m_R1.fastq.gz\n                               /home/grant/Desktop/programming/constellation/benchdata/throughput-2026-10-27/pbmc10m_R2.fastq.gz\n[quant] finding pseudoalignments for the reads ..."
+  },
+  {
+    "seconds": 55.44658791227266,
+    "text": "\r[progress] 1M reads processed (88.5% mapped)             "
+  },
+  {
+    "seconds": 57.75653513520956,
+    "text": "\r"
+  },
+  {
+    "seconds": 57.756554385181516,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 57.756562455091625,
+    "text": "2"
+  },
+  {
+    "seconds": 57.75656830519438,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 57.756580454297364,
+    "text": " ("
+  },
+  {
+    "seconds": 57.756593394093215,
+    "text": "88.2"
+  },
+  {
+    "seconds": 57.756599344313145,
+    "text": "% mapped)             "
+  },
+  {
+    "seconds": 59.785588392056525,
+    "text": "\r"
+  },
+  {
+    "seconds": 59.78560679126531,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 59.78561624139547,
+    "text": "3"
+  },
+  {
+    "seconds": 59.78562236111611,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 59.78562827128917,
+    "text": " ("
+  },
+  {
+    "seconds": 59.785640730988234,
+    "text": "87.8"
+  },
+  {
+    "seconds": 59.78564648097381,
+    "text": "% mapped)             "
+  },
+  {
+    "seconds": 61.93801844725385,
+    "text": "\r"
+  },
+  {
+    "seconds": 61.938037417363375,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 61.9380456074141,
+    "text": "4"
+  },
+  {
+    "seconds": 61.93805241724476,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 61.938058987259865,
+    "text": " ("
+  },
+  {
+    "seconds": 61.93807153729722,
+    "text": "87.5"
+  },
+  {
+    "seconds": 61.93807714711875,
+    "text": "% mapped)             "
+  },
+  {
+    "seconds": 64.89268457703292,
+    "text": "\r"
+  },
+  {
+    "seconds": 64.892703557387,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 64.8927111569792,
+    "text": "5"
+  },
+  {
+    "seconds": 64.89271680731326,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 64.894591730088,
+    "text": " (87.4% mapped)             "
+  },
+  {
+    "seconds": 66.90266937110573,
+    "text": "\r"
+  },
+  {
+    "seconds": 66.90268831141293,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 66.9026964311488,
+    "text": "6"
+  },
+  {
+    "seconds": 66.9027026812546,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 66.90270891133696,
+    "text": " ("
+  },
+  {
+    "seconds": 66.90272230003029,
+    "text": "87.3"
+  },
+  {
+    "seconds": 66.90272824000567,
+    "text": "% mapped)             "
+  },
+  {
+    "seconds": 68.9767266609706,
+    "text": "\r"
+  },
+  {
+    "seconds": 68.97674602130428,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 68.97675473010167,
+    "text": "7"
+  },
+  {
+    "seconds": 68.97676085028797,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 68.97677097003907,
+    "text": " ("
+  },
+  {
+    "seconds": 68.97678417013958,
+    "text": "87.3"
+  },
+  {
+    "seconds": 68.97678998997435,
+    "text": "% mapped)             "
+  },
+  {
+    "seconds": 71.01716808835045,
+    "text": "\r"
+  },
+  {
+    "seconds": 71.01718709804118,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 71.01719537796453,
+    "text": "8"
+  },
+  {
+    "seconds": 71.01720130816102,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 71.0172074381262,
+    "text": " ("
+  },
+  {
+    "seconds": 71.01721958816051,
+    "text": "87.2"
+  },
+  {
+    "seconds": 71.01722560822964,
+    "text": "% mapped)             "
+  },
+  {
+    "seconds": 73.67320745997131,
+    "text": "\r"
+  },
+  {
+    "seconds": 73.67322731995955,
+    "text": "[progress] "
+  },
+  {
+    "seconds": 73.6732350802049,
+    "text": "9"
+  },
+  {
+    "seconds": 73.67324090003967,
+    "text": "M reads processed"
+  },
+  {
+    "seconds": 73.67324707936496,
+    "text": " ("
+  },
+  {
+    "seconds": 73.67325941938907,
+    "text": "87.1"
+  },
+  {
+    "seconds": 73.67326498916373,
+    "text": "% mapped)             "
+  },
+  {
+    "seconds": 74.95218504127115,
+    "text": " done\n[quant] processed "
+  },
+  {
+    "seconds": 74.9521971209906,
+    "text": "10,000,000 reads, 8,711,362 reads pseudoaligned\n"
+  },
+  {
+    "seconds": 75.54533292539418,
+    "text": "\n"
+  }
+]

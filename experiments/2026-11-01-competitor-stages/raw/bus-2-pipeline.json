@@ -1,0 +1,9 @@
+{
+  "seconds": 19.826706572901458,
+  "stages_seconds": [
+    0.45427358290180564,
+    1.0564247043803334,
+    18.315337063279003
+  ],
+  "policy": "gene UMI collapsing, split S/U/A, no UMI edit correction"
+}

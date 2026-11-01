@@ -1,0 +1,9 @@
+build_phase	partition_generate	8.208867
+build_temp_bytes	5451722592
+build_phase	partition_sort_intern	2.352602
+build_phase	partition_combine	3.530331
+build_phase	ptrhash_construct	2.657077
+build_phase	ptrhash_partition	2.466833
+build_phase	ptrhash_fill	1.443880
+build_phase	ptrhash_verify	2.035129
+build_phase	ptrhash_write	1.092861

@@ -1,0 +1,28 @@
+{
+  "label": "after-consensus",
+  "repeat": 1,
+  "seconds": 4.342350591905415,
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-30-splicing/raw/after-consensus-1.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/target/release/constellation",
+    "map",
+    "--gene-ec-consensus",
+    "--index",
+    "/home/grant/Desktop/programming/constellation/benchdata/throughput-2026-10-27/reference.ptrhash.ecidx",
+    "--r1",
+    "/home/grant/Desktop/programming/constellation/benchdata/throughput-2026-10-27/pbmc10m_R1.fastq.gz",
+    "--r2",
+    "/home/grant/Desktop/programming/constellation/benchdata/throughput-2026-10-27/pbmc10m_R2.fastq.gz",
+    "--out",
+    "/home/grant/Desktop/programming/constellation/benchdata/splicing-2026-10-30/after-consensus.rad",
+    "--emit-metrics",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-30-splicing/raw/after-consensus-1.metrics.json"
+  ],
+  "exit_code": 0
+}

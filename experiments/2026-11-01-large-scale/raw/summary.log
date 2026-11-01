@@ -1,0 +1,56 @@
+{
+  "speedups": {
+    "100": {
+      "piscem": {
+        "mapping": 3.0445509541128106,
+        "map_and_count": 2.4322576152102644
+      },
+      "kallisto": {
+        "mapping": 7.034287331125808,
+        "map_and_count": 7.011293822995272
+      }
+    },
+    "500": {
+      "piscem": {
+        "mapping": 2.6000946741986044,
+        "map_and_count": 2.3045731085503083
+      },
+      "kallisto": {
+        "mapping": 4.977484214235141,
+        "map_and_count": 4.759596094802426
+      }
+    }
+  },
+  "scaling": {
+    "ours": {
+      "map_seconds": 5.8568613621571215,
+      "count_seconds": 4.552749804235206,
+      "pipeline_seconds": 5.558166293297192,
+      "pipeline_peak_rss_gib": 3.3486460149300434
+    },
+    "piscem": {
+      "map_seconds": 5.001852248421937,
+      "count_seconds": 12.5683433823654,
+      "pipeline_seconds": 5.266383171042563,
+      "pipeline_peak_rss_gib": 1.0593642127940852
+    },
+    "kallisto": {
+      "map_seconds": 4.144333832669169,
+      "count_seconds": 2.5056217727127685,
+      "pipeline_seconds": 3.773144764961254,
+      "pipeline_peak_rss_gib": 1.0154227068462416
+    }
+  },
+  "protocol": {
+    "replicates": 1,
+    "cores": 12,
+    "prebuilt_indexes": true,
+    "combined_times": "sums of measured native stages; extra USA count and validation excluded"
+  }
+}
+100m-ours {'map_seconds': 44.698509173002094, 'count_seconds': 13.279297107830644, 'pipeline_seconds': 57.97780628083274, 'pipeline_peak_rss_gib': 4.266929626464844}
+100m-piscem {'map_seconds': 136.08688875008374, 'count_seconds': 4.9300720896571875, 'pipeline_seconds': 141.01696083974093, 'pipeline_peak_rss_gib': 3.1163787841796875}
+100m-kallisto {'map_seconds': 314.42215679585934, 'count_seconds': 92.07727825175971, 'pipeline_seconds': 406.49943504761904, 'pipeline_peak_rss_gib': 14.28232192993164}
+500m-ours {'map_seconds': 261.79297132138163, 'count_seconds': 60.4573173080571, 'pipeline_seconds': 322.2502886294387, 'pipeline_peak_rss_gib': 14.288436889648438}
+500m-piscem {'map_seconds': 680.6865104753524, 'count_seconds': 61.96283892262727, 'pipeline_seconds': 742.6493493979797, 'pipeline_peak_rss_gib': 3.301380157470703}
+500m-kallisto {'map_seconds': 1303.07038214989, 'count_seconds': 230.71083315974101, 'pipeline_seconds': 1533.781215309631, 'pipeline_peak_rss_gib': 14.502593994140625}

@@ -1,0 +1,9 @@
+2026-10-31 22:53:38 INFO record type is standard short read single-cell RNA-seq
+2026-10-31 22:53:38 INFO paired: false, ref_count: 276,935, num_chunks: 611
+2026-10-31 22:53:38 INFO read 3 file-level tags
+2026-10-31 22:53:38 INFO read 2 read-level tags
+2026-10-31 22:53:38 INFO read 1 alignment-level tags
+2026-10-31 22:53:38 INFO File-level tag values TagMap { keys: [TagDesc { name: "cblen", typeid: Int(U16), role: None }, TagDesc { name: "ulen", typeid: Int(U16), role: None }, TagDesc { name: "known_rad_type", typeid: String, role: None }], dat: [U16(16), U16(12), String("sc_rna_basic")] }
+2026-10-31 22:53:38 INFO observed 8,668,767 reads (7,754,302 orientation consistent) in 611 chunks --- max ambiguity read occurs in 950 refs
+2026-10-31 22:53:38 INFO filtering selected 11769 retained barcode targets
+2026-10-31 22:53:38 INFO total number of distinct corrected barcodes : 82,484

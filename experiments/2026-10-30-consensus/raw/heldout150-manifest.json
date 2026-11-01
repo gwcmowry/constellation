@@ -1,0 +1,32 @@
+{
+  "seed": 20261031,
+  "num_reads": 420000,
+  "positive_sources": 90000,
+  "negative_sources": 60000,
+  "eligible_transcripts": 196587,
+  "eligible_introns": 335076,
+  "reference_checked_transcripts": 51520,
+  "reference_checked_intronic_sources": 30000,
+  "source_counts": {
+    "mature": 120000,
+    "junction": 120000,
+    "intronic": 120000,
+    "intergenic": 30000,
+    "random": 30000
+  },
+  "read_length": 150,
+  "files": {
+    "heldout150_R1.fastq.gz": {
+      "bytes": 2484861,
+      "sha256": "45f87d6633906e2bfee03dc4f818a1fde5bee405bbacfcf36ae91332bce81ab0"
+    },
+    "heldout150_R2.fastq.gz": {
+      "bytes": 13856258,
+      "sha256": "52d54673c0a2090308bbbe801ab0bdf48b9859640fff2f70b424174f660fdaa4"
+    },
+    "heldout150-truth.parquet": {
+      "bytes": 3599518,
+      "sha256": "8cf3f58b742e489f1a366859f22207a4e0760c44f1c36f84cfbd0eeda1fcd1af"
+    }
+  }
+}

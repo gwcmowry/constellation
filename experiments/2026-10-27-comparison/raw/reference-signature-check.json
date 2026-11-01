@@ -1,0 +1,11 @@
+{
+  "old_new_piscem_identical": true,
+  "signatures": {
+    "num_records": 276935,
+    "num_trimmed_polya": 0,
+    "sha256_names": "46b4c3e28eef1839f9de68d15bdafe91b36ac6ae1037281e57381750e6976d05",
+    "sha256_seqs": "327a08718abe035e84ffc7cf1202c13f80cf16c2f4afe2935c0839ff11aba373",
+    "sha512_names": "a0bf445451b2444674d9143382b8d49060b08c86d37bb9bf2866f6e0ca9bd2f2d1227342e3235d4464e5f59dc9aabc5e488a70f537a097dbe2bd9dc25e294875",
+    "sha512_seqs": "a8da5ce7867f2725b6153681d39c894866300a100fa76c0729d8e3e55ad08b27a772bdda1188437bd65790cb0ea223f94a64823d801f69af6f9b1cd42ec3ca98"
+  }
+}

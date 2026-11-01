@@ -1,0 +1,25 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "experiments/2026-10-30-state-comparison/raw/af-quant.time",
+    "benchdata/state-comparison-2026-10-30/alevin-fry-x86_64-unknown-linux-gnu/alevin-fry",
+    "quant",
+    "-i",
+    "benchdata/state-comparison-2026-10-30/af-collation",
+    "-o",
+    "benchdata/state-comparison-2026-10-30/af-usa",
+    "-m",
+    "benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/t2g_3col.tsv",
+    "-r",
+    "cr-like",
+    "-t",
+    "12",
+    "--small-thresh",
+    "0",
+    "--dump-molecules"
+  ],
+  "seconds": 1.0035814577713609,
+  "exit_code": 0
+}

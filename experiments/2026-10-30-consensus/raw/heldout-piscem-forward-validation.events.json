@@ -1,0 +1,54 @@
+[
+  {
+    "seconds": 0.0029569659382104874,
+    "text": "2026-10-30T12:07:27.615260Z  INFO piscem_rs::cli::map_scrna: Protocol: chromium_v3 (bc_len=16, umi_len=12)\n"
+  },
+  {
+    "seconds": 0.002965915948152542,
+    "text": "2026-10-30T12:07:27.615296Z  INFO piscem_rs::cli::map_scrna: Loading index from /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/piscem-splici\n"
+  },
+  {
+    "seconds": 0.0029839957132935524,
+    "text": "2026-10-30T12:07:27.615313Z  INFO piscem_rs::index::reference_index: Loading SSHash dictionary from /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/piscem-splici.ssi\n"
+  },
+  {
+    "seconds": 0.12723750714212656,
+    "text": "2026-10-30T12:07:27.739529Z  INFO piscem_rs::index::reference_index:   k=31, 19050010 strings\n2026-10-30T12:07:27.739540Z  INFO piscem_rs::index::reference_index: Loading contig table from /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/piscem-splici.ctab\n"
+  },
+  {
+    "seconds": 0.20432115998119116,
+    "text": "2026-10-30T12:07:27.816612Z  INFO piscem_rs::index::reference_index:   19050010 contigs, 177240068 entries, entry_width=42 bits\n2026-10-30T12:07:27.816624Z  INFO piscem_rs::index::reference_index: Loading reference info from /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/piscem-splici.refinfo\n"
+  },
+  {
+    "seconds": 0.2089988561347127,
+    "text": "2026-10-30T12:07:27.821307Z  INFO piscem_rs::index::reference_index:   276935 references, max_ref_len=2278213\n"
+  },
+  {
+    "seconds": 0.2090308158658445,
+    "text": "2026-10-30T12:07:27.821356Z  INFO piscem_rs::index::reference_index: Loading equivalence class table from /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/piscem-splici.ectab\n"
+  },
+  {
+    "seconds": 0.241032337769866,
+    "text": "2026-10-30T12:07:27.853322Z  INFO piscem_rs::index::reference_index:   19050010 tiles, 10472123 ECs, 153506540 label entries\n2026-10-30T12:07:27.853339Z  INFO piscem_rs::index::reference_index:   ref_shift=23, pos_mask=0x3fffff\n2026-10-30T12:07:27.853351Z  INFO piscem_rs::index::reference_index: No poison table found at /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/piscem-splici.poison\n2026-10-30T12:07:27.853353Z  INFO piscem_rs::index::reference_index: Loaded reference signatures from /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/piscem-splici.sigs.json\n"
+  },
+  {
+    "seconds": 0.24104866804555058,
+    "text": "2026-10-30T12:07:27.853367Z  INFO piscem_rs::cli::map_scrna: Index loaded: k=31, 276935 refs (0.24s)\n"
+  },
+  {
+    "seconds": 0.243740766774863,
+    "text": "2026-10-30T12:07:27.856047Z  INFO piscem_rs::io::calibrate: using the serial decoder: 12 threads for 2 gzip input(s) is below the 8 threads per input needed before parallel decoding adds concurrency the serial path does not already have\n"
+  },
+  {
+    "seconds": 0.24384449608623981,
+    "text": "2026-10-30T12:07:27.856165Z  INFO piscem_rs::cli::map_scrna: thread execution plan requested_budget=12 effective_budget=12 mapping_threads=12 decode_slots=0 allocation=Serial\n"
+  },
+  {
+    "seconds": 0.597878472879529,
+    "text": "2026-10-30T12:07:28.210183Z  INFO piscem_rs::io::threads: consumer measurement components modeled_busy_seconds=2.45356689 callback_setup_seconds=0.000365368 excluded_output_seconds=0.002211953 wall_seconds=0.354009738 budget=12 modeled_utilization=0.5775657716511742 excluded_output_fraction=0.0009007134361080576\n"
+  },
+  {
+    "seconds": 0.5978906829841435,
+    "text": "2026-10-30T12:07:28.210224Z  INFO piscem_rs::cli::map_scrna: Mapped 351049/420000 reads (83.6%), 0 poisoned, 0.6s\n"
+  }
+]

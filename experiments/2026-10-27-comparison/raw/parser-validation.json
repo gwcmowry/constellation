@@ -1,0 +1,10 @@
+{
+  "identity_roundtrips": 1000000,
+  "constellation_records_checked_against_tsv": 100000,
+  "piscem_checked_against_alevin_view": {
+    "records": 16030,
+    "alignments": 82772,
+    "legacy_reader": "/home/grant/Desktop/programming/constellation/.conda-af/bin/alevin-fry"
+  },
+  "kallisto_identity_check": "Every BUS flag (-n) is checked against the decoded UMI in read_outputs.py"
+}

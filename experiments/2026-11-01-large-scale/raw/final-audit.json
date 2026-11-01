@@ -1,0 +1,10 @@
+{
+  "native_stage_exit_codes_all_zero": true,
+  "native_stages": 22,
+  "exact_mapping_input_counts_verified": 6,
+  "validated_parquet_state_matrices": 24,
+  "binary_snapshot_checksum_matches": true,
+  "all_peaks_below_guard": true,
+  "no_pipeline_scratch_remaining": true,
+  "matrix_comparison_sets": 6
+}

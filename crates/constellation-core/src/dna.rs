@@ -39,7 +39,7 @@ impl Base {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EncodedSeq {
     pub words: Vec<u64>,
     pub len: u32,
@@ -54,11 +54,22 @@ pub struct Kmer {
 }
 
 pub fn encode_acgt(seq: &[u8]) -> EncodedSeq {
-    let len = seq.len() as u32;
+    let mut encoded = EncodedSeq::default();
+    encode_acgt_into(seq, &mut encoded);
+    encoded
+}
+
+/// Encode a sequence while retaining the buffers across reads of any length.
+pub fn encode_acgt_into(seq: &[u8], encoded: &mut EncodedSeq) {
+    encoded.len = seq.len() as u32;
     let word_count = seq.len().div_ceil(32);
     let mask_word_count = seq.len().div_ceil(64);
-    let mut words = vec![0_u64; word_count];
-    let mut n_mask_words = vec![0_u64; mask_word_count];
+    encoded.words.resize(word_count, 0);
+    encoded.words.fill(0);
+    encoded.n_mask_words.resize(mask_word_count, 0);
+    encoded.n_mask_words.fill(0);
+    let words = &mut encoded.words;
+    let n_mask_words = &mut encoded.n_mask_words;
     let mut has_n = false;
 
     for (i, &base) in seq.iter().enumerate() {
@@ -76,12 +87,67 @@ pub fn encode_acgt(seq: &[u8]) -> EncodedSeq {
     if !has_n {
         n_mask_words.clear();
     }
+}
 
-    EncodedSeq {
-        words,
-        len,
-        n_mask_words,
+const BASE_CODES: [u8; 256] = {
+    let mut codes = [4; 256];
+    codes[b'A' as usize] = 0;
+    codes[b'a' as usize] = 0;
+    codes[b'C' as usize] = 1;
+    codes[b'c' as usize] = 1;
+    codes[b'G' as usize] = 2;
+    codes[b'g' as usize] = 2;
+    codes[b'T' as usize] = 3;
+    codes[b't' as usize] = 3;
+    codes[b'U' as usize] = 3;
+    codes[b'u' as usize] = 3;
+    codes
+};
+
+/// A/C/G/T/U code, or 4 for an invalid base.
+#[inline]
+pub fn acgt_code(base: u8) -> u8 {
+    BASE_CODES[base as usize]
+}
+
+/// Encode and compute the mapper's exact low-complexity predicate in one pass.
+/// U encodes as T but is excluded from A/C/G/T composition, as in the sketcher.
+pub fn encode_and_check_complexity(seq: &[u8], k: u8, encoded: &mut EncodedSeq) -> bool {
+    encoded.len = seq.len() as u32;
+    encoded.words.resize(seq.len().div_ceil(32), 0);
+    encoded.words.fill(0);
+    encoded.n_mask_words.resize(seq.len().div_ceil(64), 0);
+    encoded.n_mask_words.fill(0);
+    let mut counts = [0_usize; 5];
+    let mut valid_run = 0_usize;
+    let mut kmer_count = 0_usize;
+    let mut has_n = false;
+    for (i, &base) in seq.iter().enumerate() {
+        let code = acgt_code(base);
+        let composition_code = if base.eq_ignore_ascii_case(&b'U') {
+            4
+        } else {
+            code
+        };
+        counts[composition_code as usize] += 1;
+        encoded.words[i / 32] |= ((code & 3) as u64) << ((i % 32) * 2);
+        if code < 4 {
+            valid_run += 1;
+            kmer_count += usize::from(k > 0 && valid_run >= k as usize);
+        } else {
+            valid_run = 0;
+            has_n = true;
+            encoded.n_mask_words[i / 64] |= 1_u64 << (i % 64);
+        }
     }
+    if !has_n {
+        encoded.n_mask_words.clear();
+    }
+    let valid_bases = counts[..4].iter().sum::<usize>();
+    kmer_count <= 1
+        || valid_bases == 0
+        || counts[..4].iter().copied().max().unwrap_or(0) * 5 >= valid_bases * 4
+        || counts[..4].iter().filter(|&&n| n > 0).count() <= 1
 }
 
 pub fn base_at(encoded: &EncodedSeq, pos: usize) -> Option<Base> {
@@ -353,6 +419,37 @@ pub fn decode_kmer(mut code: u64, k: u8) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn fused_encoding_matches_independent_encoding_and_complexity() {
+        let mut encoded = EncodedSeq::default();
+        let mut state = 9173_u64;
+        let alphabet = b"ACGTUacgtuNN-?";
+        for iteration in 0..500 {
+            let len = (iteration * 137) % 701;
+            let seq: Vec<_> = (0..len)
+                .map(|_| {
+                    state ^= state << 13;
+                    state ^= state >> 7;
+                    state ^= state << 17;
+                    if iteration % 11 == 0 {
+                        state as u8
+                    } else {
+                        alphabet[state as usize % alphabet.len()]
+                    }
+                })
+                .collect();
+            for k in [1, 7, 31, 32] {
+                let low_complexity = encode_and_check_complexity(&seq, k, &mut encoded);
+                assert_eq!(encoded, encode_acgt(&seq));
+                assert_eq!(
+                    low_complexity,
+                    crate::sketch::is_low_complexity_read(&seq, k)
+                );
+            }
+        }
+    }
+
     use proptest::prelude::*;
 
     #[test]

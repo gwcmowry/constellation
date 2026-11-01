@@ -1,0 +1,6 @@
+{
+  "fasta": "/home/grant/Desktop/programming/constellation/benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/roers_ref.fa",
+  "targets": 276935,
+  "intronic_targets": 73193,
+  "whitelist": "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/barcodes.txt"
+}

@@ -1,0 +1,34 @@
+Usage: constellation index-ec [OPTIONS] --transcripts <TRANSCRIPTS> --out <OUT>
+
+Options:
+      --transcripts <TRANSCRIPTS>
+          
+
+      --t2g-map <T2G_MAP>
+          
+
+      --k <K>
+          [default: 31]
+
+      --syncmer-s <SYNCMER_S>
+          Build a closed-syncmer sampled index using this s-mer length
+
+      --format <FORMAT>
+          Possible values:
+          - ptrhash: Build the fast exact PtrHash lookup directly (no intermediate index)
+          - mmap
+          - legacy
+          
+          [default: mmap]
+
+      --build-mode <BUILD_MODE>
+          Partitioned parallel construction, or the lower-memory streaming builder
+          
+          [default: partitioned]
+          [possible values: partitioned, streaming]
+
+      --out <OUT>
+          
+
+  -h, --help
+          Print help (see a summary with '-h')

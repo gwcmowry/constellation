@@ -1,0 +1,22 @@
+{
+  "rad": {
+    "byte_identical": true,
+    "bytes": 369461060,
+    "sha256": "b7c5b5ad39e5b2bca42cf253d1d9e10ef9ac5e120f752384681a14fe4cb3b99a"
+  },
+  "baseline_zstd_decoded": {
+    "byte_identical": true,
+    "bytes": 369461060,
+    "sha256": "b7c5b5ad39e5b2bca42cf253d1d9e10ef9ac5e120f752384681a14fe4cb3b99a"
+  },
+  "optimized_zstd_decoded": {
+    "byte_identical": true,
+    "bytes": 369461060,
+    "sha256": "b7c5b5ad39e5b2bca42cf253d1d9e10ef9ac5e120f752384681a14fe4cb3b99a"
+  },
+  "tsv": {
+    "byte_identical": true,
+    "bytes": 674434328,
+    "sha256": "2e2a622111f13194c9019103af8eef005fb8820ee4706a18a8b5c79c254ab702"
+  }
+}

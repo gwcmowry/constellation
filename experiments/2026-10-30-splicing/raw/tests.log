@@ -1,0 +1,130 @@
+   Compiling constellation-cli v0.1.0 (/home/grant/Desktop/programming/constellation/crates/constellation-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.91s
+     Running unittests src/main.rs (target/debug/deps/constellation-c4103c8ce238a9fa)
+
+running 5 tests
+test cmd_count::splicing::tests::ambiguous_reads_resolve_genes_and_state_without_forcing_conflicts ... ok
+test cmd_count::tests::barcode_correction_requires_unique_neighbor ... ok
+test cmd_count::splicing::tests::umi_correction_merges_state_constraints_not_separate_state_counts ... ok
+test cmd_count::tests::directional_umi_correction_collapses_one_mismatch_low_count_neighbor ... ok
+test cmd_map::packed::tests::slabs_recycle_and_cancel_on_errors ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cli_smoke.rs (target/debug/deps/cli_smoke-e77d8be1ad1ddd6d)
+
+running 3 tests
+test cli_build_transcriptome_target_kinds ... ok
+test cli_golden_assignment_types ... ok
+test cli_index_simulate_gene_ec_map_and_report ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+     Running tests/consensus.rs (target/debug/deps/consensus-b93a574ab71474e2)
+
+running 1 test
+test consensus_preserves_ties_across_sampled_layouts_and_rejects_incompatible_options ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+     Running tests/packed_pipeline.rs (target/debug/deps/packed_pipeline-7764a2da1d6b1805)
+
+running 1 test
+test packed_and_diagnostic_paths_have_identical_output ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+     Running tests/splicing.rs (target/debug/deps/splicing-d6a77faafca639de)
+
+running 1 test
+test state_output_and_molecule_counts_across_layouts_compression_and_corruption ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.19s
+
+     Running unittests src/lib.rs (target/debug/deps/constellation_core-aa11a828abe28bb8)
+
+running 75 tests
+test assign::tests::antisense_only_best_candidates_are_classified ... ok
+test assign::tests::same_gene_multi_transcript_assignment_is_gene_countable ... ok
+test assign::tests::sense_candidate_beats_equal_score_antisense_candidate ... ok
+test assign::tests::ambiguous_gene_assignment ... ok
+test assign::tests::exonic_same_gene_tie_beats_gene_body_tie ... ok
+test assign::tests::target_priority_does_not_resolve_multi_gene_tie ... ok
+test assign::tests::unique_gene_assignment ... ok
+test candidate::tests::candidate_locus_sorting_is_stable ... ok
+test candidate::tests::gene_wand_lite_prunes_by_gene_not_locus ... ok
+test candidate::tests::gene_wand_lite_can_cap_loci_per_gene ... ok
+test chemistry::tests::parse_tenx_3p_v3_r1 ... ok
+test dna::tests::encode_decode_roundtrip ... ok
+test dna::tests::hamming_counts_ns_and_length_difference ... ok
+test dna::tests::closed_syncmer_iterator_matches_naive_selection ... ok
+test dna::tests::kmer_iterator_matches_string_reference ... ok
+test dna::tests::reverse_complement_involution ... ok
+test dna::tests::reverse_complement_kmer_code_matches_sequence ... ok
+test ec_index::splicing::tests::compatibility_is_order_independent_and_distinguishes_conflict ... ok
+test candidate::tests::exon_first_search_prefers_exon_hits_before_full_fallback ... ok
+test candidate::tests::gene_idf_planner_prefers_low_gene_df_seed ... ok
+test candidate::tests::seed_batched_matches_per_read_exact_reads ... ok
+test ec_index::consensus::tests::shared_sequence_stays_ambiguous_and_scratch_does_not_leak ... ok
+test ec_index::tests::ec_index_loads_v3_mmap ... ok
+test ec_index::tests::ec_index_encoded_mapping_matches_ascii_mapping ... ok
+test ec_index::tests::ec_index_loads_v4_mmap ... ok
+test ec_index::tests::ec_index_round_trips_mmap ... ok
+test ec_index::tests::ec_index_round_trips_v5_mmap ... ok
+test ec_index::tests::ec_index_maps_unique_gene_support ... ok
+test ec_index::consensus::tests::independent_intersection_oracle_across_layouts_and_repeated_seeds ... ok
+test ec_index::tests::ec_index_round_trips_binary ... ok
+test ec_index::tests::ec_lookup_hit_accumulates_like_lookup_record ... ok
+test fastq::tests::gzip_roundtrip ... ok
+test gtf::tests::parses_gtf_attributes ... ok
+test index::tests::compact_mmap_roundtrip ... ok
+test index::tests::compact_v4_partitions_seed_postings_by_target_class ... ok
+test index::tests::legacy_binary_mmap_roundtrip_to_owned ... ok
+test index::tests::parses_target_class_from_transcript_name ... ok
+test index_build::tests::computes_gene_df_lower_than_raw_postings_for_isoforms ... ok
+test index_build::tests::gtf_gene_map_can_match_target_header_base_id ... ok
+test index_build::tests::gtf_gene_map_overrides_fasta_gene ... ok
+test index_build::tests::parses_ensembl_cdna_gene_colon_header ... ok
+test index_build::tests::parses_gene_id_header_variants ... ok
+test index_build::tests::sharded_merge_concatenates_kmer_ranges_with_adjusted_offsets ... ok
+test index_build::tests::tiny_index_contains_expected_kmers ... ok
+test lookup::tests::known_kmer_returns_expected_postings ... ok
+test metrics::tests::parses_perf_stat_text_rates ... ok
+test read_store::tests::read_store_roundtrip ... ok
+test score::tests::hamming_reverse_complement_match_zero ... ok
+test score::tests::score_block_materializes_parallel_arrays ... ok
+test score_scalar::tests::default_scoring_matches_old_behavior ... ok
+test score_scalar::tests::full_length_match_beats_softclipped_match ... ok
+test score_scalar::tests::hamming_exact_match_zero ... ok
+test score_scalar::tests::hamming_one_mismatch ... ok
+test score_scalar::tests::low_quality_tail_can_trim ... ok
+test score_scalar::tests::poly_a_tail_can_softclip ... ok
+test score_scalar::tests::tso_prefix_can_trim ... ok
+test score_simd::tests::simd_matches_scalar ... ok
+test sketch::tests::deterministic_keys_for_fixed_read ... ok
+test sketch::tests::encoded_sketch_matches_ascii_sketch ... ok
+test sketch::tests::flags_low_complexity_homopolymer ... ok
+test sketch::tests::lightweight_low_complexity_check_matches_full_sketch ... ok
+test transcriptome_target::tests::builds_exon_transcripts_with_strand_and_versions ... ok
+test transcriptome_target::tests::builds_gene_body_and_intron_targets ... ok
+test transcriptome_target::tests::exon_plus_gene_body_emits_both_target_classes ... ok
+test ec_index::tests::ec_index_round_trips_v6_mmap ... ok
+test dna::tests::fused_encoding_matches_independent_encoding_and_complexity ... ok
+test ec_index::tests::ec_index_v8_mph_round_trips_lookup_and_mapping ... ok
+test ec_index::tests::sampled_v4_index_round_trips_selection_and_mapping ... ok
+test dna::tests::prop_encode_decode_acgt ... ok
+test dna::tests::prop_reverse_complement_twice ... ok
+test ec_index::tests::ec_index_v6_finds_suffixes_across_multiple_blocks ... ok
+test ec_index::tests::ec_index_v6_finds_wide_suffixes_across_multiple_blocks ... ok
+test ec_index::tests::ec_index_converts_v5_to_v6_mmap ... ok
+test ec_index::tests::ec_index_v7_dedups_target_suffixes_without_changing_scores ... ok
+test ec_index::tests::ptrhash_v9_round_trips_sampled_v4_lookup_and_mapping ... ok
+
+test result: ok. 75 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.06s
+
+   Doc-tests constellation_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

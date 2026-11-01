@@ -1,0 +1,61 @@
+{
+  "synthetic": {
+    "seed": 20261027,
+    "num_reads": 420000,
+    "positive_sources": 90000,
+    "negative_sources": 60000,
+    "eligible_transcripts": 201350,
+    "eligible_introns": 353469,
+    "reference_checked_transcripts": 51667,
+    "reference_checked_intronic_sources": 30000,
+    "source_counts": {
+      "mature": 120000,
+      "junction": 120000,
+      "intronic": 120000,
+      "intergenic": 30000,
+      "random": 30000
+    }
+  },
+  "real1m": {
+    "num_reads": 1000000,
+    "original_r1_valid": 999029
+  },
+  "umi_xor_mask": 5913705,
+  "fixed_barcode": "ACGTGTCAGTACGATC",
+  "read_length": 91,
+  "quality_model": "Phred40 for synthetic; original R2 for real",
+  "inputs": {
+    "benchdata/reference/ensembl93/Homo_sapiens.GRCh38.93.gtf": {
+      "bytes": 1144423988,
+      "sha256": "4544a3839eed9dda630b523fe5ed5bf37cb163060240d1ae1169d05d9e5babab"
+    },
+    "benchdata/reference/ensembl93/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz": {
+      "bytes": 881214682,
+      "sha256": "2a27436d44f0d6350f86894fbe5edec56faa5467028879784508041562406aa0"
+    },
+    "benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/roers_ref.fa": {
+      "bytes": 2055593469,
+      "sha256": "9a194025e61849b54fdfc8ac2375ea44ced8280297c55626c31bc511e18d6cf8"
+    },
+    "benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/t2g_3col.tsv": {
+      "bytes": 9638381,
+      "sha256": "c6b55fd5f5e79226cd288c34adca21b7788ae2c051c9ba84a8c34ad6e3b5c6ad"
+    },
+    "benchdata/comparison-2026-10-27/real1m_R1.fastq.gz": {
+      "bytes": 5921036,
+      "sha256": "e844a94136ff5db185b71646525509b1b7571ba00b4b9eb1702b876939217348"
+    },
+    "benchdata/comparison-2026-10-27/real1m_R2.fastq.gz": {
+      "bytes": 51892380,
+      "sha256": "d944663ea6743cdb78076d018310bacc2188adfad69050d51991093b69a19af4"
+    },
+    "benchdata/comparison-2026-10-27/synthetic_R1.fastq.gz": {
+      "bytes": 2484861,
+      "sha256": "e7f207014c51adb95d998d3ab8d5f2a3adffc540980ee7586d8c64142f725a92"
+    },
+    "benchdata/comparison-2026-10-27/synthetic_R2.fastq.gz": {
+      "bytes": 9155677,
+      "sha256": "dd929c53baadd189536498152e18e1ef08e751d6be9aba49e9d0e3d5487e16e9"
+    }
+  }
+}

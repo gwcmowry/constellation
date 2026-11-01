@@ -1,0 +1,1 @@
+{"corpus": "heldout", "tool": "constellation", "records": 420000, "returned_gene_sets": 359533, "unique_gene": 331046, "unique_calls_from_multiple_score_ties": 12439, "assignment_type_counts": {"1": 331046, "5": 60467, "2": 28487}}

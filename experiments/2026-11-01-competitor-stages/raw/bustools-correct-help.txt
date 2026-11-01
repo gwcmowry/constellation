@@ -1,0 +1,10 @@
+Usage: bustools correct [options] bus-files
+
+Options: 
+-o, --output          File for corrected bus output
+-w, --onlist          File of on-list barcodes to correct to
+-p, --pipe            Write to standard output
+-d, --dump            Dump uncorrected to corrected barcodes (optional)
+-r, --replace         The file of on-list barcodes is a barcode replacement file
+    --nocorrect       Skip barcode error correction and only keep perfect matches to on-list
+

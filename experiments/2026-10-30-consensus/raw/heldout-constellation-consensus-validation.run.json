@@ -1,0 +1,40 @@
+{
+  "tool": "constellation-consensus",
+  "corpus": "heldout",
+  "repeat": "validation",
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-30-consensus/raw/heldout-constellation-consensus-validation.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/target/release/constellation",
+    "map",
+    "--index",
+    "/home/grant/Desktop/programming/constellation/benchdata/throughput-2026-10-27/reference.ptrhash.ecidx",
+    "--r1",
+    "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/heldout_R1.fastq.gz",
+    "--r2",
+    "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/heldout_R2.fastq.gz",
+    "--batch-size",
+    "65536",
+    "--output-format",
+    "gene-ec-rad",
+    "--out",
+    "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/heldout-constellation-consensus/map.cstrad",
+    "--emit-metrics",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-30-consensus/raw/heldout-constellation-consensus-validation.metrics.json",
+    "--gene-ec-consensus"
+  ],
+  "environment": {
+    "RAYON_NUM_THREADS": "12",
+    "OMP_NUM_THREADS": "12"
+  },
+  "process_wall_seconds": 0.2099725748412311,
+  "pairs": 420000,
+  "pairs_per_second": 2000261.2261033577,
+  "exit_code": 0,
+  "executable_sha256": "816cf4d27b0c4d80adbfce20a47672647cbee4ae5aa24922727e45baae756c56"
+}

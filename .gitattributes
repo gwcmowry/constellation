@@ -1,0 +1,5 @@
+# Preserve captured output and patches verbatim, including their whitespace.
+experiments/**/raw/** -whitespace
+experiments/**/*.patch -whitespace
+experiments/**/figures/*.svg -whitespace
+release/third-party-notices/** -whitespace

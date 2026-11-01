@@ -1,0 +1,35 @@
+{"seconds": 0.0026638489216566086, "line": ""}
+{"seconds": 0.0028329971246421337, "line": "[build] loading fasta file /home/grant/Desktop/programming/constellation/benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/roers_ref.fa"}
+{"seconds": 0.002845277078449726, "line": "[build] k-mer length: 31"}
+{"seconds": 9.697251200210303, "line": "[build] warning: clipped off poly-A tail (longer than 10)"}
+{"seconds": 9.697285389062017, "line": "        from 1607 target sequences"}
+{"seconds": 9.697294329293072, "line": "[build] warning: replaced 795638 non-ACGUT characters in the input sequence"}
+{"seconds": 9.69730176916346, "line": "        with pseudorandom nucleotides"}
+{"seconds": 9.69739337824285, "line": "KmerStream::KmerStream(): Start computing k-mer cardinality estimations (1/2)"}
+{"seconds": 9.716832349076867, "line": "KmerStream::KmerStream(): Start computing k-mer cardinality estimations (1/2)"}
+{"seconds": 26.751373558305204, "line": "KmerStream::KmerStream(): Finished"}
+{"seconds": 26.882262276951224, "line": "CompactedDBG::build(): Estimated number of k-mers occurring at least once: 1449246429"}
+{"seconds": 26.882289117202163, "line": "CompactedDBG::build(): Estimated number of minimizer occurring at least once: 344007319"}
+{"seconds": 49.05215068394318, "line": "CompactedDBG::filter(): Processed 2042053312 k-mers in 276935 reads"}
+{"seconds": 49.05219062324613, "line": "CompactedDBG::filter(): Found 1449948373 unique k-mers"}
+{"seconds": 49.05219951318577, "line": "CompactedDBG::filter(): Number of blocks in Bloom filter is 9906960"}
+{"seconds": 55.063812491018325, "line": "CompactedDBG::construct(): Extract approximate unitigs (1/2)"}
+{"seconds": 294.24157816916704, "line": "CompactedDBG::construct(): Extract approximate unitigs (2/2)"}
+{"seconds": 313.94643465196714, "line": "CompactedDBG::construct(): Closed all input files"}
+{"seconds": 313.94646738190204, "line": ""}
+{"seconds": 313.94647624203935, "line": "CompactedDBG::construct(): Splitting unitigs (1/2)"}
+{"seconds": 314.17809781618416, "line": ""}
+{"seconds": 314.1781312851235, "line": "CompactedDBG::construct(): Splitting unitigs (2/2)"}
+{"seconds": 338.9095315411687, "line": "CompactedDBG::construct(): Before split: 21733300 unitigs"}
+{"seconds": 338.9095628513023, "line": "CompactedDBG::construct(): After split (1/1): 21733300 unitigs"}
+{"seconds": 338.9095716611482, "line": "CompactedDBG::construct(): Unitigs split: 986"}
+{"seconds": 338.9095787713304, "line": "CompactedDBG::construct(): Unitigs deleted: 0"}
+{"seconds": 338.9095853213221, "line": ""}
+{"seconds": 338.9095917711966, "line": "CompactedDBG::construct(): Joining unitigs"}
+{"seconds": 580.3323459932581, "line": "CompactedDBG::construct(): After join: 20179969 unitigs"}
+{"seconds": 580.3323843632825, "line": "CompactedDBG::construct(): Joined 1553500 unitigs"}
+{"seconds": 737.8010658239946, "line": "[build] building MPHF"}
+{"seconds": 786.6918007899076, "line": "[build] creating equivalence classes ..."}
+{"seconds": 1048.3299809698947, "line": "[build] target de Bruijn graph has k-mer length 31 and minimizer length 23"}
+{"seconds": 1048.435455644969, "line": "[build] target de Bruijn graph has 20179969 contigs and contains 1451575591 k-mers"}
+{"seconds": 1097.6345585249364, "line": ""}

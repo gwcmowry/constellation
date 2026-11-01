@@ -1,0 +1,514 @@
+    Checking constellation-core v0.1.0 (/home/grant/Desktop/programming/constellation/crates/constellation-core)
+warning: digits of hex, binary or octal literal not in groups of equal size
+    --> crates/constellation-core/src/ec_index.rs:6014:22
+     |
+6014 |         let prefix = 0x00ab_cdu64;
+     |                      ^^^^^^^^^^^^ help: consider: `0x0000_abcd_u64`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#unusual_byte_groupings
+     = note: `#[warn(clippy::unusual_byte_groupings)]` on by default
+
+warning: digits of hex, binary or octal literal not in groups of equal size
+    --> crates/constellation-core/src/ec_index.rs:6064:22
+     |
+6064 |         let prefix = 0x0034_56u64;
+     |                      ^^^^^^^^^^^^ help: consider: `0x0000_3456_u64`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#unusual_byte_groupings
+
+warning: digits of hex, binary or octal literal not in groups of equal size
+    --> crates/constellation-core/src/ec_index.rs:6108:22
+     |
+6108 |         let prefix = 0x0034_56u64;
+     |                      ^^^^^^^^^^^^ help: consider: `0x0000_3456_u64`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#unusual_byte_groupings
+
+warning: digits of hex, binary or octal literal not in groups of equal size
+    --> crates/constellation-core/src/ec_index.rs:6163:22
+     |
+6163 |         let prefix = 0x0034_56u64;
+     |                      ^^^^^^^^^^^^ help: consider: `0x0000_3456_u64`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#unusual_byte_groupings
+
+warning: unneeded `return` statement
+   --> crates/constellation-core/src/assign.rs:120:5
+    |
+120 | /     return Assignment {
+121 | |         read_id,
+122 | |         cell_barcode,
+123 | |         umi,
+...   |
+129 | |         flags: best_flags(&best),
+130 | |     };
+    | |_____^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#needless_return
+    = note: `#[warn(clippy::needless_return)]` on by default
+help: remove `return`
+    |
+120 ~     Assignment {
+121 +         read_id,
+122 +         cell_barcode,
+123 +         umi,
+124 +         assignment_type: AssignmentType::AntisenseGene,
+125 +         gene_id,
+126 +         transcript_id: None,
+127 +         candidate_count: candidates.len() as u32,
+128 +         score: best_score,
+129 +         flags: best_flags(&best),
+130 ~     }
+    |
+
+warning: this function has too many arguments (8/7)
+    --> crates/constellation-core/src/candidate.rs:1089:1
+     |
+1089 | / fn collect_seed_choices(
+1090 | |     index: &dyn IndexAccess,
+1091 | |     encoded: &crate::dna::EncodedSeq,
+1092 | |     qual: Option<&[u8]>,
+...    |
+1097 | |     seed_choices: &mut SmallVec<[QuerySeedChoice; 256]>,
+1098 | | ) {
+     | |_^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#too_many_arguments
+     = note: `#[warn(clippy::too_many_arguments)]` on by default
+
+warning: this function has too many arguments (8/7)
+    --> crates/constellation-core/src/candidate.rs:1179:1
+     |
+1179 | / fn select_seed_choices_for_read_mode(
+1180 | |     index: &dyn IndexAccess,
+1181 | |     seq: &[u8],
+1182 | |     qual: Option<&[u8]>,
+...    |
+1187 | |     selection_mode: SeedSelectionMode,
+1188 | | ) -> (SmallVec<[QuerySeedChoice; 256]>, CandidateGenerationStats) {
+     | |_________________________________________________________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#too_many_arguments
+
+warning: large size difference between variants
+  --> crates/constellation-core/src/ec_index.rs:69:1
+   |
+69 | / pub enum LoadedEcIndex {
+70 | |     Owned(EcIndex),
+   | |     -------------- the second-largest variant contains at least 128 bytes
+71 | |     Mmap(MmapEcIndex),
+   | |     ----------------- the largest variant contains at least 1376 bytes
+72 | | }
+   | |_^ the entire enum is at least 1376 bytes
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#large_enum_variant
+   = note: `#[warn(clippy::large_enum_variant)]` on by default
+help: consider boxing the large fields or introducing indirection in some other way to reduce the total size of the enum
+   |
+71 -     Mmap(MmapEcIndex),
+71 +     Mmap(Box<MmapEcIndex>),
+   |
+
+warning: this `if` has identical blocks
+    --> crates/constellation-core/src/ec_index.rs:1914:44
+     |
+1914 |           } else if self.header_v8.is_some() {
+     |  ____________________________________________^
+1915 | |             self.slice::<u32>(self.header.ec_offsets_offset, self.header.num_ec_offsets)?;
+1916 | |         } else {
+     | |_________^
+     |
+note: same as this
+    --> crates/constellation-core/src/ec_index.rs:1916:16
+     |
+1916 |           } else {
+     |  ________________^
+1917 | |             self.slice::<u32>(self.header.ec_offsets_offset, self.header.num_ec_offsets)?;
+1918 | |         }
+     | |_________^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#if_same_then_else
+     = note: `#[warn(clippy::if_same_then_else)]` on by default
+
+warning: manual implementation of `.is_multiple_of()`
+    --> crates/constellation-core/src/ec_index.rs:2601:12
+     |
+2601 |         if offset % std::mem::align_of::<T>() as u64 != 0 {
+     |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: replace with: `!offset.is_multiple_of(std::mem::align_of::<T>() as u64)`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#manual_is_multiple_of
+     = note: `#[warn(clippy::manual_is_multiple_of)]` on by default
+
+warning: this function has too many arguments (10/7)
+    --> crates/constellation-core/src/ec_index.rs:3378:1
+     |
+3378 | / fn save_mmap_locality_from_slices(
+3379 | |     path: impl AsRef<Path>,
+3380 | |     k: u8,
+3381 | |     sampling: EcSampling,
+...    |
+3388 | |     prefix_offsets: &[u32],
+3389 | | ) -> Result<(), EcIndexError> {
+     | |_____________________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#too_many_arguments
+
+warning: this function has too many arguments (9/7)
+    --> crates/constellation-core/src/ec_index.rs:3543:1
+     |
+3543 | / fn save_mmap_v8_from_slices(
+3544 | |     path: impl AsRef<Path>,
+3545 | |     k: u8,
+3546 | |     gene_metas: &[EcGeneMeta],
+...    |
+3552 | |     kmer_prefix_offsets: &[u32],
+3553 | | ) -> Result<(), EcIndexError> {
+     | |_____________________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#too_many_arguments
+
+warning: this function has too many arguments (9/7)
+    --> crates/constellation-core/src/ec_index.rs:3676:1
+     |
+3676 | / fn save_mmap_v7_from_slices(
+3677 | |     path: impl AsRef<Path>,
+3678 | |     k: u8,
+3679 | |     gene_metas: &[EcGeneMeta],
+...    |
+3685 | |     kmer_prefix_offsets: &[u32],
+3686 | | ) -> Result<(), EcIndexError> {
+     | |_____________________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#too_many_arguments
+
+warning: this function has too many arguments (9/7)
+    --> crates/constellation-core/src/ec_index.rs:3832:1
+     |
+3832 | / fn save_mmap_v6_from_slices(
+3833 | |     path: impl AsRef<Path>,
+3834 | |     k: u8,
+3835 | |     gene_metas: &[EcGeneMeta],
+...    |
+3841 | |     kmer_prefix_offsets: &[u32],
+3842 | | ) -> Result<(), EcIndexError> {
+     | |_____________________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#too_many_arguments
+
+warning: this function has too many arguments (9/7)
+    --> crates/constellation-core/src/ec_index.rs:3980:1
+     |
+3980 | / fn save_mmap_v5_from_slices(
+3981 | |     path: impl AsRef<Path>,
+3982 | |     k: u8,
+3983 | |     gene_metas: &[EcGeneMeta],
+...    |
+3989 | |     prefix_offsets: &[u32],
+3990 | | ) -> Result<(), EcIndexError> {
+     | |_____________________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#too_many_arguments
+
+warning: enclosing `Ok` and `?` operator are unneeded
+    --> crates/constellation-core/src/ec_index.rs:4375:5
+     |
+4375 | /     Ok(deduped_ec_target_storage_is_smaller(
+4376 | |         ec_offsets.len(),
+4377 | |         ec_gene_ids.len(),
+4378 | |         &deduped,
+4379 | |     )?)
+     | |_______^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#needless_question_mark
+     = note: `#[warn(clippy::needless_question_mark)]` on by default
+help: remove the enclosing `Ok` and `?` operator
+     |
+4375 ~     deduped_ec_target_storage_is_smaller(
+4376 |         ec_offsets.len(),
+4377 |         ec_gene_ids.len(),
+4378 |         &deduped,
+4379 ~     )
+     |
+
+warning: very complex type used. Consider factoring parts into `type` definitions
+    --> crates/constellation-core/src/ec_index.rs:4569:6
+     |
+4569 | ) -> Result<(Vec<u32>, Vec<u32>, Vec<u64>), EcIndexError> {
+     |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#type_complexity
+     = note: `#[warn(clippy::type_complexity)]` on by default
+
+warning: very complex type used. Consider factoring parts into `type` definitions
+    --> crates/constellation-core/src/ec_index.rs:4608:6
+     |
+4608 | ) -> Result<(Vec<u32>, Vec<u32>, Vec<u64>), EcIndexError> {
+     |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#type_complexity
+
+warning: this function has too many arguments (9/7)
+    --> crates/constellation-core/src/ec_index.rs:5424:1
+     |
+5424 | / fn save_mmap_v4_from_slices(
+5425 | |     path: impl AsRef<Path>,
+5426 | |     k: u8,
+5427 | |     gene_metas: &[EcGeneMeta],
+...    |
+5433 | |     prefix_offsets: &[u32],
+5434 | | ) -> Result<(), EcIndexError> {
+     | |_____________________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#too_many_arguments
+
+warning: this function has too many arguments (10/7)
+    --> crates/constellation-core/src/ec_index.rs:5449:1
+     |
+5449 | / fn save_mmap_v4_from_slices_with_sampling(
+5450 | |     path: impl AsRef<Path>,
+5451 | |     k: u8,
+5452 | |     sampling: EcSampling,
+...    |
+5459 | |     prefix_offsets: &[u32],
+5460 | | ) -> Result<(), EcIndexError> {
+     | |_____________________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#too_many_arguments
+
+warning: manual implementation of `.is_multiple_of()`
+   --> crates/constellation-core/src/index.rs:991:12
+    |
+991 |         if offset % std::mem::align_of::<T>() as u64 != 0 {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: replace with: `!offset.is_multiple_of(std::mem::align_of::<T>() as u64)`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#manual_is_multiple_of
+
+warning: manually reimplementing `div_ceil`
+    --> crates/constellation-core/src/index.rs:1802:5
+     |
+1802 |     (value + align - 1) / align * align
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: consider using `.div_ceil()`: `value.div_ceil(align)`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#manual_div_ceil
+     = note: `#[warn(clippy::manual_div_ceil)]` on by default
+
+warning: this function has too many arguments (9/7)
+   --> crates/constellation-core/src/index_build.rs:485:1
+    |
+485 | / fn flush_merged_kmer(
+486 | |     kmers: &mut impl Write,
+487 | |     gene_dfs: &mut impl Write,
+488 | |     postings: &mut impl Write,
+...   |
+494 | |     num_postings: &mut u64,
+495 | | ) -> Result<(), BuildIndexError> {
+    | |________________________________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#too_many_arguments
+
+warning: this `impl` can be derived
+  --> crates/constellation-core/src/score_scalar.rs:19:1
+   |
+19 | / impl Default for ScalarScorer {
+20 | |     fn default() -> Self {
+21 | |         Self {
+22 | |             config: ScoreConfig::default(),
+...  |
+26 | | }
+   | |_^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#derivable_impls
+   = note: `#[warn(clippy::derivable_impls)]` on by default
+help: replace the manual implementation with a derive attribute
+   |
+14 + #[derive(Default)]
+15 | pub struct ScalarScorer {
+   |
+
+warning: this `if` has identical blocks
+   --> crates/constellation-core/src/score_scalar.rs:293:36
+    |
+293 |       } else if saw_mismatch_failure {
+    |  ____________________________________^
+294 | |         ScoreOutcome::failure(ScoreFailureReason::Mismatch)
+295 | |     } else {
+    | |_____^
+    |
+note: same as this
+   --> crates/constellation-core/src/score_scalar.rs:295:12
+    |
+295 |       } else {
+    |  ____________^
+296 | |         ScoreOutcome::failure(ScoreFailureReason::Mismatch)
+297 | |     }
+    | |_____^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#if_same_then_else
+
+warning: this `impl` can be derived
+  --> crates/constellation-core/src/score_simd.rs:13:1
+   |
+13 | / impl Default for PulpScorer {
+14 | |     fn default() -> Self {
+15 | |         Self {
+16 | |             config: ScoreConfig::default(),
+...  |
+20 | | }
+   | |_^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#derivable_impls
+help: replace the manual implementation with a derive attribute
+   |
+ 8 + #[derive(Default)]
+ 9 | pub struct PulpScorer {
+   |
+
+warning: `constellation-core` (lib) generated 22 warnings (run `cargo clippy --fix --lib -p constellation-core` to apply 7 suggestions)
+    Checking constellation-cli v0.1.0 (/home/grant/Desktop/programming/constellation/crates/constellation-cli)
+warning: `constellation-core` (lib test) generated 26 warnings (22 duplicates)
+warning: this method chain can be written more clearly with `if .. else ..`
+    --> crates/constellation-cli/src/cmd_map.rs:1269:24
+     |
+1269 |           output_chunks: write_output
+     |  ________________________^
+1270 | |             .then(|| Vec::with_capacity(1))
+1271 | |             .unwrap_or_default(),
+     | |________________________________^ help: try: `if write_output { Vec::with_capacity(1) } else { Default::default() }`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#obfuscated_if_else
+     = note: `#[warn(clippy::obfuscated_if_else)]` on by default
+
+warning: this function has too many arguments (8/7)
+    --> crates/constellation-cli/src/cmd_map.rs:2021:1
+     |
+2021 | / fn map_prepared_gene_ec(
+2022 | |     index: &LoadedEcIndex,
+2023 | |     prepared_read: &PreparedGeneEcRead,
+2024 | |     search_reverse_complement: bool,
+...    |
+2029 | |     emit_top_gene_ids: bool,
+2030 | | ) -> MappedGeneEcRead {
+     | |_____________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#too_many_arguments
+     = note: `#[warn(clippy::too_many_arguments)]` on by default
+
+warning: clamp-like pattern without using clamp function
+    --> crates/constellation-cli/src/cmd_map.rs:2079:22
+     |
+2079 |       let chunk_size = prepared_reads
+     |  ______________________^
+2080 | |         .len()
+2081 | |         .div_ceil((rayon::current_num_threads() * 2).max(1))
+2082 | |         .max(2048)
+2083 | |         .min(8192);
+     | |__________________^
+     |
+     = note: clamp will panic if max < min
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#manual_clamp
+     = note: `#[warn(clippy::manual_clamp)]` on by default
+help: replace with clamp
+     |
+2079 ~     let chunk_size = prepared_reads
+2080 +         .len()
+2081 ~         .div_ceil((rayon::current_num_threads() * 2).max(1)).clamp(2048, 8192);
+     |
+
+warning: this function has too many arguments (17/7)
+    --> crates/constellation-cli/src/cmd_map.rs:2960:1
+     |
+2960 | / fn map_read_at_a_time(
+2961 | |     args: &MapArgs,
+2962 | |     reads: &[(u64, Vec<u8>)],
+2963 | |     quals: &[(u64, Vec<u8>)],
+...    |
+2977 | |     read_score_stats: &mut [ScoreFailureStats],
+2978 | | ) -> Vec<Assignment> {
+     | |____________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#too_many_arguments
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+    --> crates/constellation-cli/src/cmd_map.rs:3234:67
+     |
+3234 |         assignments.push(assign_read(*read_id, cell_barcode, umi, &candidates));
+     |                                                                   ^^^^^^^^^^^ help: change this to: `candidates`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#needless_borrow
+     = note: `#[warn(clippy::needless_borrow)]` on by default
+
+warning: manual implementation of `.is_multiple_of()`
+    --> crates/constellation-cli/src/cmd_map.rs:3509:44
+     |
+3509 |         if args.cold_evict_interval > 0 && summary.shard_groups % args.cold_evict_interval == 0 {
+     |                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: replace with: `summary.shard_groups.is_multiple_of(args.cold_evict_interval)`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#manual_is_multiple_of
+     = note: `#[warn(clippy::manual_is_multiple_of)]` on by default
+
+warning: large size difference between variants
+    --> crates/constellation-cli/src/cmd_map.rs:3963:1
+     |
+3963 | /  enum CandidateWork {
+3964 | |/     Hits {
+3965 | ||         read_id: u64,
+3966 | ||         hits: Vec<constellation_core::candidate::CandidateHit>,
+3967 | ||         read_stats: CandidateGenerationStats,
+3968 | ||     },
+     | ||_____- the largest variant contains at least 224 bytes
+3969 | |      LowQuality(u64),
+     | |      --------------- the second-largest variant contains at least 8 bytes
+3970 | |      LowComplexity(u64),
+3971 | |  }
+     | |__^ the entire enum is at least 224 bytes
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#large_enum_variant
+     = note: `#[warn(clippy::large_enum_variant)]` on by default
+help: consider boxing the large fields or introducing indirection in some other way to reduce the total size of the enum
+     |
+3967 -         read_stats: CandidateGenerationStats,
+3967 +         read_stats: Box<CandidateGenerationStats>,
+     |
+
+warning: manual implementation of `.is_multiple_of()`
+    --> crates/constellation-cli/src/cmd_map.rs:4147:8
+     |
+4147 |     if values.len() % 2 == 0 {
+     |        ^^^^^^^^^^^^^^^^^^^^^ help: replace with: `values.len().is_multiple_of(2)`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#manual_is_multiple_of
+
+warning: large size difference between variants
+  --> crates/constellation-cli/src/main.rs:22:1
+   |
+22 | / enum Commands {
+23 | |     Index(IndexArgs),
+24 | |     IndexEc(IndexEcArgs),
+25 | |     ConvertEcIndex(ConvertEcIndexArgs),
+...  |
+29 | |     Map(MapArgs),
+   | |     ------------ the largest variant contains at least 368 bytes
+30 | |     Count(CountArgs),
+   | |     ---------------- the second-largest variant contains at least 152 bytes
+...  |
+33 | |     BenchReport(BenchReportArgs),
+34 | | }
+   | |_^ the entire enum is at least 368 bytes
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#large_enum_variant
+help: consider boxing the large fields or introducing indirection in some other way to reduce the total size of the enum
+   |
+29 -     Map(MapArgs),
+29 +     Map(Box<MapArgs>),
+   |
+
+warning: useless use of `vec!`
+    --> crates/constellation-cli/src/cmd_map.rs:4119:22
+     |
+4119 |     let mut padded = vec![b'N'; 28];
+     |                      ^^^^^^^^^^^^^^ help: you can use an array directly: `[b'N'; 28]`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#useless_vec
+     = note: `#[warn(clippy::useless_vec)]` on by default
+
+warning: `constellation-cli` (bin "constellation") generated 10 warnings (run `cargo clippy --fix --bin "constellation" -p constellation-cli` to apply 5 suggestions)
+warning: `constellation-cli` (bin "constellation" test) generated 10 warnings (10 duplicates)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.31s

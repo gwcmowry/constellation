@@ -1,0 +1,49 @@
+{
+  "cmd": "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/alevin-fry-x86_64-unknown-linux-gnu/alevin-fry generate-permit-list -i /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-piscem/map -o /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-piscem/collation -d fw -t 12 --valid-bc /home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/barcodes.txt --cell-bc-correction unique --cell-bc-neighborhood hamming-1",
+  "correction_stats": {
+    "ambiguous_distinct": 1187,
+    "ambiguous_reads": 33865,
+    "corrected_distinct": 475055,
+    "corrected_reads": 7631470,
+    "exact_distinct": 11769,
+    "exact_reads": 355251616,
+    "not_found_distinct": 3627190,
+    "not_found_reads": 25977526
+  },
+  "expected_ori": "+",
+  "gpl_options": {
+    "cell_bc_confidence": {
+      "denominator": 40,
+      "numerator": 39
+    },
+    "cell_bc_correction": "unique",
+    "cell_bc_neighborhood": "hamming-one",
+    "cmdline": "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/alevin-fry-x86_64-unknown-linux-gnu/alevin-fry generate-permit-list -i /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-piscem/map -o /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-piscem/collation -d fw -t 12 --valid-bc /home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/barcodes.txt --cell-bc-correction unique --cell-bc-neighborhood hamming-1",
+    "expected_ori": "Forward",
+    "fmeth": {
+      "ExplicitList": "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/barcodes.txt"
+    },
+    "input_dir": "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-piscem/map",
+    "memory_limit": 536870912,
+    "output_dir": "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-piscem/collation",
+    "sample_bc_confidence": {
+      "denominator": 40,
+      "numerator": 39
+    },
+    "sample_bc_list": null,
+    "sample_bc_neighborhood": "hamming-one",
+    "sample_bc_ori": "Forward",
+    "sample_correction_mode": "exact",
+    "sample_names": null,
+    "threads": 12,
+    "tmp_dir": null,
+    "velo_mode": false,
+    "version": "0.19.0"
+  },
+  "max-ambig-record": 983,
+  "permit-list-type": "filtered",
+  "resolved_cell_bc_confidence": "39/40",
+  "resolved_cell_bc_neighborhood": "hamming-1",
+  "velo_mode": false,
+  "version_str": "0.19.0"
+}

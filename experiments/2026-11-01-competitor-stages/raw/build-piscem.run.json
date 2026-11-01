@@ -1,0 +1,29 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-competitor-stages/raw/build-piscem.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/tools/piscem-x86_64-unknown-linux-gnu/piscem",
+    "build",
+    "-s",
+    "/home/grant/Desktop/programming/constellation/benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/roers_ref.fa",
+    "-k",
+    "31",
+    "-m",
+    "19",
+    "-t",
+    "12",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici",
+    "-w",
+    "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-work",
+    "--ram-limit-gib",
+    "24"
+  ],
+  "seconds": 190.71449278807268,
+  "exit_code": 0
+}

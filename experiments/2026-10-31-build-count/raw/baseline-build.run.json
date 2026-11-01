@@ -1,0 +1,25 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-31-build-count/raw/baseline-build.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/benchdata/build-count-2026-10-31/constellation.instrumented",
+    "index-ec",
+    "--transcripts",
+    "/home/grant/Desktop/programming/constellation/benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/roers_ref.fa",
+    "--t2g-map",
+    "/home/grant/Desktop/programming/constellation/benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/t2g_3col.tsv",
+    "--k",
+    "31",
+    "--syncmer-s",
+    "20",
+    "--out",
+    "/home/grant/Desktop/programming/constellation/benchdata/build-count-2026-10-31/baseline-build.ecidx"
+  ],
+  "seconds": 125.43875533528626,
+  "exit_code": 0
+}

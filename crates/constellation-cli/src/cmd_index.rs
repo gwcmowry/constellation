@@ -1,4 +1,6 @@
-use crate::{ConvertEcIndexArgs, EcIndexFormatArg, IndexArgs, IndexEcArgs, InspectIndexArgs};
+use crate::{
+    ConvertEcIndexArgs, EcBuildModeArg, EcIndexFormatArg, IndexArgs, IndexEcArgs, InspectIndexArgs,
+};
 use anyhow::{bail, Result};
 use constellation_core::ec_index::{EcIndex, EcSampling, LoadedEcIndex};
 use constellation_core::gtf::transcript_gene_map;
@@ -47,15 +49,21 @@ pub fn run_index_ec(args: IndexEcArgs) -> Result<()> {
         .syncmer_s
         .map_or(EcSampling::AllKmers, |s| EcSampling::ClosedSyncmer { s });
     if sampling.is_sampled() && args.format == EcIndexFormatArg::Legacy {
-        bail!("--syncmer-s requires --format mmap");
+        bail!("--syncmer-s requires --format mmap or ptrhash");
     }
-    let index = EcIndex::build_from_fasta_with_t2g_and_sampling(
-        args.transcripts,
-        args.t2g_map.as_ref(),
-        args.k,
-        sampling,
-    )?;
+    let index = match args.build_mode {
+        EcBuildModeArg::Streaming => EcIndex::build_from_fasta_with_t2g_and_sampling(
+            &args.transcripts,
+            args.t2g_map.as_ref(),
+            args.k,
+            sampling,
+        )?,
+        EcBuildModeArg::Partitioned => {
+            EcIndex::build_partitioned(&args.transcripts, args.t2g_map.as_ref(), args.k, sampling)?
+        }
+    };
     match args.format {
+        EcIndexFormatArg::Ptrhash => index.save_ptrhash(args.out)?,
         EcIndexFormatArg::Mmap => index.save_mmap(args.out)?,
         EcIndexFormatArg::Legacy => index.save(args.out)?,
     }

@@ -1,0 +1,6 @@
+{"seconds": 1.8375124209560454, "line": "partition time: 0.761382s"}
+{"seconds": 3.1247060680761933, "line": "partition time: 0.07001s"}
+{"seconds": 3.345916276331991, "line": "Read in 73269328 BUS records"}
+{"seconds": 3.345951066352427, "line": "reading time 0.264471s"}
+{"seconds": 3.3459656164050102, "line": "sorting time 8.83028s"}
+{"seconds": 3.345974136143923, "line": "writing time 0s"}

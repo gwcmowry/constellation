@@ -42,7 +42,15 @@ use std::sync::mpsc::{self, Receiver};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
-pub fn run_map(args: MapArgs) -> Result<()> {
+mod packed;
+
+pub fn run_map(mut args: MapArgs) -> Result<()> {
+    if args.splicing_state {
+        args.gene_ec_consensus = true;
+    }
+    if args.gene_ec_consensus && !matches!(args.mode, MapMode::GeneEc) {
+        return Err(anyhow!("--gene-ec-consensus requires --mode gene-ec"));
+    }
     let _chemistry = Chemistry::parse(&args.chemistry)?;
     if args.mode != MapMode::GeneEc {
         return Err(anyhow!(
@@ -413,6 +421,15 @@ pub fn run_map(args: MapArgs) -> Result<()> {
 }
 
 fn run_map_gene_ec(args: MapArgs) -> Result<()> {
+    if args.gene_ec_consensus
+        && (args.search_reverse_complement
+            || args.gene_ec_traversal != GeneEcTraversalArg::ReadAtATime
+            || matches!(args.read_chunking, ReadChunkingArg::BestSeed)
+            || args.gene_ec_adaptive_rescue
+            || args.emit_unmapped_diagnostics.is_some())
+    {
+        return Err(anyhow!("--gene-ec-consensus requires forward-strand read-at-a-time mapping without locality sorting, adaptive rescue, or unmapped diagnostics"));
+    }
     let mut function_timings = FunctionTimings::default();
     let total_started = Instant::now();
 
@@ -432,8 +449,15 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
     let index_load_seconds = index_started.elapsed().as_secs_f64();
 
     let stream_batch_size = args.batch_size.max(65_536);
-    let mut fastq_pipeline =
-        FastqPairBatchPipeline::new(args.r1.clone(), args.r2.clone(), stream_batch_size);
+    let use_packed = args.gene_ec_traversal == GeneEcTraversalArg::ReadAtATime
+        && !matches!(args.read_chunking, ReadChunkingArg::BestSeed)
+        && !args.gene_ec_adaptive_rescue
+        && args.emit_unmapped_diagnostics.is_none();
+    let mut fastq_pipeline = (!use_packed)
+        .then(|| FastqPairBatchPipeline::new(args.r1.clone(), args.r2.clone(), stream_batch_size));
+    let mut packed_pipeline = use_packed
+        .then(|| packed::Pipeline::new(args.r1.clone(), args.r2.clone(), stream_batch_size));
+    let mut packed_workers = use_packed.then(|| packed::Workers::new(index.num_genes()));
     let mut assignment_writer = if args.skip_assignments {
         None
     } else {
@@ -442,6 +466,7 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
             args.output_compression,
             args.zstd_level,
             &args.out,
+            args.splicing_state.then_some(&index),
         )?)
     };
     let emit_top_gene_ids =
@@ -473,179 +498,206 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
         args.gene_ec_adaptive_rescue && adaptive_rescue_stride < args.sparse_probe_stride.max(1);
 
     loop {
-        let Some((batch, read_elapsed)) = fastq_pipeline.next_batch()? else {
-            break;
-        };
-        fastq_load_seconds += read_elapsed.as_secs_f64();
-        function_timings.add_duration("stream_fastq_pair_batches", read_elapsed);
-
-        let map_started = Instant::now();
-        let mut mapped: Vec<_> = if args.gene_ec_traversal == GeneEcTraversalArg::PrefixTiled {
-            let prepare_started = Instant::now();
-            let prepared_batch: Vec<_> = batch
-                .par_iter()
-                .map(|raw| {
-                    prepare_gene_ec_raw_prefix_tiled(
-                        &index,
-                        raw,
-                        args.trim_tso,
-                        args.min_tso_match_len,
-                        args.max_tso_mismatches,
-                        args.min_mean_quality,
-                    )
-                })
-                .collect();
-            function_timings.add_elapsed("prefix_tiled_prepare_reads", prepare_started);
-            let result = map_prepared_gene_ec_prefix_tiled(
+        let drained = if let Some(pipeline) = &mut packed_pipeline {
+            let read_started = Instant::now();
+            let Some(batch) = pipeline.next_batch()? else {
+                break;
+            };
+            let elapsed = read_started.elapsed();
+            fastq_load_seconds += elapsed.as_secs_f64();
+            function_timings.add_duration("stream_fastq_pair_batches", elapsed);
+            let map_started = Instant::now();
+            let drained = packed_workers.as_mut().unwrap().map(
                 &index,
-                &prepared_batch,
-                args.search_reverse_complement,
-                args.min_mean_quality,
-                args.sparse_probe_stride,
-                args.max_postings_per_seed as u32,
-                collect_diagnostics,
-                emit_top_gene_ids,
-            );
-            function_timings.add_all(result.function_timings);
-            result.mapped
-        } else if args.gene_ec_traversal == GeneEcTraversalArg::SeedBatched {
-            let prepared_batch: Vec<_> = batch
-                .par_iter()
-                .map(|raw| {
-                    prepare_gene_ec_raw(
-                        &index,
-                        raw,
-                        args.trim_tso,
-                        args.min_tso_match_len,
-                        args.max_tso_mismatches,
-                        args.min_mean_quality,
-                        args.sparse_probe_stride,
-                        false,
-                    )
-                })
-                .collect();
-            map_prepared_gene_ec_seed_batched(
-                &index,
-                &prepared_batch,
-                args.search_reverse_complement,
-                args.min_mean_quality,
-                args.sparse_probe_stride,
-                args.max_postings_per_seed as u32,
-                collect_diagnostics,
-                emit_top_gene_ids,
-            )
-        } else if sort_by_locality {
-            let mut prepared_batch: Vec<_> = batch
-                .par_iter()
-                .map(|raw| {
-                    prepare_gene_ec_raw(
-                        &index,
-                        raw,
-                        args.trim_tso,
-                        args.min_tso_match_len,
-                        args.max_tso_mismatches,
-                        args.min_mean_quality,
-                        args.sparse_probe_stride,
-                        true,
-                    )
-                })
-                .collect();
-            prepared_batch.sort_unstable_by_key(|read| (read.locality_key, read.prepared.read_id));
-            let mut mapped: Vec<_> = prepared_batch
-                .par_iter()
-                .map(|prepared| {
-                    map_prepared_gene_ec(
-                        &index,
-                        prepared,
-                        args.search_reverse_complement,
-                        args.min_mean_quality,
-                        args.sparse_probe_stride,
-                        args.max_postings_per_seed as u32,
-                        collect_diagnostics,
-                        emit_top_gene_ids,
-                    )
-                })
-                .collect();
-            mapped.sort_unstable_by_key(|mapped_read| mapped_read.assignment.read_id);
-            mapped
+                &batch,
+                &args,
+                assignment_writer.is_some(),
+            )?;
+            let elapsed = map_started.elapsed();
+            mapping_seconds += elapsed.as_secs_f64();
+            function_timings.add_duration("prepare_map_and_format_gene_ec_batches", elapsed);
+            pipeline.recycle(batch);
+            drained
         } else {
-            batch
-                .par_iter()
-                .map_init(
-                    || EcScoreScratch::new(index.num_genes()),
-                    |scratch, raw| {
-                        prepare_and_map_gene_ec_raw(
+            let Some((batch, read_elapsed)) = fastq_pipeline.as_mut().unwrap().next_batch()? else {
+                break;
+            };
+            fastq_load_seconds += read_elapsed.as_secs_f64();
+            function_timings.add_duration("stream_fastq_pair_batches", read_elapsed);
+
+            let map_started = Instant::now();
+            let mut mapped: Vec<_> = if args.gene_ec_traversal == GeneEcTraversalArg::PrefixTiled {
+                let prepare_started = Instant::now();
+                let prepared_batch: Vec<_> = batch
+                    .par_iter()
+                    .map(|raw| {
+                        prepare_gene_ec_raw_prefix_tiled(
                             &index,
                             raw,
                             args.trim_tso,
                             args.min_tso_match_len,
                             args.max_tso_mismatches,
                             args.min_mean_quality,
+                        )
+                    })
+                    .collect();
+                function_timings.add_elapsed("prefix_tiled_prepare_reads", prepare_started);
+                let result = map_prepared_gene_ec_prefix_tiled(
+                    &index,
+                    &prepared_batch,
+                    args.search_reverse_complement,
+                    args.min_mean_quality,
+                    args.sparse_probe_stride,
+                    args.max_postings_per_seed as u32,
+                    collect_diagnostics,
+                    emit_top_gene_ids,
+                );
+                function_timings.add_all(result.function_timings);
+                result.mapped
+            } else if args.gene_ec_traversal == GeneEcTraversalArg::SeedBatched {
+                let prepared_batch: Vec<_> = batch
+                    .par_iter()
+                    .map(|raw| {
+                        prepare_gene_ec_raw(
+                            &index,
+                            raw,
+                            args.trim_tso,
+                            args.min_tso_match_len,
+                            args.max_tso_mismatches,
+                            args.min_mean_quality,
+                            args.sparse_probe_stride,
+                            false,
+                        )
+                    })
+                    .collect();
+                map_prepared_gene_ec_seed_batched(
+                    &index,
+                    &prepared_batch,
+                    args.search_reverse_complement,
+                    args.min_mean_quality,
+                    args.sparse_probe_stride,
+                    args.max_postings_per_seed as u32,
+                    collect_diagnostics,
+                    emit_top_gene_ids,
+                )
+            } else if sort_by_locality {
+                let mut prepared_batch: Vec<_> = batch
+                    .par_iter()
+                    .map(|raw| {
+                        prepare_gene_ec_raw(
+                            &index,
+                            raw,
+                            args.trim_tso,
+                            args.min_tso_match_len,
+                            args.max_tso_mismatches,
+                            args.min_mean_quality,
+                            args.sparse_probe_stride,
+                            true,
+                        )
+                    })
+                    .collect();
+                prepared_batch
+                    .sort_unstable_by_key(|read| (read.locality_key, read.prepared.read_id));
+                let mut mapped: Vec<_> = prepared_batch
+                    .par_iter()
+                    .map(|prepared| {
+                        map_prepared_gene_ec(
+                            &index,
+                            prepared,
                             args.search_reverse_complement,
+                            args.min_mean_quality,
                             args.sparse_probe_stride,
                             args.max_postings_per_seed as u32,
                             collect_diagnostics,
                             emit_top_gene_ids,
-                            scratch,
                         )
-                    },
-                )
-                .collect()
-        };
-        if adaptive_rescue_enabled {
-            let rescue_started = Instant::now();
-            let rescue_counts = rescue_unmapped_gene_ec_reads(
-                &index,
-                &batch,
-                &mut mapped,
-                args.trim_tso,
-                args.min_tso_match_len,
-                args.max_tso_mismatches,
-                args.min_mean_quality,
-                args.search_reverse_complement,
-                adaptive_rescue_stride,
-                args.max_postings_per_seed as u32,
-                collect_diagnostics,
-                emit_top_gene_ids,
-            );
-            let rescue_elapsed = rescue_started.elapsed();
-            adaptive_rescue_seconds += rescue_elapsed.as_secs_f64();
-            adaptive_rescue_reads += rescue_counts.attempted;
-            adaptive_rescue_replaced_reads += rescue_counts.replaced;
-            function_timings.add_duration("adaptive_gene_ec_rescue", rescue_elapsed);
-        }
-        let map_elapsed = map_started.elapsed();
-        mapping_seconds += map_elapsed.as_secs_f64();
-        function_timings.add_duration("prepare_and_map_gene_ec_batches", map_elapsed);
+                    })
+                    .collect();
+                mapped.sort_unstable_by_key(|mapped_read| mapped_read.assignment.read_id);
+                mapped
+            } else {
+                batch
+                    .par_iter()
+                    .map_init(
+                        || EcScoreScratch::new(index.num_genes()),
+                        |scratch, raw| {
+                            prepare_and_map_gene_ec_raw(
+                                &index,
+                                raw,
+                                args.trim_tso,
+                                args.min_tso_match_len,
+                                args.max_tso_mismatches,
+                                args.min_mean_quality,
+                                args.search_reverse_complement,
+                                args.sparse_probe_stride,
+                                args.max_postings_per_seed as u32,
+                                collect_diagnostics,
+                                emit_top_gene_ids,
+                                scratch,
+                            )
+                        },
+                    )
+                    .collect()
+            };
+            if adaptive_rescue_enabled {
+                let rescue_started = Instant::now();
+                let rescue_counts = rescue_unmapped_gene_ec_reads(
+                    &index,
+                    &batch,
+                    &mut mapped,
+                    args.trim_tso,
+                    args.min_tso_match_len,
+                    args.max_tso_mismatches,
+                    args.min_mean_quality,
+                    args.search_reverse_complement,
+                    adaptive_rescue_stride,
+                    args.max_postings_per_seed as u32,
+                    collect_diagnostics,
+                    emit_top_gene_ids,
+                );
+                let rescue_elapsed = rescue_started.elapsed();
+                adaptive_rescue_seconds += rescue_elapsed.as_secs_f64();
+                adaptive_rescue_reads += rescue_counts.attempted;
+                adaptive_rescue_replaced_reads += rescue_counts.replaced;
+                function_timings.add_duration("adaptive_gene_ec_rescue", rescue_elapsed);
+            }
+            let map_elapsed = map_started.elapsed();
+            mapping_seconds += map_elapsed.as_secs_f64();
+            function_timings.add_duration("prepare_and_map_gene_ec_batches", map_elapsed);
 
-        let assignment_started = Instant::now();
-        let drained = if collect_diagnostics {
-            drain_mapped_gene_ec_reads_serial(
-                mapped,
-                args.output_format,
-                assignment_writer.is_some(),
-                &mut diagnostic_assignments,
-                &mut diagnostic_reads,
-                &mut diagnostic_candidate_stats,
-                &mut diagnostic_score_stats,
-            )?
-        } else {
-            drain_mapped_gene_ec_reads_parallel(
-                &mapped,
-                args.output_format,
-                assignment_writer.is_some(),
-            )?
+            let assignment_started = Instant::now();
+            let drained = if collect_diagnostics {
+                drain_mapped_gene_ec_reads_serial(
+                    mapped,
+                    args.output_format,
+                    assignment_writer.is_some(),
+                    &mut diagnostic_assignments,
+                    &mut diagnostic_reads,
+                    &mut diagnostic_candidate_stats,
+                    &mut diagnostic_score_stats,
+                )?
+            } else {
+                drain_mapped_gene_ec_reads_parallel(
+                    &mapped,
+                    args.output_format,
+                    assignment_writer.is_some(),
+                )?
+            };
+            let assignment_elapsed = assignment_started.elapsed();
+            assignment_seconds += assignment_elapsed.as_secs_f64();
+            function_timings.add_duration("assign_gene_ec_reads", assignment_elapsed);
+            drained
         };
         add_ec_stats(&mut ec_stats, drained.ec_stats);
         total_gene_candidates += drained.total_gene_candidates;
         total_bases += drained.total_bases;
         num_reads += drained.num_reads;
         assignment_counts.add_all(drained.assignment_counts);
-        let assignment_elapsed = assignment_started.elapsed();
-        assignment_seconds += assignment_elapsed.as_secs_f64();
-        function_timings.add_duration("assign_gene_ec_reads", assignment_elapsed);
         if let Some(writer) = assignment_writer.as_mut() {
             let write_started = Instant::now();
+            if let Some(workers) = &packed_workers {
+                workers.write(writer)?;
+            }
             for chunk in drained.output_chunks {
                 writer.write_all(&chunk)?;
             }
@@ -653,7 +705,9 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
         }
     }
 
-    fastq_pipeline.finish()?;
+    if let Some(pipeline) = fastq_pipeline {
+        pipeline.finish()?;
+    }
     if let Some(writer) = assignment_writer {
         let flush_started = Instant::now();
         writer.finish()?;
@@ -1273,14 +1327,24 @@ impl GeneEcOutputWriter {
         compression: OutputCompressionArg,
         zstd_level: i32,
         path: &Path,
+        splicing_index: Option<&LoadedEcIndex>,
     ) -> Result<Self> {
         let mut sink = OutputSink::create(compression, zstd_level, path)?;
         match format {
             MapOutputFormatArg::Tsv => {
-                sink.write_all(Assignment::tsv_header().as_bytes())?;
+                if splicing_index.is_some() {
+                    sink.write_all(Assignment::tsv_header().trim_end().as_bytes())?;
+                    sink.write_all(b"\tgene_states\n")?;
+                } else {
+                    sink.write_all(Assignment::tsv_header().as_bytes())?;
+                }
             }
             MapOutputFormatArg::GeneEcRad => {
-                write_gene_ec_rad_header(&mut sink)?;
+                if let Some(index) = splicing_index {
+                    crate::splicing_io::write_header(&mut sink, index)?;
+                } else {
+                    write_gene_ec_rad_header(&mut sink)?;
+                }
             }
         }
         Ok(Self { sink })
@@ -1415,20 +1479,45 @@ fn write_gene_ec_rad_record(buffer: &mut Vec<u8>, mapped_read: &MappedGeneEcRead
     let assignment = &mapped_read.assignment;
     let (barcode_umi_code, barcode_umi_valid_mask) =
         pack_barcode_umi(&assignment.cell_barcode, &assignment.umi);
-    let primary_gene_id = assignment.gene_id.unwrap_or(u32::MAX);
-    let top_gene_count = u16::try_from(mapped_read.top_gene_ids.len())
+    write_gene_ec_rad_fields(
+        buffer,
+        barcode_umi_code,
+        barcode_umi_valid_mask,
+        assignment.gene_id,
+        assignment.candidate_count,
+        assignment.score,
+        assignment.flags,
+        assignment.assignment_type,
+        &mapped_read.top_gene_ids,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn write_gene_ec_rad_fields(
+    buffer: &mut Vec<u8>,
+    barcode_umi_code: u64,
+    barcode_umi_valid_mask: u32,
+    gene_id: Option<u32>,
+    candidate_count: u32,
+    score: u16,
+    flags: u16,
+    assignment_type: AssignmentType,
+    top_gene_ids: &[u32],
+) -> Result<()> {
+    let primary_gene_id = gene_id.unwrap_or(u32::MAX);
+    let top_gene_count = u16::try_from(top_gene_ids.len())
         .map_err(|_| anyhow!("gene-EC RAD top gene set exceeds u16::MAX"))?;
 
     buffer.extend_from_slice(&barcode_umi_code.to_le_bytes());
     buffer.extend_from_slice(&barcode_umi_valid_mask.to_le_bytes());
     buffer.extend_from_slice(&primary_gene_id.to_le_bytes());
-    buffer.extend_from_slice(&assignment.candidate_count.to_le_bytes());
-    buffer.extend_from_slice(&assignment.score.to_le_bytes());
-    buffer.extend_from_slice(&assignment.flags.to_le_bytes());
-    buffer.push(assignment_type_code(assignment.assignment_type));
+    buffer.extend_from_slice(&candidate_count.to_le_bytes());
+    buffer.extend_from_slice(&score.to_le_bytes());
+    buffer.extend_from_slice(&flags.to_le_bytes());
+    buffer.push(assignment_type_code(assignment_type));
     buffer.push(0);
     buffer.extend_from_slice(&top_gene_count.to_le_bytes());
-    for &gene_id in &mapped_read.top_gene_ids {
+    for &gene_id in top_gene_ids {
         buffer.extend_from_slice(&gene_id.to_le_bytes());
     }
     Ok(())
@@ -1582,12 +1671,22 @@ impl FastqStreamReader {
     }
 
     fn next_record(&mut self) -> Result<Option<StreamFastqRecord>> {
+        if !self.read_record()? {
+            return Ok(None);
+        }
+        Ok(Some(StreamFastqRecord {
+            seq: trim_fastq_line(self.seq_buf.as_bytes()).to_ascii_uppercase(),
+            qual: trim_fastq_line(self.qual_buf.as_bytes()).to_vec(),
+        }))
+    }
+
+    fn read_record(&mut self) -> Result<bool> {
         self.id_buf.clear();
         self.seq_buf.clear();
         self.plus_buf.clear();
         self.qual_buf.clear();
         if self.reader.read_line(&mut self.id_buf)? == 0 {
-            return Ok(None);
+            return Ok(false);
         }
         self.records_read += 1;
         if self.reader.read_line(&mut self.seq_buf)? == 0 {
@@ -1632,10 +1731,7 @@ impl FastqStreamReader {
                 qual.len()
             ));
         }
-        Ok(Some(StreamFastqRecord {
-            seq: seq.to_ascii_uppercase(),
-            qual: qual.to_vec(),
-        }))
+        Ok(true)
     }
 }
 
@@ -2609,7 +2705,11 @@ struct AssignmentCounts {
 
 impl AssignmentCounts {
     fn add(&mut self, assignment: &Assignment) {
-        match assignment.assignment_type {
+        self.add_fields(assignment.assignment_type, assignment.flags);
+    }
+
+    fn add_fields(&mut self, assignment_type: AssignmentType, flags: u16) {
+        match assignment_type {
             AssignmentType::UniqueGene => self.unique_gene += 1,
             AssignmentType::AmbiguousGene => self.ambiguous_gene += 1,
             AssignmentType::AmbiguousTranscriptSameGene => self.same_gene_multitranscript += 1,
@@ -2618,16 +2718,16 @@ impl AssignmentCounts {
             AssignmentType::LowComplexity => self.low_complexity += 1,
             AssignmentType::LowQuality => self.low_quality += 1,
         }
-        if assignment.flags & SCORE_FLAG_TARGET_EXON != 0 {
+        if flags & SCORE_FLAG_TARGET_EXON != 0 {
             self.exon_target += 1;
         }
-        if assignment.flags & SCORE_FLAG_TARGET_INTRON != 0 {
+        if flags & SCORE_FLAG_TARGET_INTRON != 0 {
             self.intron_target += 1;
         }
-        if assignment.flags & SCORE_FLAG_TARGET_GENE_BODY != 0 {
+        if flags & SCORE_FLAG_TARGET_GENE_BODY != 0 {
             self.gene_body_target += 1;
         }
-        if assignment.flags & SCORE_FLAG_RESCUED != 0 {
+        if flags & SCORE_FLAG_RESCUED != 0 {
             self.rescued += 1;
         }
         let target_count = [
@@ -2636,12 +2736,12 @@ impl AssignmentCounts {
             SCORE_FLAG_TARGET_GENE_BODY,
         ]
         .iter()
-        .filter(|&&flag| assignment.flags & flag != 0)
+        .filter(|&&flag| flags & flag != 0)
         .count();
         if target_count > 1 {
             self.mixed_target += 1;
         }
-        if is_target_assignment_type(assignment.assignment_type) && target_count == 0 {
+        if is_target_assignment_type(assignment_type) && target_count == 0 {
             self.unknown_target += 1;
         }
     }

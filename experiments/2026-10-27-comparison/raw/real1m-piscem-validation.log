@@ -1,0 +1,18 @@
+2026-10-28T02:05:10.084302Z  INFO piscem_rs::cli::map_scrna: Protocol: chromium_v3 (bc_len=16, umi_len=12)
+2026-10-28T02:05:10.084349Z  INFO piscem_rs::cli::map_scrna: Loading index from /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/piscem-splici
+2026-10-28T02:05:10.084366Z  INFO piscem_rs::index::reference_index: Loading SSHash dictionary from /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/piscem-splici.ssi
+2026-10-28T02:05:10.210273Z  INFO piscem_rs::index::reference_index:   k=31, 19050010 strings
+2026-10-28T02:05:10.210330Z  INFO piscem_rs::index::reference_index: Loading contig table from /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/piscem-splici.ctab
+2026-10-28T02:05:10.288468Z  INFO piscem_rs::index::reference_index:   19050010 contigs, 177240068 entries, entry_width=42 bits
+2026-10-28T02:05:10.288489Z  INFO piscem_rs::index::reference_index: Loading reference info from /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/piscem-splici.refinfo
+2026-10-28T02:05:10.293224Z  INFO piscem_rs::index::reference_index:   276935 references, max_ref_len=2278213
+2026-10-28T02:05:10.293285Z  INFO piscem_rs::index::reference_index: Loading equivalence class table from /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/piscem-splici.ectab
+2026-10-28T02:05:10.324350Z  INFO piscem_rs::index::reference_index:   19050010 tiles, 10472123 ECs, 153506540 label entries
+2026-10-28T02:05:10.324373Z  INFO piscem_rs::index::reference_index:   ref_shift=23, pos_mask=0x3fffff
+2026-10-28T02:05:10.324386Z  INFO piscem_rs::index::reference_index: No poison table found at /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/piscem-splici.poison
+2026-10-28T02:05:10.324388Z  INFO piscem_rs::index::reference_index: Loaded reference signatures from /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/piscem-splici.sigs.json
+2026-10-28T02:05:10.324396Z  INFO piscem_rs::cli::map_scrna: Index loaded: k=31, 276935 refs (0.24s)
+2026-10-28T02:05:10.327218Z  INFO piscem_rs::io::calibrate: using the serial decoder: 12 threads for 2 gzip input(s) is below the 8 threads per input needed before parallel decoding adds concurrency the serial path does not already have
+2026-10-28T02:05:10.327339Z  INFO piscem_rs::cli::map_scrna: thread execution plan requested_budget=12 effective_budget=12 mapping_threads=12 decode_slots=0 allocation=Serial
+2026-10-28T02:05:11.883822Z  INFO piscem_rs::io::threads: consumer measurement components modeled_busy_seconds=16.011254897 callback_setup_seconds=0.000477907 excluded_output_seconds=0.005380093 wall_seconds=1.556476105 budget=12 modeled_utilization=0.8572384999233038 excluded_output_fraction=0.0003359065748429096
+2026-10-28T02:05:11.883848Z  INFO piscem_rs::cli::map_scrna: Mapped 880212/1000000 reads (88.0%), 0 poisoned, 1.8s

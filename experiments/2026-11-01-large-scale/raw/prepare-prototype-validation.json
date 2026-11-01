@@ -1,0 +1,55 @@
+{
+  "gzip_level": 1,
+  "large_pairs": 500000000,
+  "r1_r2_ids_match": true,
+  "reports": [
+    {
+      "gzip_members": 6885,
+      "lanes": [
+        {
+          "first_id": "@A00228:279:HFWFVDMXX:1:1101:3260:1000",
+          "last_id": "@A00228:279:HFWFVDMXX:1:2266:12382:13135",
+          "path": "benchdata/pbmc_10k_v3/pbmc_10k_v3_fastqs/pbmc_10k_v3_S1_L001_R1_001.fastq.gz",
+          "records": 250000000
+        },
+        {
+          "first_id": "@A00228:279:HFWFVDMXX:2:1101:1705:1000",
+          "last_id": "@A00228:279:HFWFVDMXX:2:2311:15609:8703",
+          "path": "benchdata/pbmc_10k_v3/pbmc_10k_v3_fastqs/pbmc_10k_v3_S1_L002_R1_001.fastq.gz",
+          "records": 250000000
+        }
+      ],
+      "large_id_sha256": "1d68e3ac8377a99dfdbeeee090d95a824e44e4498a9e383ef1fb437d55a4cc4b",
+      "large_records": 500000000,
+      "mate": 1,
+      "seconds": 101.5903526,
+      "small_id_sha256": "0c62ba24f6e27052cd6fe69f41f0b39ffa080cf9f31f1e9ff94fe683eaa84411",
+      "small_records": 100000000
+    },
+    {
+      "gzip_members": 14395,
+      "lanes": [
+        {
+          "first_id": "@A00228:279:HFWFVDMXX:1:1101:3260:1000",
+          "last_id": "@A00228:279:HFWFVDMXX:1:2266:12382:13135",
+          "path": "benchdata/pbmc_10k_v3/pbmc_10k_v3_fastqs/pbmc_10k_v3_S1_L001_R2_001.fastq.gz",
+          "records": 250000000
+        },
+        {
+          "first_id": "@A00228:279:HFWFVDMXX:2:1101:1705:1000",
+          "last_id": "@A00228:279:HFWFVDMXX:2:2311:15609:8703",
+          "path": "benchdata/pbmc_10k_v3/pbmc_10k_v3_fastqs/pbmc_10k_v3_S1_L002_R2_001.fastq.gz",
+          "records": 250000000
+        }
+      ],
+      "large_id_sha256": "1d68e3ac8377a99dfdbeeee090d95a824e44e4498a9e383ef1fb437d55a4cc4b",
+      "large_records": 500000000,
+      "mate": 2,
+      "seconds": 175.441683665,
+      "small_id_sha256": "0c62ba24f6e27052cd6fe69f41f0b39ffa080cf9f31f1e9ff94fe683eaa84411",
+      "small_records": 100000000
+    }
+  ],
+  "selection": "first N pairs per lane, both lanes jointly; small subset nested in large",
+  "small_pairs": 100000000
+}

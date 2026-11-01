@@ -1,0 +1,23 @@
+	Command being timed: "taskset -c 0-11 /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/tools/piscem-x86_64-unknown-linux-gnu/piscem map-sc -i /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici -g chromium_v3 -t 12 -1 /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/large_R1.fastq.gz -2 /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/large_R2.fastq.gz -o /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-piscem/map"
+	User time (seconds): 7982.72
+	System time (seconds): 15.42
+	Percent of CPU this job got: 1175%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 11:20.68
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 3461748
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 5844
+	Voluntary context switches: 11876
+	Involuntary context switches: 66868
+	Swaps: 0
+	File system inputs: 113061896
+	File system outputs: 22954000
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

@@ -1,0 +1,27 @@
+{
+  "label": "after-weighted",
+  "repeat": 2,
+  "seconds": 3.0224923328496516,
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-30-splicing/raw/after-weighted-2.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/target/release/constellation",
+    "map",
+    "--index",
+    "/home/grant/Desktop/programming/constellation/benchdata/throughput-2026-10-27/reference.ptrhash.ecidx",
+    "--r1",
+    "/home/grant/Desktop/programming/constellation/benchdata/throughput-2026-10-27/pbmc10m_R1.fastq.gz",
+    "--r2",
+    "/home/grant/Desktop/programming/constellation/benchdata/throughput-2026-10-27/pbmc10m_R2.fastq.gz",
+    "--out",
+    "/home/grant/Desktop/programming/constellation/benchdata/splicing-2026-10-30/after-weighted.rad",
+    "--emit-metrics",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-10-30-splicing/raw/after-weighted-2.metrics.json"
+  ],
+  "exit_code": 0
+}

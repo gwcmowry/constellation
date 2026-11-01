@@ -1,0 +1,171 @@
+{
+  "pairs": 100000000,
+  "tool": "piscem",
+  "steps": {
+    "map": {
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/100m-piscem-map.time",
+        "taskset",
+        "-c",
+        "0-11",
+        "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/tools/piscem-x86_64-unknown-linux-gnu/piscem",
+        "map-sc",
+        "-i",
+        "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici",
+        "-g",
+        "chromium_v3",
+        "-t",
+        "12",
+        "-1",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/small_R1.fastq.gz",
+        "-2",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/small_R2.fastq.gz",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-piscem/map"
+      ],
+      "seconds": 136.08688875008374,
+      "exit_code": 0,
+      "sampled_peak_rss_bytes": 3345920000,
+      "memory_guard_gib": 46,
+      "stopped_by_memory_guard": false
+    },
+    "permit": {
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/100m-piscem-permit.time",
+        "taskset",
+        "-c",
+        "0-11",
+        "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/alevin-fry-x86_64-unknown-linux-gnu/alevin-fry",
+        "generate-permit-list",
+        "-i",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-piscem/map",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-piscem/collation",
+        "-d",
+        "fw",
+        "-t",
+        "12",
+        "--valid-bc",
+        "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/barcodes.txt",
+        "--cell-bc-correction",
+        "unique",
+        "--cell-bc-neighborhood",
+        "hamming-1"
+      ],
+      "seconds": 1.5136839440092444,
+      "exit_code": 0,
+      "sampled_peak_rss_bytes": 786432,
+      "memory_guard_gib": 46,
+      "stopped_by_memory_guard": false
+    },
+    "collate": {
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/100m-piscem-collate.time",
+        "taskset",
+        "-c",
+        "0-11",
+        "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/alevin-fry-x86_64-unknown-linux-gnu/alevin-fry",
+        "collate",
+        "-i",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-piscem/collation",
+        "-r",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-piscem/map",
+        "-t",
+        "12"
+      ],
+      "seconds": 1.123044203966856,
+      "exit_code": 0,
+      "sampled_peak_rss_bytes": 585728,
+      "memory_guard_gib": 46,
+      "stopped_by_memory_guard": false
+    },
+    "quant": {
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/100m-piscem-quant.time",
+        "taskset",
+        "-c",
+        "0-11",
+        "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/alevin-fry-x86_64-unknown-linux-gnu/alevin-fry",
+        "quant",
+        "-i",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-piscem/collation",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-piscem/quant",
+        "-m",
+        "/home/grant/Desktop/programming/constellation/benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/t2g_3col.tsv",
+        "-r",
+        "cr-like",
+        "-t",
+        "12",
+        "--small-thresh",
+        "0"
+      ],
+      "seconds": 2.293343941681087,
+      "exit_code": 0,
+      "sampled_peak_rss_bytes": 588038144,
+      "memory_guard_gib": 46,
+      "stopped_by_memory_guard": false
+    }
+  },
+  "count_policy": {
+    "count": "cr-like WTA exact UMI"
+  },
+  "matrix_totals": {
+    "count": {
+      "S": {
+        "total": 24816270,
+        "nonzero": 10007306,
+        "sha256_canonical_arrays": "2a40bedbcc91826a8754082cb26a51749d3687d6d10d3b2b9b2ae45bc12b88ed",
+        "genes_with_counts": 26241,
+        "cells_with_counts": 11769
+      },
+      "U": {
+        "total": 16573794,
+        "nonzero": 10682714,
+        "sha256_canonical_arrays": "f3fc5b69897b21bbf7560c62d5c5691644d3ca4d6d37a440e836d38feded2444",
+        "genes_with_counts": 24294,
+        "cells_with_counts": 11769
+      },
+      "A": {
+        "total": 6581502,
+        "nonzero": 3289426,
+        "sha256_canonical_arrays": "9f11da3232fda7eda47838f9c98d3ffcc3d4a2ce9374e32f7332b924634012ce",
+        "genes_with_counts": 15281,
+        "cells_with_counts": 11763
+      },
+      "total": 47971566,
+      "barcodes": 11769,
+      "genes": 58395
+    }
+  },
+  "index_warmup": {
+    "seconds": 0.4495929442346096,
+    "bytes": 2976434264,
+    "files": [
+      "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici.ctab",
+      "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici.ectab",
+      "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici.refinfo",
+      "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici.sigs.json",
+      "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici.ssi",
+      "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici.ssi.mphf",
+      "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici_cfish.json",
+      "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici_ver.json"
+    ],
+    "included_in_mapping_time": false
+  },
+  "count_seconds": 4.9300720896571875,
+  "map_seconds": 136.08688875008374,
+  "pipeline_seconds": 141.01696083974093
+}

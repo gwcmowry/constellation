@@ -1,0 +1,56 @@
+{
+  "before-weighted": {
+    "seconds": [
+      3.0632536062039435,
+      3.0670741172507405,
+      3.1925851707346737
+    ],
+    "median_seconds": 3.0670741172507405,
+    "million_pairs_per_second": 3.2604363695533336,
+    "output_bytes": 369461060
+  },
+  "after-weighted": {
+    "seconds": [
+      3.0825982578098774,
+      3.0224923328496516,
+      3.192003335803747
+    ],
+    "median_seconds": 3.0825982578098774,
+    "million_pairs_per_second": 3.244016626125259,
+    "output_bytes": 369461060
+  },
+  "before-consensus": {
+    "seconds": [
+      4.3836928778328,
+      4.346513877622783,
+      4.450103963725269
+    ],
+    "median_seconds": 4.3836928778328,
+    "million_pairs_per_second": 2.281181706539573,
+    "output_bytes": 334172392
+  },
+  "after-consensus": {
+    "seconds": [
+      4.342350591905415,
+      4.391218611039221,
+      4.592484298162162
+    ],
+    "median_seconds": 4.391218611039221,
+    "million_pairs_per_second": 2.277272184732659,
+    "output_bytes": 334172392
+  },
+  "splicing": {
+    "seconds": [
+      4.470293330028653,
+      4.562468534801155,
+      4.816983308177441
+    ],
+    "median_seconds": 4.562468534801155,
+    "million_pairs_per_second": 2.1917959375989047,
+    "output_bytes": 348708203
+  },
+  "binaries": {
+    "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/constellation.before-splicing": "816cf4d27b0c4d80adbfce20a47672647cbee4ae5aa24922727e45baae756c56",
+    "/home/grant/Desktop/programming/constellation/target/release/constellation": "c4384c0e5968910c7d35cc89921acc6763e0de93dbfe48bbafb207f9926d65b4"
+  }
+}

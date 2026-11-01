@@ -1,0 +1,13 @@
+Usage: bustools count [options] sorted-bus-files
+
+Options: 
+-o, --output          Output directory gene matrix files
+-g, --genemap         File for mapping transcripts to genes
+-e, --ecmap           File for mapping equivalence classes to transcripts
+-t, --txnames         File with names of transcripts
+    --genecounts      Aggregate counts to genes only
+    --umi-gene        Perform gene-level collapsing of UMIs
+    --cm              Count multiplicities instead of UMIs
+-s, --split           Split output matrix in two (plus ambiguous) based on transcripts supplied in this file
+-m, --multimapping    Include bus records that pseudoalign to multiple genes
+

@@ -1,0 +1,18 @@
+{
+  "R1": {
+    "source": "benchdata/pbmc_10k_v3/pbmc_10k_v3_fastqs/pbmc_10k_v3_S1_L001_R1_001.fastq.gz",
+    "reads": 10000000,
+    "raw_bytes": 1154400627,
+    "raw_sha256": "3e72275ba707f5ce477db638e2c978d6aae4cf535a92fe5f5d8c3cd262e6b671",
+    "gzip_level": 1,
+    "gzip_bytes": 234052182
+  },
+  "R2": {
+    "source": "benchdata/pbmc_10k_v3/pbmc_10k_v3_fastqs/pbmc_10k_v3_S1_L001_R2_001.fastq.gz",
+    "reads": 10000000,
+    "raw_bytes": 2414400627,
+    "raw_sha256": "75c9f5886df29d0eb2ae05311c86d82e8e17477fab224893c6a486a97812298b",
+    "gzip_level": 1,
+    "gzip_bytes": 554509759
+  }
+}

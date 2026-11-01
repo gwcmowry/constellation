@@ -1,0 +1,37 @@
+{
+  "primary": {
+    "name": "10x PBMC 10k v3",
+    "read_pairs": 638901019,
+    "called_cells": 11769,
+    "source_summary": "https://cf.10xgenomics.com/samples/cell-exp/3.0.0/pbmc_10k_v3/pbmc_10k_v3_web_summary.html",
+    "local_gzip_bytes": 47303551792,
+    "local_files": [
+      "/home/grant/Desktop/programming/constellation/benchdata/pbmc_10k_v3/pbmc_10k_v3_fastqs/pbmc_10k_v3_S1_L001_R1_001.fastq.gz",
+      "/home/grant/Desktop/programming/constellation/benchdata/pbmc_10k_v3/pbmc_10k_v3_fastqs/pbmc_10k_v3_S1_L001_R2_001.fastq.gz",
+      "/home/grant/Desktop/programming/constellation/benchdata/pbmc_10k_v3/pbmc_10k_v3_fastqs/pbmc_10k_v3_S1_L002_R1_001.fastq.gz",
+      "/home/grant/Desktop/programming/constellation/benchdata/pbmc_10k_v3/pbmc_10k_v3_fastqs/pbmc_10k_v3_S1_L002_R2_001.fastq.gz"
+    ],
+    "recommended_pairs": [
+      100000000,
+      638901019
+    ]
+  },
+  "independent": {
+    "name": "20k Human PBMCs, 3 HT v3.1, Chromium X",
+    "read_pairs": 818107363,
+    "called_cells": 23837,
+    "source_summary": "https://cf.10xgenomics.com/samples/cell-exp/6.1.0/20k_PBMC_3p_HT_nextgem_Chromium_X/20k_PBMC_3p_HT_nextgem_Chromium_X_web_summary.html",
+    "recommended_pairs": [
+      100000000,
+      500000000
+    ],
+    "fastqs_downloaded": false
+  },
+  "notes": [
+    "Use actual paired reads and preserve barcode/UMI identities.",
+    "Sample across both lanes; deduplicate across lanes jointly.",
+    "Fix reference, whitelist, policies and CPU budget across tools.",
+    "Larger read count does not increase a fixed-reference index build workload.",
+    "Benchmark native compression and one run at a time; reuse temporary output space."
+  ]
+}

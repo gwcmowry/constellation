@@ -1,0 +1,211 @@
+{
+  "universe": {
+    "genes": 58395,
+    "barcodes": 11769
+  },
+  "totals": {
+    "ours_corrected": {
+      "S": 2656486.0,
+      "U": 2007141.0,
+      "A": 850393.0,
+      "total": 5514020.0
+    },
+    "ours_exact_umi": {
+      "S": 2661927.0,
+      "U": 2011089.0,
+      "A": 852738.0,
+      "total": 5525754.0
+    },
+    "piscem_common_corrected": {
+      "S": 2797507.0,
+      "U": 1989631.0,
+      "A": 802337.0,
+      "total": 5589475.0
+    },
+    "piscem_common_exact_umi": {
+      "S": 2803971.0,
+      "U": 1993952.0,
+      "A": 804998.0,
+      "total": 5602921.0
+    },
+    "piscem_native_af": {
+      "S": 2959526.0,
+      "U": 1994063.0,
+      "A": 841163.0,
+      "total": 5794752.0
+    }
+  },
+  "comparisons": {
+    "ours_corrected_vs_piscem_common_corrected": {
+      "S": {
+        "a_total": 2656486.0,
+        "b_total": 2797507.0,
+        "l1": 187633.0,
+        "l1_over_sum": 0.034402867770457354,
+        "weighted_jaccard": 0.9334826519872108,
+        "full_matrix_pearson": 0.9883636232462245,
+        "gene_total_log1p_pearson": 0.9969312829092555,
+        "nonzero_union": 1919069
+      },
+      "U": {
+        "a_total": 2007141.0,
+        "b_total": 1989631.0,
+        "l1": 196746.0,
+        "l1_over_sum": 0.049226225564030175,
+        "weighted_jaccard": 0.9061666123765297,
+        "full_matrix_pearson": 0.9588337577637058,
+        "gene_total_log1p_pearson": 0.9895978692799701,
+        "nonzero_union": 1921366
+      },
+      "A": {
+        "a_total": 850393.0,
+        "b_total": 802337.0,
+        "l1": 112202.0,
+        "l1_over_sum": 0.06788888687202387,
+        "weighted_jaccard": 0.8728540249709337,
+        "full_matrix_pearson": 0.9818238464134125,
+        "gene_total_log1p_pearson": 0.9937389663854882,
+        "nonzero_union": 630066
+      }
+    },
+    "ours_exact_umi_vs_piscem_common_exact_umi": {
+      "S": {
+        "a_total": 2661927.0,
+        "b_total": 2803971.0,
+        "l1": 188752.0,
+        "l1_over_sum": 0.03453266050702007,
+        "weighted_jaccard": 0.9332400767509925,
+        "full_matrix_pearson": 0.9883367320692814,
+        "gene_total_log1p_pearson": 0.9969357175714537,
+        "nonzero_union": 1919080
+      },
+      "U": {
+        "a_total": 2011089.0,
+        "b_total": 1993952.0,
+        "l1": 197699.0,
+        "l1_over_sum": 0.04936254085788385,
+        "weighted_jaccard": 0.9059189957028034,
+        "full_matrix_pearson": 0.9587797575434686,
+        "gene_total_log1p_pearson": 0.9895924698435128,
+        "nonzero_union": 1921378
+      },
+      "A": {
+        "a_total": 852738.0,
+        "b_total": 804998.0,
+        "l1": 112840.0,
+        "l1_over_sum": 0.06806873953391855,
+        "weighted_jaccard": 0.8725386540877094,
+        "full_matrix_pearson": 0.9817944581055287,
+        "gene_total_log1p_pearson": 0.9937721776562936,
+        "nonzero_union": 630611
+      }
+    },
+    "ours_corrected_vs_piscem_native_af": {
+      "S": {
+        "a_total": 2656486.0,
+        "b_total": 2959526.0,
+        "l1": 348242.0,
+        "l1_over_sum": 0.06200877063652998,
+        "weighted_jaccard": 0.8832236185782832,
+        "full_matrix_pearson": 0.9009025992847337,
+        "gene_total_log1p_pearson": 0.9670629720498943,
+        "nonzero_union": 2017181
+      },
+      "U": {
+        "a_total": 2007141.0,
+        "b_total": 1994063.0,
+        "l1": 201070.0,
+        "l1_over_sum": 0.05025237403541534,
+        "weighted_jaccard": 0.9043041933962421,
+        "full_matrix_pearson": 0.9579972173779244,
+        "gene_total_log1p_pearson": 0.989584572209086,
+        "nonzero_union": 1921451
+      },
+      "A": {
+        "a_total": 850393.0,
+        "b_total": 841163.0,
+        "l1": 150466.0,
+        "l1_over_sum": 0.0889512377952607,
+        "weighted_jaccard": 0.8366295299404676,
+        "full_matrix_pearson": 0.97586603451687,
+        "gene_total_log1p_pearson": 0.9611405344503833,
+        "nonzero_union": 664365
+      }
+    },
+    "ours_exact_umi_vs_piscem_native_af": {
+      "S": {
+        "a_total": 2661927.0,
+        "b_total": 2959526.0,
+        "l1": 342999.0,
+        "l1_over_sum": 0.06101607538122261,
+        "weighted_jaccard": 0.884985577887122,
+        "full_matrix_pearson": 0.9011587636130372,
+        "gene_total_log1p_pearson": 0.9670855700890804,
+        "nonzero_union": 2017181
+      },
+      "U": {
+        "a_total": 2011089.0,
+        "b_total": 1994063.0,
+        "l1": 197762.0,
+        "l1_over_sum": 0.049376902549516224,
+        "weighted_jaccard": 0.9058929114419186,
+        "full_matrix_pearson": 0.9587679992810088,
+        "gene_total_log1p_pearson": 0.9895834683379982,
+        "nonzero_union": 1921451
+      },
+      "A": {
+        "a_total": 852738.0,
+        "b_total": 841163.0,
+        "l1": 148785.0,
+        "l1_over_sum": 0.08783571176827926,
+        "weighted_jaccard": 0.8385129099586147,
+        "full_matrix_pearson": 0.9761705165028791,
+        "gene_total_log1p_pearson": 0.9611486209901812,
+        "nonzero_union": 664455
+      }
+    },
+    "piscem_common_exact_umi_vs_piscem_native_af": {
+      "S": {
+        "a_total": 2803971.0,
+        "b_total": 2959526.0,
+        "l1": 155555.0,
+        "l1_over_sum": 0.026989690460496468,
+        "weighted_jaccard": 0.947439218307256,
+        "full_matrix_pearson": 0.9121302884657335,
+        "gene_total_log1p_pearson": 0.970819136108249,
+        "nonzero_union": 2001924
+      },
+      "U": {
+        "a_total": 1993952.0,
+        "b_total": 1994063.0,
+        "l1": 111.0,
+        "l1_over_sum": 2.7833395812202312e-05,
+        "weighted_jaccard": 0.9999443347577284,
+        "full_matrix_pearson": 0.9999769950751869,
+        "gene_total_log1p_pearson": 0.999994199775068,
+        "nonzero_union": 1823463
+      },
+      "A": {
+        "a_total": 804998.0,
+        "b_total": 841163.0,
+        "l1": 36289.0,
+        "l1_over_sum": 0.02204462382476562,
+        "weighted_jaccard": 0.9568617195161817,
+        "full_matrix_pearson": 0.9942691727560763,
+        "gene_total_log1p_pearson": 0.9670178212989989,
+        "nonzero_union": 601520
+      }
+    }
+  },
+  "native_molecule_status_counts": [
+    {
+      "status": "assigned",
+      "status_count": 5794752
+    },
+    {
+      "status": "multi_gene",
+      "status_count": 680944
+    }
+  ],
+  "native_assigned_rows_match_matrix": true
+}

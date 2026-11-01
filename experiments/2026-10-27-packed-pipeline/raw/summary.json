@@ -1,0 +1,159 @@
+{
+  "baseline-none": {
+    "repetitions": 3,
+    "median_wall_seconds": 7.955018642,
+    "wall_range": [
+      7.8633992379999995,
+      8.189911434
+    ],
+    "median_reads_per_second": 1257068.0786595698,
+    "median_max_rss_kib": 4567912.0,
+    "median_cpu_seconds": 61.300000000000004,
+    "major_faults": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "median_mapping_seconds": 5.490592473999997,
+    "median_input_wait_seconds": 0.043039743000000054,
+    "median_write_seconds": 0.0
+  },
+  "baseline-zstd": {
+    "repetitions": 3,
+    "median_wall_seconds": 8.949250669,
+    "wall_range": [
+      8.896039989,
+      9.056013976
+    ],
+    "median_reads_per_second": 1117411.9901054702,
+    "median_max_rss_kib": 4584088.0,
+    "median_cpu_seconds": 65.73,
+    "major_faults": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "median_mapping_seconds": 5.927029550999997,
+    "median_input_wait_seconds": 0.029172932000000016,
+    "median_write_seconds": 0.19912114400000003,
+    "output_bytes": 168459890
+  },
+  "optimized-none": {
+    "repetitions": 3,
+    "median_wall_seconds": 2.746393982,
+    "wall_range": [
+      2.73636702,
+      2.7643873450000003
+    ],
+    "median_reads_per_second": 3641138.1853952813,
+    "median_max_rss_kib": 4467676.0,
+    "median_cpu_seconds": 22.66,
+    "major_faults": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "median_mapping_seconds": 2.5001098920000007,
+    "median_input_wait_seconds": 0.21473165200000002,
+    "median_write_seconds": 0.0,
+    "speedup": 2.896532214291751
+  },
+  "optimized-zstd": {
+    "repetitions": 3,
+    "median_wall_seconds": 2.97908842,
+    "wall_range": [
+      2.964690465,
+      3.111118759
+    ],
+    "median_reads_per_second": 3356731.519905676,
+    "median_max_rss_kib": 4471884.0,
+    "median_cpu_seconds": 27.0,
+    "major_faults": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "median_mapping_seconds": 2.687117436,
+    "median_input_wait_seconds": 0.013667956000000002,
+    "median_write_seconds": 0.21855622199999994,
+    "output_bytes": 168459890,
+    "speedup": 3.004023180016926
+  },
+  "optimized-rad": {
+    "repetitions": 1,
+    "median_wall_seconds": 3.107250711,
+    "wall_range": [
+      3.107250711,
+      3.107250711
+    ],
+    "median_reads_per_second": 3218279.093025526,
+    "median_max_rss_kib": 4471992.0,
+    "median_cpu_seconds": 25.37,
+    "major_faults": [
+      0.0
+    ],
+    "median_mapping_seconds": 2.9019431120000005,
+    "median_input_wait_seconds": 0.009112168999999993,
+    "median_write_seconds": 0.12976475099999998,
+    "output_bytes": 369461060
+  },
+  "baseline-tsv": {
+    "repetitions": 1,
+    "median_wall_seconds": 9.068880798,
+    "wall_range": [
+      9.068880798,
+      9.068880798
+    ],
+    "median_reads_per_second": 1102671.8977500887,
+    "median_max_rss_kib": 4577972.0,
+    "median_cpu_seconds": 63.56,
+    "major_faults": [
+      0.0
+    ],
+    "median_mapping_seconds": 6.132696071999999,
+    "median_input_wait_seconds": 0.021891042999999995,
+    "median_write_seconds": 0.20990738800000008,
+    "output_bytes": 674434328
+  },
+  "optimized-tsv": {
+    "repetitions": 1,
+    "median_wall_seconds": 2.947465759,
+    "wall_range": [
+      2.947465759,
+      2.947465759
+    ],
+    "median_reads_per_second": 3392745.0961780623,
+    "median_max_rss_kib": 4475848.0,
+    "median_cpu_seconds": 24.439999999999998,
+    "major_faults": [
+      0.0
+    ],
+    "median_mapping_seconds": 2.671852662,
+    "median_input_wait_seconds": 0.000145158,
+    "median_write_seconds": 0.20343320300000003,
+    "output_bytes": 674434328,
+    "speedup": 3.076840085523789
+  },
+  "output_equality": {
+    "rad": {
+      "byte_identical": true,
+      "bytes": 369461060,
+      "sha256": "b7c5b5ad39e5b2bca42cf253d1d9e10ef9ac5e120f752384681a14fe4cb3b99a"
+    },
+    "baseline_zstd_decoded": {
+      "byte_identical": true,
+      "bytes": 369461060,
+      "sha256": "b7c5b5ad39e5b2bca42cf253d1d9e10ef9ac5e120f752384681a14fe4cb3b99a"
+    },
+    "optimized_zstd_decoded": {
+      "byte_identical": true,
+      "bytes": 369461060,
+      "sha256": "b7c5b5ad39e5b2bca42cf253d1d9e10ef9ac5e120f752384681a14fe4cb3b99a"
+    },
+    "tsv": {
+      "byte_identical": true,
+      "bytes": 674434328,
+      "sha256": "2e2a622111f13194c9019103af8eef005fb8820ee4706a18a8b5c79c254ab702"
+    }
+  }
+}

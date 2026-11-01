@@ -1,0 +1,244 @@
+{
+  "assignment_summary": {
+    "constellation": {
+      "n": 1000000,
+      "unique": 785531,
+      "ambiguous": 96343,
+      "unmapped": 118126,
+      "original_r1_valid_n": 999158,
+      "valid_unique": 784866,
+      "valid_ambiguous": 96256,
+      "valid_unmapped": 118036
+    },
+    "constellation-consensus": {
+      "n": 1000000,
+      "unique": 656004,
+      "ambiguous": 126583,
+      "unmapped": 217413,
+      "original_r1_valid_n": 999158,
+      "valid_unique": 655447,
+      "valid_ambiguous": 126480,
+      "valid_unmapped": 217231
+    },
+    "piscem-forward": {
+      "n": 1000000,
+      "unique": 668045,
+      "ambiguous": 106795,
+      "unmapped": 225160,
+      "original_r1_valid_n": 999158,
+      "valid_unique": 667470,
+      "valid_ambiguous": 106707,
+      "valid_unmapped": 224981
+    },
+    "kallisto-forward": {
+      "n": 1000000,
+      "unique": 670293,
+      "ambiguous": 108968,
+      "unmapped": 220739,
+      "original_r1_valid_n": 999158,
+      "valid_unique": 669715,
+      "valid_ambiguous": 108878,
+      "valid_unmapped": 220565
+    }
+  },
+  "read_concordance": {
+    "constellation_vs_constellation-consensus": {
+      "all_reads": 1000000,
+      "equal_gene_sets": 834013,
+      "original_r1_valid": 999158,
+      "valid_equal_gene_sets": 833318,
+      "either_mapped": 881122,
+      "both_mapped": 781927,
+      "equal_nonempty_sets": 715282,
+      "a_only_mapped": 99195,
+      "b_only_mapped": 0,
+      "a_unique_b_ambiguous_contains_a": 66645,
+      "b_unique_a_ambiguous_contains_b": 0,
+      "mapped_disjoint": 0,
+      "both_unique": 655447,
+      "same_unique_gene": 655447,
+      "unique_gene_agreement": 1.0,
+      "disjoint_among_both_mapped": 0.0
+    },
+    "constellation_vs_piscem-forward": {
+      "all_reads": 1000000,
+      "equal_gene_sets": 799368,
+      "original_r1_valid": 999158,
+      "valid_equal_gene_sets": 798704,
+      "either_mapped": 892357,
+      "both_mapped": 762942,
+      "equal_nonempty_sets": 691903,
+      "a_only_mapped": 118180,
+      "b_only_mapped": 11235,
+      "a_unique_b_ambiguous_contains_a": 56416,
+      "b_unique_a_ambiguous_contains_b": 6074,
+      "mapped_disjoint": 3052,
+      "both_unique": 653797,
+      "same_unique_gene": 651846,
+      "unique_gene_agreement": 0.9970158933124502,
+      "disjoint_among_both_mapped": 0.004000304086024888
+    },
+    "constellation_vs_kallisto-forward": {
+      "all_reads": 1000000,
+      "equal_gene_sets": 797642,
+      "original_r1_valid": 999158,
+      "valid_equal_gene_sets": 796977,
+      "either_mapped": 894464,
+      "both_mapped": 765251,
+      "equal_nonempty_sets": 692283,
+      "a_only_mapped": 115871,
+      "b_only_mapped": 13342,
+      "a_unique_b_ambiguous_contains_a": 56597,
+      "b_unique_a_ambiguous_contains_b": 5863,
+      "mapped_disjoint": 4758,
+      "both_unique": 655110,
+      "same_unique_gene": 652376,
+      "unique_gene_agreement": 0.9958266550655616,
+      "disjoint_among_both_mapped": 0.006217567830685619
+    },
+    "constellation-consensus_vs_piscem-forward": {
+      "all_reads": 1000000,
+      "equal_gene_sets": 922364,
+      "original_r1_valid": 999158,
+      "valid_equal_gene_sets": 921587,
+      "either_mapped": 806307,
+      "both_mapped": 749797,
+      "equal_nonempty_sets": 728736,
+      "a_only_mapped": 32130,
+      "b_only_mapped": 24380,
+      "a_unique_b_ambiguous_contains_a": 0,
+      "b_unique_a_ambiguous_contains_b": 12245,
+      "mapped_disjoint": 1,
+      "both_unique": 637422,
+      "same_unique_gene": 637422,
+      "unique_gene_agreement": 1.0,
+      "disjoint_among_both_mapped": 1.3336943199292609e-06
+    },
+    "constellation-consensus_vs_kallisto-forward": {
+      "all_reads": 1000000,
+      "equal_gene_sets": 918524,
+      "original_r1_valid": 999158,
+      "valid_equal_gene_sets": 917751,
+      "either_mapped": 810039,
+      "both_mapped": 750481,
+      "equal_nonempty_sets": 728632,
+      "a_only_mapped": 31446,
+      "b_only_mapped": 28112,
+      "a_unique_b_ambiguous_contains_a": 211,
+      "b_unique_a_ambiguous_contains_b": 12017,
+      "mapped_disjoint": 545,
+      "both_unique": 637686,
+      "same_unique_gene": 637512,
+      "unique_gene_agreement": 0.9997271384349037,
+      "disjoint_among_both_mapped": 0.000726200929803686
+    },
+    "piscem-forward_vs_kallisto-forward": {
+      "all_reads": 1000000,
+      "equal_gene_sets": 989838,
+      "original_r1_valid": 999158,
+      "valid_equal_gene_sets": 989006,
+      "either_mapped": 779299,
+      "both_mapped": 773471,
+      "equal_nonempty_sets": 769147,
+      "a_only_mapped": 706,
+      "b_only_mapped": 5122,
+      "a_unique_b_ambiguous_contains_a": 690,
+      "b_unique_a_ambiguous_contains_b": 284,
+      "mapped_disjoint": 97,
+      "both_unique": 666133,
+      "same_unique_gene": 666099,
+      "unique_gene_agreement": 0.999948959141793,
+      "disjoint_among_both_mapped": 0.00012540870957023599
+    }
+  },
+  "common_count_policy": {
+    "policy": "Original valid CB/UMI; CB >=20 input reads; unique genes; exact UMI deduplication; no correction or multi-gene resolution",
+    "retained_barcodes": 11107,
+    "molecule_counts": {
+      "constellation": 658015,
+      "constellation-consensus": 550172,
+      "piscem-forward": 558892,
+      "kallisto-forward": 560851
+    },
+    "comparisons": {
+      "constellation_vs_constellation-consensus": {
+        "shared_molecules": 550172,
+        "molecule_jaccard": 0.8361085993480392,
+        "matrix_log1p": {
+          "pearson": 0.4008298668275767,
+          "nonzero_union": 614035
+        },
+        "gene_total_log1p": {
+          "pearson": 0.936408029009372,
+          "nonzero_union": 20727
+        },
+        "matrix_l1_over_total": 0.08926018902702976
+      },
+      "constellation_vs_piscem-forward": {
+        "shared_molecules": 546653,
+        "molecule_jaccard": 0.8155908058735942,
+        "matrix_log1p": {
+          "pearson": 0.28930725116656447,
+          "nonzero_union": 624873
+        },
+        "gene_total_log1p": {
+          "pearson": 0.9272700828192173,
+          "nonzero_union": 20902
+        },
+        "matrix_l1_over_total": 0.10143174457867364
+      },
+      "constellation_vs_kallisto-forward": {
+        "shared_molecules": 547086,
+        "molecule_jaccard": 0.8143826848075263,
+        "matrix_log1p": {
+          "pearson": 0.2788831019095172,
+          "nonzero_union": 626341
+        },
+        "gene_total_log1p": {
+          "pearson": 0.9269953281288792,
+          "nonzero_union": 20926
+        },
+        "matrix_l1_over_total": 0.1021572510842045
+      },
+      "constellation-consensus_vs_piscem-forward": {
+        "shared_molecules": 535250,
+        "molecule_jaccard": 0.9327935533117003,
+        "matrix_log1p": {
+          "pearson": 0.45931347801689115,
+          "nonzero_union": 534737
+        },
+        "gene_total_log1p": {
+          "pearson": 0.9815883857679474,
+          "nonzero_union": 16689
+        },
+        "matrix_l1_over_total": 0.03472477692901402
+      },
+      "constellation-consensus_vs_kallisto-forward": {
+        "shared_molecules": 535320,
+        "molecule_jaccard": 0.9298544562039802,
+        "matrix_log1p": {
+          "pearson": 0.4490758623281588,
+          "nonzero_union": 536558
+        },
+        "gene_total_log1p": {
+          "pearson": 0.9806383809540162,
+          "nonzero_union": 16752
+        },
+        "matrix_l1_over_total": 0.036300778651747086
+      },
+      "piscem-forward_vs_kallisto-forward": {
+        "shared_molecules": 557827,
+        "molecule_jaccard": 0.9927231116394621,
+        "matrix_log1p": {
+          "pearson": 0.8878748128532697,
+          "nonzero_union": 523328
+        },
+        "gene_total_log1p": {
+          "pearson": 0.9967491424807536,
+          "nonzero_union": 15841
+        },
+        "matrix_l1_over_total": 0.003651730798942257
+      }
+    }
+  }
+}

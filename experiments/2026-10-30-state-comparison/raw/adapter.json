@@ -1,0 +1,7 @@
+{
+  "input_rad_records": 8668767,
+  "forward_mapped": 7754302,
+  "barcode_umi_roundtrips_checked": 10000,
+  "output": "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/piscem-common-counter.cstrad2",
+  "score_and_flags": "not supplied; zero; ignored by counter"
+}

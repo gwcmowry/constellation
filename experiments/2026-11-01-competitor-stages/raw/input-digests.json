@@ -1,0 +1,14 @@
+{
+  "/home/grant/Desktop/programming/constellation/benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/roers_ref.fa": {
+    "bytes": 2055593469,
+    "sha256": "9a194025e61849b54fdfc8ac2375ea44ced8280297c55626c31bc511e18d6cf8"
+  },
+  "/home/grant/Desktop/programming/constellation/benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/t2g_3col.tsv": {
+    "bytes": 9638381,
+    "sha256": "c6b55fd5f5e79226cd288c34adca21b7788ae2c051c9ba84a8c34ad6e3b5c6ad"
+  },
+  "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/barcodes.txt": {
+    "bytes": 200073,
+    "sha256": "a31fb40a684ba193150c192ffd5e3b9b525d6cb8847a4c74642e41d1abd600ae"
+  }
+}

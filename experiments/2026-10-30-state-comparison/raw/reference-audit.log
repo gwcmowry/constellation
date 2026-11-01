@@ -1,0 +1,96 @@
+{
+  "heldout": {
+    "balanced": {
+      "n": 1500,
+      "reference_masks": {
+        "A": 216,
+        "S": 841,
+        "U": 443
+      },
+      "tools": {
+        "ours": {
+          "exact_state_set": 1484,
+          "extra_state_ambiguity": 14,
+          "source_gene_not_reported": 2
+        },
+        "piscem": {
+          "exact_state_set": 1499,
+          "source_gene_not_reported": 1
+        },
+        "kallisto": {
+          "exact_state_set": 1500
+        }
+      }
+    },
+    "discordance": {
+      "n": 200,
+      "reference_masks": {
+        "S": 184,
+        "U": 16
+      },
+      "tools": {
+        "ours": {
+          "extra_state_ambiguity": 200
+        },
+        "piscem": {
+          "exact_state_set": 200
+        },
+        "kallisto": {
+          "exact_state_set": 200
+        }
+      }
+    }
+  },
+  "heldout150": {
+    "balanced": {
+      "n": 1500,
+      "reference_masks": {
+        "S": 882,
+        "A": 174,
+        "U": 444
+      },
+      "tools": {
+        "ours": {
+          "exact_state_set": 1494,
+          "extra_state_ambiguity": 5,
+          "source_gene_not_reported": 1
+        },
+        "piscem": {
+          "exact_state_set": 1499,
+          "source_gene_not_reported": 1
+        },
+        "kallisto": {
+          "exact_state_set": 1500
+        }
+      }
+    },
+    "discordance": {
+      "n": 200,
+      "reference_masks": {
+        "S": 171,
+        "U": 29
+      },
+      "tools": {
+        "ours": {
+          "extra_state_ambiguity": 200
+        },
+        "piscem": {
+          "exact_state_set": 200
+        },
+        "kallisto": {
+          "exact_state_set": 200
+        }
+      }
+    }
+  },
+  "discordance_diagnosis": {
+    "heldout": {
+      "discriminating_kmers_not_enforced": 198,
+      "target_path_identity_lost_even_with_dense_kmers": 2
+    },
+    "heldout150": {
+      "discriminating_kmers_not_enforced": 190,
+      "target_path_identity_lost_even_with_dense_kmers": 10
+    }
+  }
+}

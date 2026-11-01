@@ -1,0 +1,92 @@
+2026-11-01T10:48:51.266404Z  INFO piscem: starting piscem build
+2026-11-01T10:48:51.267134Z  INFO piscem: Computing and recording reference signatures...
+2026-11-01T10:48:51.267642Z  INFO piscem: done.
+2026-11-01T10:48:51.267647Z  INFO piscem: starting cDBG construction with cf1-rs
+2026-11-01T10:48:51.272809Z  INFO cf1_rs::pipeline: RSS at start: current=14 MB, peak=14 MB
+2026-11-01T10:48:51.272820Z  INFO cf1_rs::pipeline: Phase 1: Counting minimizer frequencies...
+2026-11-01T10:48:51.272933Z  INFO cf1_rs::minimizer: Counting minimizer frequencies with m=15, w=17, k=31
+2026-11-01T10:48:51.274126Z  INFO cf1_rs::minimizer: Histogram: 128 total minimizer occurrences across 66 non-empty buckets
+2026-11-01T10:48:51.276234Z  INFO cf1_rs::pipeline: RSS after P1: current=21 MB, peak=20 MB
+2026-11-01T10:48:51.276238Z  INFO cf1_rs::pipeline: Phase 2: Partitioning minimizers and routing super k-mers...
+2026-11-01T10:48:51.276267Z  INFO cf1_rs::minimizer: Partitioned into 128 bins (target 1/bin)
+2026-11-01T10:48:51.276298Z  INFO cf1_rs::superkmer: Routing super k-mers to 128 bins with m=15, w=17
+2026-11-01T10:48:51.322842Z  INFO cf1_rs::superkmer: Finished routing super k-mers to bin files
+2026-11-01T10:48:51.324877Z  INFO cf1_rs::pipeline: RSS after P2: current=31 MB, peak=30 MB
+2026-11-01T10:48:51.324897Z  INFO cf1_rs::pipeline: Phase 3: Building global MPHF...
+2026-11-01T10:48:51.325119Z  INFO cf1_rs::mphf: Reading canonical k-mers from 128 bins
+2026-11-01T10:48:51.327235Z  INFO cf1_rs::mphf: P3a: RSS before dedup: current=31 MB, peak=30 MB
+2026-11-01T10:48:51.330023Z  INFO cf1_rs::mphf: Total 543 distinct canonical k-mers across 128 bins (per-bin: min=0, max=37, avg=4)
+2026-11-01T10:48:51.332058Z  INFO cf1_rs::mphf: P3a: RSS after dedup: current=57 MB, peak=57 MB
+2026-11-01T10:48:51.336504Z  INFO cf1_rs::mphf: P3b: RSS after consolidation: current=57 MB, peak=57 MB
+2026-11-01T10:48:51.336510Z  INFO cf1_rs::mphf: Building global MPHF for 543 distinct canonical k-mers (in-memory, threads=12)
+2026-11-01T10:48:51.337429Z  INFO cf1_rs::mphf: MPHF construction complete
+2026-11-01T10:48:51.339560Z  INFO cf1_rs::pipeline: RSS after P3 MPHF: current=60 MB, peak=59 MB
+2026-11-01T10:48:51.341761Z  INFO cf1_rs::pipeline: RSS after P3 StateVector: current=60 MB, peak=59 MB
+2026-11-01T10:48:51.343221Z  INFO cf1_rs::pipeline: Phase 4: Classifying k-mer vertices...
+2026-11-01T10:48:51.343224Z  INFO cf1_rs::classify: Phase 4: Classifying k-mer vertices
+2026-11-01T10:48:51.343384Z  INFO cf1_rs::classify: Classification complete
+2026-11-01T10:48:51.345107Z  INFO cf1_rs::pipeline: RSS after P4: current=60 MB, peak=59 MB
+2026-11-01T10:48:51.345113Z  INFO cf1_rs::pipeline: Phase 5: Extracting unitigs and writing output...
+2026-11-01T10:48:51.345119Z  INFO cf1_rs::output: Phase 5: Extracting unitigs and writing output
+2026-11-01T10:48:51.345945Z  INFO cf1_rs::output: Extracted 11 unitigs, 543 vertices, avg length 79
+2026-11-01T10:48:51.348000Z  INFO cf1_rs::pipeline: RSS after P5: current=80 MB, peak=80 MB
+2026-11-01T10:48:51.348041Z  INFO cf1_rs::output: Wrote JSON output to /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem_cfish.json
+2026-11-01T10:48:51.348044Z  INFO cf1_rs::pipeline: Pipeline complete.
+2026-11-01T10:48:51.348093Z  INFO piscem: cDBG construction complete: 11 unitigs, 543 vertices
+2026-11-01T10:48:51.348521Z  INFO piscem_rs::index::build: Parsing segment file: /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem_cfish.cf_seg
+2026-11-01T10:48:51.349100Z  INFO piscem_rs::index::build:   11 segments
+2026-11-01T10:48:51.349103Z  INFO piscem_rs::index::build: Building SSHash dictionary (k=31, m=19)
+2026-11-01T10:48:51.349623Z  INFO piscem_rs::index::mem_budget: sshash minimizer-sort RAM budget: 31 GiB (auto-detected; 62 GiB usable)
+2026-11-01T10:48:51.350646Z  INFO sshash_lib::builder::config: Build Configuration:
+2026-11-01T10:48:51.350655Z  INFO sshash_lib::builder::config:   k = 31
+2026-11-01T10:48:51.350657Z  INFO sshash_lib::builder::config:   m = 19
+2026-11-01T10:48:51.350659Z  INFO sshash_lib::builder::config:   num_threads = 12
+2026-11-01T10:48:51.350664Z  INFO sshash_lib::builder::dictionary_builder: Building SSHash Dictionary
+2026-11-01T10:48:51.350666Z  INFO sshash_lib::builder::dictionary_builder: Step 1: Encoding sequences...
+2026-11-01T10:48:51.351767Z  INFO sshash_lib::builder::dictionary_builder:   Encoded 11 sequences
+2026-11-01T10:48:51.351775Z  INFO sshash_lib::builder::dictionary_builder:   Total bases: 873
+2026-11-01T10:48:51.351777Z  INFO sshash_lib::builder::dictionary_builder: Step 2: Extracting and coalescing minimizer tuples (in-memory)...
+2026-11-01T10:48:51.352234Z  INFO sshash_lib::builder::dictionary_builder:   Extracted and coalesced 89 tuples
+2026-11-01T10:48:51.352240Z  INFO sshash_lib::builder::dictionary_builder: Step 3: Classifying buckets (in-place)...
+2026-11-01T10:48:51.352319Z  INFO sshash_lib::builder::buckets: Bucket Statistics:
+2026-11-01T10:48:51.352324Z  INFO sshash_lib::builder::buckets:   Total buckets: 86
+2026-11-01T10:48:51.352326Z  INFO sshash_lib::builder::buckets:   Total k-mers: 543
+2026-11-01T10:48:51.352327Z  INFO sshash_lib::builder::buckets:   Total positions: 89
+2026-11-01T10:48:51.352329Z  INFO sshash_lib::builder::buckets:   Singleton buckets: 84 (97.67%)
+2026-11-01T10:48:51.352331Z  INFO sshash_lib::builder::buckets:   Light buckets (2-64): 2 (2.33%)
+2026-11-01T10:48:51.352332Z  INFO sshash_lib::builder::buckets:   Heavy buckets (>64): 0 (0.00%)
+2026-11-01T10:48:51.352334Z  INFO sshash_lib::builder::buckets:   Max bucket size: 3
+2026-11-01T10:48:51.352335Z  INFO sshash_lib::builder::buckets:   Positions in light buckets: 5 (5.62%)
+2026-11-01T10:48:51.352336Z  INFO sshash_lib::builder::buckets:   Positions in heavy buckets: 0 (0.00%)
+2026-11-01T10:48:51.352338Z  INFO sshash_lib::builder::dictionary_builder: Step 4: Building minimizers control map...
+2026-11-01T10:48:51.352340Z  INFO sshash_lib::builder::dictionary_builder: Building PHastR MPHF for 86 minimizers (Streaming(Auto { min_keys: 16777216 }))
+2026-11-01T10:48:51.353115Z  INFO sshash_lib::builder::dictionary_builder:   Built MPHF for 86 minimizers
+2026-11-01T10:48:51.353120Z  INFO sshash_lib::builder::dictionary_builder: Step 5: Building sparse and skew index...
+2026-11-01T10:48:51.353445Z  INFO sshash_lib::sparse_and_skew_index:   Pass 1 (EF build): 0.00s — 86 buckets, 89 total super-kmers, max_bucket_size=3
+2026-11-01T10:48:51.353477Z  INFO sshash_lib::sparse_and_skew_index:   Pass 2 (fill offsets): 0.00s — 0 heavy buckets collected
+2026-11-01T10:48:51.353479Z  INFO sshash_lib::sparse_and_skew_index:   Pass 3 (skew index): 0.00s
+2026-11-01T10:48:51.353481Z  INFO sshash_lib::builder::dictionary_builder:   Index built successfully
+2026-11-01T10:48:51.353482Z  INFO sshash_lib::builder::dictionary_builder: Dictionary Build Complete
+2026-11-01T10:48:51.353493Z  INFO sshash_lib::builder::dictionary_builder: Total memory: 0.00 MB
+2026-11-01T10:48:51.353621Z  INFO piscem_rs::index::build:   Dictionary built: 11 strings
+2026-11-01T10:48:51.353632Z  INFO piscem_rs::index::build: First pass over /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem_cfish.cf_seq
+2026-11-01T10:48:51.355093Z  INFO piscem_rs::index::build:   10 references, max_ref_len=91
+2026-11-01T10:48:51.355098Z  INFO piscem_rs::index::build: Second pass over /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem_cfish.cf_seq to fill contig entries
+2026-11-01T10:48:51.355105Z  INFO piscem_rs::index::build:   processing reference #0
+2026-11-01T10:48:51.355111Z  INFO piscem_rs::index::build:   ContigTable: 11 contigs, 68 entries
+2026-11-01T10:48:51.355112Z  INFO piscem_rs::index::build: Building equivalence class table
+2026-11-01T10:48:51.355120Z  INFO piscem_rs::index::build:   EqClassMap: 11 tiles, 10 ECs, 10 label entries
+2026-11-01T10:48:51.355127Z  INFO piscem_rs::index::reference_index: Saving SSHash dictionary to /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem.ssi
+2026-11-01T10:48:51.355921Z  INFO piscem_rs::index::reference_index: Saving contig table to /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem.ctab
+2026-11-01T10:48:51.355943Z  INFO piscem_rs::index::reference_index: Saving reference info to /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem.refinfo
+2026-11-01T10:48:51.355958Z  INFO piscem_rs::index::reference_index: Saving equivalence class table to /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem.ectab
+2026-11-01T10:48:51.355975Z  INFO piscem_rs::index::reference_index: Index saved to /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem
+2026-11-01T10:48:51.355978Z  INFO piscem_rs::index::build: Index built and saved to /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem
+2026-11-01T10:48:51.355979Z  INFO piscem_rs::index::build: auto dict selection: 543 canonical k-mers (100000000 threshold), emitting Tiny artifacts: true
+2026-11-01T10:48:51.355981Z  INFO piscem_rs::index::build: Emitting Tiny index artifacts (.tdct + .tct)
+2026-11-01T10:48:51.355983Z  INFO piscem_rs::index::reference_index: Building and saving TinyDictionary to /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem.tdct
+2026-11-01T10:48:51.356021Z  INFO piscem_rs::index::reference_index: Building and saving TinyContigTable to /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem.tct
+2026-11-01T10:48:51.356115Z  INFO piscem: removing intermediate cdBG files produced by cf1-rs.
+2026-11-01T10:48:51.356134Z  INFO piscem: removed segment file /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem_cfish.cf_seg
+2026-11-01T10:48:51.356146Z  INFO piscem: removed tiling file /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/piscem_cfish.cf_seq
+2026-11-01T10:48:51.356189Z  INFO piscem: piscem build finished.

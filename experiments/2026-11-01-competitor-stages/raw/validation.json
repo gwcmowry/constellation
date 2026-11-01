@@ -1,0 +1,118 @@
+{
+  "totals": {
+    "ours-default": {
+      "S": 2656486,
+      "U": 2007141,
+      "A": 850393,
+      "total": 5514020
+    },
+    "ours-usa": {
+      "S": 2823561,
+      "U": 2011271,
+      "A": 894749,
+      "total": 5729581
+    },
+    "ours-piscem-usa": {
+      "S": 2959526,
+      "U": 1994063,
+      "A": 841163,
+      "total": 5794752
+    },
+    "alevin-fry": {
+      "S": 2959526,
+      "U": 1994063,
+      "A": 841163,
+      "total": 5794752
+    },
+    "bustools": {
+      "S": 2807312,
+      "U": 2011001,
+      "A": 1002480,
+      "total": 5820793
+    }
+  },
+  "matrix_digests": {
+    "ours-default": "b4ee6697aba5269c18793b5ba9f98fd1d7146cea0fa2c9aeb7b8850b7d234778",
+    "ours-usa": "1dc85d7a968fcc3da436889f6c0c998a547576f2d18705347ecfe7fb3356dc9a",
+    "ours-piscem-usa": "0327d88c186e9e6de028320025f1a43fee577e5f01dc0e39952565224cde2440",
+    "alevin-fry": "0327d88c186e9e6de028320025f1a43fee577e5f01dc0e39952565224cde2440",
+    "bustools": "3418b01c7abe13744c0f53401adedb58eb9669766b1dffe10ceef1589130a96f"
+  },
+  "repeat_identity": {
+    "ours-default": true,
+    "ours-usa": true,
+    "ours-piscem-usa": true,
+    "alevin-fry": true,
+    "bustools": true
+  },
+  "native_metadata": {
+    "1": {
+      "cmdline": "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/alevin-fry-x86_64-unknown-linux-gnu/alevin-fry quant -i /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/af-1/collation -o /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/af-1/quant -m /home/grant/Desktop/programming/constellation/benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/t2g_3col.tsv -r cr-like -t 12 --small-thresh 0",
+      "crlike_umi_edit": 0,
+      "dump_eq": false,
+      "dump_molecules": false,
+      "filter_list": null,
+      "init_uniform": false,
+      "input_dir": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/af-1/collation",
+      "large_graph_thresh": 0,
+      "num_bootstraps": 0,
+      "num_threads": 12,
+      "output_dir": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/af-1/quant",
+      "probe_level": false,
+      "probe_mtx": false,
+      "pug_exact_umi": false,
+      "resolution": "CellRangerLike",
+      "sa_model": "WinnerTakeAll",
+      "small_thresh": 0,
+      "summary_stat": false,
+      "tg_map": "/home/grant/Desktop/programming/constellation/benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/t2g_3col.tsv",
+      "version": "0.19.0"
+    },
+    "2": {
+      "cmdline": "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/alevin-fry-x86_64-unknown-linux-gnu/alevin-fry quant -i /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/af-2/collation -o /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/af-2/quant -m /home/grant/Desktop/programming/constellation/benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/t2g_3col.tsv -r cr-like -t 12 --small-thresh 0",
+      "crlike_umi_edit": 0,
+      "dump_eq": false,
+      "dump_molecules": false,
+      "filter_list": null,
+      "init_uniform": false,
+      "input_dir": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/af-2/collation",
+      "large_graph_thresh": 0,
+      "num_bootstraps": 0,
+      "num_threads": 12,
+      "output_dir": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/af-2/quant",
+      "probe_level": false,
+      "probe_mtx": false,
+      "pug_exact_umi": false,
+      "resolution": "CellRangerLike",
+      "sa_model": "WinnerTakeAll",
+      "small_thresh": 0,
+      "summary_stat": false,
+      "tg_map": "/home/grant/Desktop/programming/constellation/benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/t2g_3col.tsv",
+      "version": "0.19.0"
+    },
+    "3": {
+      "cmdline": "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/alevin-fry-x86_64-unknown-linux-gnu/alevin-fry quant -i /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/af-3/collation -o /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/af-3/quant -m /home/grant/Desktop/programming/constellation/benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/t2g_3col.tsv -r cr-like -t 12 --small-thresh 0",
+      "crlike_umi_edit": 0,
+      "dump_eq": false,
+      "dump_molecules": false,
+      "filter_list": null,
+      "init_uniform": false,
+      "input_dir": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/af-3/collation",
+      "large_graph_thresh": 0,
+      "num_bootstraps": 0,
+      "num_threads": 12,
+      "output_dir": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/af-3/quant",
+      "probe_level": false,
+      "probe_mtx": false,
+      "pug_exact_umi": false,
+      "resolution": "CellRangerLike",
+      "sa_model": "WinnerTakeAll",
+      "small_thresh": 0,
+      "summary_stat": false,
+      "tg_map": "/home/grant/Desktop/programming/constellation/benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/t2g_3col.tsv",
+      "version": "0.19.0"
+    }
+  },
+  "matched_piscem_evidence_usa_matrices_exactly_match_native": true,
+  "all_counts_positive_finite_integers": true
+}

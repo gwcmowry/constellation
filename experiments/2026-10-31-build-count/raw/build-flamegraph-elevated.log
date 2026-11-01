@@ -1,0 +1,3 @@
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.08s
+sudo: a password is required
+failed to sample program, exited with code: Some(1)

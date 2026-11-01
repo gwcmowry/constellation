@@ -1,0 +1,345 @@
+{
+  "count": {
+    "ours_default": {
+      "seconds": {
+        "median": 1.5846116677857935,
+        "min": 1.55729974899441,
+        "max": 1.606894495896995
+      },
+      "cpu_seconds": {
+        "median": 2.96,
+        "min": 2.71,
+        "max": 3.1100000000000003
+      },
+      "rss_gib": {
+        "median": 0.47360992431640625,
+        "min": 0.45072174072265625,
+        "max": 0.485137939453125
+      }
+    },
+    "ours_usa": {
+      "seconds": {
+        "median": 1.4632338569499552,
+        "min": 1.4463529246859252,
+        "max": 1.4922155453823507
+      },
+      "cpu_seconds": {
+        "median": 2.19,
+        "min": 2.1799999999999997,
+        "max": 2.21
+      },
+      "rss_gib": {
+        "median": 0.5654983520507812,
+        "min": 0.5647201538085938,
+        "max": 0.5656242370605469
+      }
+    },
+    "ours_piscem_usa": {
+      "seconds": {
+        "median": 1.422396396752447,
+        "min": 1.390400764066726,
+        "max": 1.506483827251941
+      },
+      "cpu_seconds": {
+        "median": 2.13,
+        "min": 2.1,
+        "max": 2.17
+      },
+      "rss_gib": {
+        "median": 0.534088134765625,
+        "min": 0.5340843200683594,
+        "max": 0.5345878601074219
+      }
+    },
+    "alevin_fry": {
+      "seconds": {
+        "median": 1.2634760080836713,
+        "min": 1.2447673580609262,
+        "max": 1.2802007305435836
+      },
+      "cpu_seconds": {
+        "median": 9.49,
+        "min": 9.48,
+        "max": 9.81
+      },
+      "rss_gib": {
+        "median": 0.5347480773925781,
+        "min": 0.5286674499511719,
+        "max": 0.5602302551269531
+      }
+    },
+    "bustools": {
+      "seconds": {
+        "median": 19.880289474036545,
+        "min": 19.826706572901458,
+        "max": 19.968250541947782
+      },
+      "cpu_seconds": {
+        "median": 20.35,
+        "min": 20.310000000000002,
+        "max": 20.45
+      },
+      "rss_gib": {
+        "median": 2.0345687866210938,
+        "min": 2.0341949462890625,
+        "max": 2.035144805908203
+      }
+    }
+  },
+  "count_stages": {
+    "alevin_fry": {
+      "permit": {
+        "seconds": {
+          "median": 0.288377886172384,
+          "min": 0.2822100380435586,
+          "max": 0.29217590065672994
+        },
+        "cpu_seconds": {
+          "median": 0.8099999999999999,
+          "min": 0.79,
+          "max": 0.8500000000000001
+        },
+        "rss_gib": {
+          "median": 0.15972518920898438,
+          "min": 0.15930938720703125,
+          "max": 0.16321563720703125
+        }
+      },
+      "collate": {
+        "seconds": {
+          "median": 0.21025755489245057,
+          "min": 0.19635326927527785,
+          "max": 0.21865032659843564
+        },
+        "cpu_seconds": {
+          "median": 0.75,
+          "min": 0.74,
+          "max": 0.79
+        },
+        "rss_gib": {
+          "median": 0.3304595947265625,
+          "min": 0.3111991882324219,
+          "max": 0.3304595947265625
+        }
+      },
+      "quant": {
+        "seconds": {
+          "median": 0.7656658669002354,
+          "min": 0.752094856929034,
+          "max": 0.7809260180220008
+        },
+        "cpu_seconds": {
+          "median": 7.94,
+          "min": 7.880000000000001,
+          "max": 8.23
+        },
+        "rss_gib": {
+          "median": 0.5347480773925781,
+          "min": 0.5286674499511719,
+          "max": 0.5602302551269531
+        }
+      }
+    },
+    "bustools": {
+      "correct": {
+        "seconds": {
+          "median": 0.45427358290180564,
+          "min": 0.4391879797913134,
+          "max": 0.4603365305811167
+        },
+        "cpu_seconds": {
+          "median": 0.43000000000000005,
+          "min": 0.43000000000000005,
+          "max": 0.44000000000000006
+        },
+        "rss_gib": {
+          "median": 0.013576507568359375,
+          "min": 0.013225555419921875,
+          "max": 0.0137481689453125
+        }
+      },
+      "sort": {
+        "seconds": {
+          "median": 1.0564247043803334,
+          "min": 1.0458883689716458,
+          "max": 1.0793712437152863
+        },
+        "cpu_seconds": {
+          "median": 1.58,
+          "min": 1.5499999999999998,
+          "max": 1.5899999999999999
+        },
+        "rss_gib": {
+          "median": 2.0345687866210938,
+          "min": 2.0341949462890625,
+          "max": 2.035144805908203
+        }
+      },
+      "count": {
+        "seconds": {
+          "median": 18.394566782284528,
+          "min": 18.315337063279003,
+          "max": 18.4278791048564
+        },
+        "cpu_seconds": {
+          "median": 18.37,
+          "min": 18.3,
+          "max": 18.419999999999998
+        },
+        "rss_gib": {
+          "median": 0.1497802734375,
+          "min": 0.14969635009765625,
+          "max": 0.14990234375
+        }
+      }
+    }
+  },
+  "build": {
+    "ours": {
+      "seconds": 24.390158081892878,
+      "cpu_seconds": 139.29000000000002,
+      "rss_gib": 14.17630386352539
+    },
+    "piscem": {
+      "seconds": 190.71449278807268,
+      "cpu_seconds": 1266.3300000000002,
+      "rss_gib": 7.4009552001953125
+    },
+    "kallisto": {
+      "seconds": 1099.3762404462323,
+      "cpu_seconds": 6054.8099999999995,
+      "rss_gib": 38.945831298828125
+    }
+  },
+  "controls": {
+    "bustools_gene_only_final_count": {
+      "seconds": 1.4697373514063656,
+      "cpu_seconds": 1.4500000000000002,
+      "rss_gib": 0.11278915405273438
+    },
+    "bustools_streamed_correct_sort": {
+      "seconds": {
+        "median": 1.397935246117413,
+        "min": 1.3935319683514535,
+        "max": 1.402160775847733
+      },
+      "cpu_seconds": {
+        "median": 2.03,
+        "min": 2.03,
+        "max": 2.04
+      },
+      "rss_gib": {
+        "median": 2.034961700439453,
+        "min": 2.0347251892089844,
+        "max": 2.0352821350097656
+      }
+    },
+    "alevin_fry_native_small_cell_default": {
+      "seconds": {
+        "median": 1.3064723056741059,
+        "min": 1.2803276916965842,
+        "max": 1.3153528333641589
+      },
+      "cpu_seconds": {
+        "median": 10.040000000000001,
+        "min": 9.870000000000001,
+        "max": 10.379999999999999
+      },
+      "rss_gib": {
+        "median": 0.5406303405761719,
+        "min": 0.5387382507324219,
+        "max": 0.5640106201171875
+      }
+    },
+    "bustools_empty_split": {
+      "seconds": 16.91426887875423,
+      "cpu_seconds": 16.9,
+      "rss_gib": 0.15026092529296875
+    }
+  },
+  "index_files": {
+    "ours": [
+      {
+        "path": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/constellation.ecidx",
+        "bytes": 4427647629
+      }
+    ],
+    "piscem": [
+      {
+        "path": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici.ctab",
+        "bytes": 943500552
+      },
+      {
+        "path": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici.ectab",
+        "bytes": 468127992
+      },
+      {
+        "path": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici.refinfo",
+        "bytes": 7699852
+      },
+      {
+        "path": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici.sigs.json",
+        "bytes": 498
+      },
+      {
+        "path": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici.ssi",
+        "bytes": 1500734762
+      },
+      {
+        "path": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici.ssi.mphf",
+        "bytes": 56368188
+      },
+      {
+        "path": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici_cfish.json",
+        "bytes": 2350
+      },
+      {
+        "path": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici_ver.json",
+        "bytes": 70
+      }
+    ],
+    "kallisto": [
+      {
+        "path": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/kallisto-splici.idx",
+        "bytes": 6012587383
+      }
+    ]
+  },
+  "index_bytes": {
+    "ours": 4427647629,
+    "piscem": 2976434264,
+    "kallisto": 6012587383
+  },
+  "count_output_validation": {
+    "ours-default": {
+      "S": 2656486,
+      "U": 2007141,
+      "A": 850393,
+      "total": 5514020
+    },
+    "ours-usa": {
+      "S": 2823561,
+      "U": 2011271,
+      "A": 894749,
+      "total": 5729581
+    },
+    "ours-piscem-usa": {
+      "S": 2959526,
+      "U": 1994063,
+      "A": 841163,
+      "total": 5794752
+    },
+    "alevin-fry": {
+      "S": 2959526,
+      "U": 1994063,
+      "A": 841163,
+      "total": 5794752
+    },
+    "bustools": {
+      "S": 2807312,
+      "U": 2011001,
+      "A": 1002480,
+      "total": 5820793
+    }
+  }
+}

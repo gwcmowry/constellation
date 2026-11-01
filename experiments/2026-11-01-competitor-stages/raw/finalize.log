@@ -1,0 +1,72 @@
+{
+  "build": {
+    "ours": {
+      "seconds": 24.390158081892878,
+      "cpu_seconds": 139.29000000000002,
+      "rss_gib": 14.17630386352539
+    },
+    "piscem": {
+      "seconds": 190.71449278807268,
+      "cpu_seconds": 1266.3300000000002,
+      "rss_gib": 7.4009552001953125
+    },
+    "kallisto": {
+      "seconds": 1099.3762404462323,
+      "cpu_seconds": 6054.8099999999995,
+      "rss_gib": 38.945831298828125
+    }
+  },
+  "count_medians": {
+    "ours_default": 1.5846116677857935,
+    "ours_usa": 1.4632338569499552,
+    "ours_piscem_usa": 1.422396396752447,
+    "alevin_fry": 1.2634760080836713,
+    "bustools": 19.880289474036545
+  },
+  "controls": {
+    "bustools_gene_only_final_count": {
+      "seconds": 1.4697373514063656,
+      "cpu_seconds": 1.4500000000000002,
+      "rss_gib": 0.11278915405273438
+    },
+    "bustools_streamed_correct_sort": {
+      "seconds": {
+        "median": 1.397935246117413,
+        "min": 1.3935319683514535,
+        "max": 1.402160775847733
+      },
+      "cpu_seconds": {
+        "median": 2.03,
+        "min": 2.03,
+        "max": 2.04
+      },
+      "rss_gib": {
+        "median": 2.034961700439453,
+        "min": 2.0347251892089844,
+        "max": 2.0352821350097656
+      }
+    },
+    "alevin_fry_native_small_cell_default": {
+      "seconds": {
+        "median": 1.3064723056741059,
+        "min": 1.2803276916965842,
+        "max": 1.3153528333641589
+      },
+      "cpu_seconds": {
+        "median": 10.040000000000001,
+        "min": 9.870000000000001,
+        "max": 10.379999999999999
+      },
+      "rss_gib": {
+        "median": 0.5406303405761719,
+        "min": 0.5387382507324219,
+        "max": 0.5640106201171875
+      }
+    },
+    "bustools_empty_split": {
+      "seconds": 16.91426887875423,
+      "cpu_seconds": 16.9,
+      "rss_gib": 0.15026092529296875
+    }
+  }
+}

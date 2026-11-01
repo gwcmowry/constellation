@@ -1,0 +1,22 @@
+before-weighted warmup 3.054
+after-weighted warmup 3.104
+before-consensus warmup 4.343
+after-consensus warmup 4.335
+splicing warmup 4.484
+after-weighted 1 3.083
+before-consensus 1 4.384
+after-consensus 1 4.342
+splicing 1 4.47
+before-weighted 1 3.063
+before-consensus 2 4.347
+after-consensus 2 4.391
+splicing 2 4.562
+before-weighted 2 3.067
+after-weighted 2 3.022
+after-consensus 3 4.592
+splicing 3 4.817
+before-weighted 3 3.193
+after-weighted 3 3.192
+before-consensus 3 4.45
+count-splicing validation 7.861
+All output and molecule conservation checks passed

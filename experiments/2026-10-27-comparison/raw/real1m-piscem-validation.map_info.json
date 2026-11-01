@@ -1,0 +1,38 @@
+{
+  "cmdline": "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/tools/piscem-x86_64-unknown-linux-gnu/piscem map-sc -i /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/piscem-splici -g chromium_v3 -t 12 -1 /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/real1m_R1.fastq.gz -2 /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/real1m_R2.fastq.gz -o /home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/real1m-piscem",
+  "consumer_measurement": {
+    "busy_nanos": 16011254897,
+    "callback_setup_nanos": 477907,
+    "output_flush_nanos": 5380093
+  },
+  "execution_plan": {
+    "allocation": {
+      "kind": "serial"
+    },
+    "decode_slots": 0,
+    "effective_budget": 12,
+    "map_threads": 12,
+    "requested_budget": 12,
+    "requested_decode_slots": null
+  },
+  "index_path": "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/piscem-splici",
+  "k": 31,
+  "m": 19,
+  "mapping_seconds": 1.556476105,
+  "mode": "sc-rna",
+  "num_mapped": 880212,
+  "num_poisoned": 0,
+  "num_reads": 1000000,
+  "num_refs": 276935,
+  "num_threads": 12,
+  "percent_mapped": "88.02",
+  "piscem_rs_version": "0.11.1",
+  "runtime_seconds": "1.80",
+  "signatures": {
+    "sha256_names": "46b4c3e28eef1839f9de68d15bdafe91b36ac6ae1037281e57381750e6976d05",
+    "sha256_seqs": "327a08718abe035e84ffc7cf1202c13f80cf16c2f4afe2935c0839ff11aba373",
+    "sha512_names": "a0bf445451b2444674d9143382b8d49060b08c86d37bb9bf2866f6e0ca9bd2f2d1227342e3235d4464e5f59dc9aabc5e488a70f537a097dbe2bd9dc25e294875",
+    "sha512_seqs": "a8da5ce7867f2725b6153681d39c894866300a100fa76c0729d8e3e55ad08b27a772bdda1188437bd65790cb0ea223f94a64823d801f69af6f9b1cd42ec3ca98"
+  },
+  "skipping_strategy": "permissive"
+}

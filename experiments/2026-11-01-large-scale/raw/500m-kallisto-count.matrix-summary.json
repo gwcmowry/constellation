@@ -1,0 +1,26 @@
+{
+  "S": {
+    "total": 65578812,
+    "nonzero": 18826604,
+    "sha256_canonical_arrays": "16253890cf14758b3d879c89090bf2e484a13a9a6b037c4ef07ccda211d6bd9f",
+    "genes_with_counts": 27482,
+    "cells_with_counts": 11769
+  },
+  "U": {
+    "total": 46513256,
+    "nonzero": 21010599,
+    "sha256_canonical_arrays": "e2d48bca2ca3a43c4b49e7d789d45b1642da78e00c1d5c68137114ef63fe35be",
+    "genes_with_counts": 27514,
+    "cells_with_counts": 11769
+  },
+  "A": {
+    "total": 18326990,
+    "nonzero": 7292199,
+    "sha256_canonical_arrays": "76bd3f7cd48af08b91333e130b442e71dc0040b290e3bf843efc086b36e302f8",
+    "genes_with_counts": 21677,
+    "cells_with_counts": 11769
+  },
+  "total": 130419058,
+  "barcodes": 11769,
+  "genes": 58395
+}

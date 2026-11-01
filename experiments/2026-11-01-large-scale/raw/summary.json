@@ -1,0 +1,990 @@
+{
+  "cases": {
+    "100m-ours": {
+      "pairs": 100000000,
+      "map_seconds": 44.698509173002094,
+      "count_seconds": 13.279297107830644,
+      "pipeline_seconds": 57.97780628083274,
+      "matrix_totals": {
+        "count": {
+          "S": {
+            "total": 22300193,
+            "nonzero": 9300426,
+            "sha256_canonical_arrays": "740248d85c026f63277460a06efdcb2de41e7e670f443a423f86fcbd7a6f8aaf",
+            "genes_with_counts": 22971,
+            "cells_with_counts": 11769
+          },
+          "U": {
+            "total": 16605351,
+            "nonzero": 10863984,
+            "sha256_canonical_arrays": "586f6a43ef6900e4139bb72c56802969f1d315e51b63dda55d2e63fb11965ce9",
+            "genes_with_counts": 24828,
+            "cells_with_counts": 11769
+          },
+          "A": {
+            "total": 6593250,
+            "nonzero": 3254479,
+            "sha256_canonical_arrays": "992c9b613706e0ec771247f7ca0777d60f47fcff935da2c478d6008ad86e404e",
+            "genes_with_counts": 14718,
+            "cells_with_counts": 11759
+          },
+          "total": 45498794,
+          "barcodes": 11769,
+          "genes": 58395
+        },
+        "usa": {
+          "S": {
+            "total": 23857375,
+            "nonzero": 9859362,
+            "sha256_canonical_arrays": "4855e1156e8d5ea3d43285daf3576b6032c7edd4e7280baf843d8920d6d229a6",
+            "genes_with_counts": 26614,
+            "cells_with_counts": 11769
+          },
+          "U": {
+            "total": 16776425,
+            "nonzero": 10879550,
+            "sha256_canonical_arrays": "0f9a7cadcf5e1c756825415428a5651f47eced70f9531ba963da879f704ec9f2",
+            "genes_with_counts": 24875,
+            "cells_with_counts": 11769
+          },
+          "A": {
+            "total": 7017638,
+            "nonzero": 3523646,
+            "sha256_canonical_arrays": "ae76bec81a4316b178e3b5b705fa07583c2e903fd1f97fa7aefdab145857fef4",
+            "genes_with_counts": 16128,
+            "cells_with_counts": 11763
+          },
+          "total": 47651438,
+          "barcodes": 11769,
+          "genes": 58395
+        }
+      },
+      "count_policy": {
+        "count": "intersection",
+        "usa": "usa"
+      },
+      "stages": {
+        "map": {
+          "seconds": 44.698509173002094,
+          "cpu_seconds": 400.17,
+          "rss_gib": 4.266929626464844,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 21232632,
+          "filesystem_output_blocks": 6802520
+        },
+        "count": {
+          "seconds": 13.279297107830644,
+          "cpu_seconds": 23.72,
+          "rss_gib": 3.6299057006835938,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 0,
+          "filesystem_output_blocks": 1185576
+        },
+        "usa": {
+          "seconds": 11.899804490152746,
+          "cpu_seconds": 17.819999999999997,
+          "rss_gib": 3.4572181701660156,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 0,
+          "filesystem_output_blocks": 1232072
+        }
+      },
+      "million_pairs_per_second": 2.237211080417868,
+      "pipeline_peak_rss_gib": 4.266929626464844,
+      "count_metrics": {
+        "ambiguous_including_conflict_unknown": 6593250,
+        "barcode_corrected": 1142234,
+        "barcode_exact": 72853185,
+        "barcode_rejected_rows": 5371733,
+        "cells": 11769,
+        "compatible_both": 6569155,
+        "conflicting_gene_groups": 158714,
+        "conflicting_state": 24095,
+        "correct_umis": true,
+        "count_seconds": 13.117961638,
+        "invalid_barcode_rows": 0,
+        "mapped_valid_rows": 73995419,
+        "molecules_after_umi_correction": 45498794,
+        "molecules_before_umi_correction": 45923758,
+        "phase_seconds": {
+          "gather": 0.484512462,
+          "ingest": 9.13011342,
+          "resolve_and_collapse": 1.4820414020000001,
+          "write": 2.021292035
+        },
+        "policy": "intersection of candidate genes within corrected barcode/exact UMI; skip unresolved/conflicting genes; deterministic one-hop directional UMI correction within cell/gene; intersect states across merged reads/UMIs",
+        "policy_changed_genes": 0,
+        "policy_changed_states": 0,
+        "policy_rescued_groups": 0,
+        "raw_barcode_umi_groups": 54224332,
+        "resolution": "intersection",
+        "rows": 100000000,
+        "spliced": 22300193,
+        "unknown_state": 0,
+        "unresolved_gene_groups": 8141860,
+        "unspliced": 16605351,
+        "usa_spliced_tiebreak_groups": 0,
+        "usa_unknown_conflict_fallback_groups": 0
+      },
+      "usa_metrics": {
+        "ambiguous_including_conflict_unknown": 7017638,
+        "barcode_corrected": 1142234,
+        "barcode_exact": 72853185,
+        "barcode_rejected_rows": 5371733,
+        "cells": 11769,
+        "compatible_both": 7010671,
+        "conflicting_gene_groups": 100423,
+        "conflicting_state": 6967,
+        "correct_umis": false,
+        "count_seconds": 11.720912859,
+        "invalid_barcode_rows": 0,
+        "mapped_valid_rows": 73995419,
+        "molecules_after_umi_correction": 47651438,
+        "molecules_before_umi_correction": 47651438,
+        "phase_seconds": {
+          "gather": 0.333354586,
+          "ingest": 8.825600337000001,
+          "resolve_and_collapse": 0.454470574,
+          "write": 2.107486812
+        },
+        "policy": "exact UMI, maximum-support gene/state labels; USA spliced preference for cross-gene ties of at most ten labels; C/X groups use conservative intersection",
+        "policy_changed_genes": 11,
+        "policy_changed_states": 16156,
+        "policy_rescued_groups": 1728154,
+        "raw_barcode_umi_groups": 54224332,
+        "resolution": "usa",
+        "rows": 100000000,
+        "spliced": 23857375,
+        "unknown_state": 0,
+        "unresolved_gene_groups": 6472471,
+        "unspliced": 16776425,
+        "usa_spliced_tiebreak_groups": 1685729,
+        "usa_unknown_conflict_fallback_groups": 15308
+      },
+      "usa_policy_net_gain_vs_exact_intersection": {
+        "molecules": 1727680,
+        "fraction": 0.03762061458472105
+      },
+      "usa_pipeline_seconds": 56.59831366315484,
+      "mapping_metrics": {
+        "mode": "gene-ec",
+        "score_mode": "gene-ec",
+        "num_reads": 100000000,
+        "wall_seconds": 44.67126811,
+        "index_load_seconds": 0.037626934,
+        "fastq_load_seconds": 0.03246476000000011,
+        "preprocess_seconds": 0.0,
+        "mapping_seconds": 43.71004942099998,
+        "candidate_generation_seconds": 43.71004942099998,
+        "bucket_build_seconds": 0.0,
+        "scoring_seconds": 0.0,
+        "assignment_seconds": 0.0,
+        "write_seconds": 0.7757872430000001,
+        "hot_index_enabled": false,
+        "hot_mapping_seconds": 0.0,
+        "cold_fallback_seconds": 0.0,
+        "cold_fallback_reads": 0,
+        "cold_fallback_replaced_reads": 0,
+        "cold_fallback_shard_groups": 0,
+        "cold_shard_prefix_bits": 0,
+        "cold_evict_interval": 0,
+        "cold_shard_scheduling": false,
+        "cold_preload_seconds": 0.0,
+        "adaptive_rescue_seconds": 0.0,
+        "adaptive_rescue_reads": 0,
+        "adaptive_rescue_replaced_reads": 0,
+        "adaptive_rescue_stride": 0,
+        "reads_per_second": 2238575.3579629017,
+        "bases_per_second": 203710357.57462403,
+        "seed_lookups_per_read": 10.24847042,
+        "seed_candidates_considered_per_read": 10.24847042,
+        "candidate_hits_per_read": 24.24591794,
+        "candidate_buckets_per_read": 0.0,
+        "postings_skipped_due_to_frequency": 0,
+        "seeds_skipped_due_to_quality": 0,
+        "early_stopped_reads": 0,
+        "seed_lookups_saved_by_early_stop": 0,
+        "scored_candidates_per_read": 24.24591794,
+        "mean_candidate_bucket_size": 0.0,
+        "median_candidate_bucket_size": 0.0,
+        "max_candidate_bucket_size": 0,
+        "reads_with_no_valid_kmers": 0,
+        "reads_with_no_selected_seeds": 0,
+        "reads_with_no_seed_postings": 20632848,
+        "reads_all_selected_seeds_over_frequency_cap": 0,
+        "reads_with_candidate_hits": 79367152,
+        "selected_seeds_absent_from_index": 275368278,
+        "selected_seeds_over_frequency_cap": 49658612,
+        "selected_seeds_with_postings": 749478764,
+        "query_seed_occurrences_per_read": 10.24847042,
+        "distinct_seed_lists_loaded": 749478764,
+        "posting_list_reuse_factor": 1.0,
+        "candidate_votes_per_read": 44.81714749,
+        "seed_groups_skipped_due_to_frequency": 0,
+        "sparse_probe_attempted_reads": 0,
+        "sparse_probe_accepted_reads": 0,
+        "sparse_probe_fallback_reads": 0,
+        "candidate_hits_pruned": 0,
+        "score_candidates_seen": 0,
+        "score_candidates_out_of_bounds": 0,
+        "score_candidates_failed_mismatch": 0,
+        "score_candidates_failed_min_scored_len": 0,
+        "score_candidates_failed_trimmed_out_of_bounds": 0,
+        "score_candidates_full_length_mismatch_only": 0,
+        "score_candidates_passed_full_length": 0,
+        "score_candidates_passed_trimmed_or_softclipped": 0,
+        "unique_gene_rate": 0.667065,
+        "ambiguous_gene_rate": 0.12660652,
+        "same_gene_multitranscript_rate": 0.0,
+        "multi_gene_ambiguous_rate": 0.12660652,
+        "antisense_gene_rate": 0.0,
+        "gene_countable_rate": 0.667065,
+        "exon_target_assignment_rate": 0.52747361,
+        "intron_target_assignment_rate": 0.56917561,
+        "gene_body_target_assignment_rate": 0.0,
+        "mixed_target_assignment_rate": 0.3029777,
+        "unknown_target_assignment_rate": 0.0,
+        "rescued_assignment_rate": 0.0,
+        "low_complexity_rate": 0.00613215,
+        "low_quality_rate": 0.00077569,
+        "unmapped_rate": 0.19942064,
+        "function_seconds": {
+          "LoadedEcIndex::load": 0.037626894,
+          "prepare_map_and_format_gene_ec_batches": 43.710049421,
+          "stream_fastq_pair_batches": 0.03246476
+        }
+      },
+      "forward_assigned_reads": 79367152,
+      "forward_assignment_fraction": 0.79367152
+    },
+    "100m-piscem": {
+      "pairs": 100000000,
+      "map_seconds": 136.08688875008374,
+      "count_seconds": 4.9300720896571875,
+      "pipeline_seconds": 141.01696083974093,
+      "matrix_totals": {
+        "count": {
+          "S": {
+            "total": 24816270,
+            "nonzero": 10007306,
+            "sha256_canonical_arrays": "2a40bedbcc91826a8754082cb26a51749d3687d6d10d3b2b9b2ae45bc12b88ed",
+            "genes_with_counts": 26241,
+            "cells_with_counts": 11769
+          },
+          "U": {
+            "total": 16573794,
+            "nonzero": 10682714,
+            "sha256_canonical_arrays": "f3fc5b69897b21bbf7560c62d5c5691644d3ca4d6d37a440e836d38feded2444",
+            "genes_with_counts": 24294,
+            "cells_with_counts": 11769
+          },
+          "A": {
+            "total": 6581502,
+            "nonzero": 3289426,
+            "sha256_canonical_arrays": "9f11da3232fda7eda47838f9c98d3ffcc3d4a2ce9374e32f7332b924634012ce",
+            "genes_with_counts": 15281,
+            "cells_with_counts": 11763
+          },
+          "total": 47971566,
+          "barcodes": 11769,
+          "genes": 58395
+        }
+      },
+      "count_policy": {
+        "count": "cr-like WTA exact UMI"
+      },
+      "stages": {
+        "map": {
+          "seconds": 136.08688875008374,
+          "cpu_seconds": 1616.03,
+          "rss_gib": 3.1163787841796875,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 21408,
+          "filesystem_output_blocks": 4645312
+        },
+        "permit": {
+          "seconds": 1.5136839440092444,
+          "cpu_seconds": 10.68,
+          "rss_gib": 0.2213592529296875,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 0,
+          "filesystem_output_blocks": 83960
+        },
+        "collate": {
+          "seconds": 1.123044203966856,
+          "cpu_seconds": 9.3,
+          "rss_gib": 0.9186019897460938,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 0,
+          "filesystem_output_blocks": 7514640
+        },
+        "quant": {
+          "seconds": 2.293343941681087,
+          "cpu_seconds": 26.31,
+          "rss_gib": 0.5446548461914062,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 0,
+          "filesystem_output_blocks": 623072
+        }
+      },
+      "million_pairs_per_second": 0.7348246470947295,
+      "pipeline_peak_rss_gib": 3.1163787841796875,
+      "barcode_correction": {
+        "ambiguous_distinct": 981,
+        "ambiguous_reads": 5524,
+        "corrected_distinct": 311972,
+        "corrected_reads": 1240931,
+        "exact_distinct": 11769,
+        "exact_reads": 71624796,
+        "not_found_distinct": 1451552,
+        "not_found_reads": 5289756
+      },
+      "forward_assigned_reads": 78161007,
+      "mapping_metrics": {
+        "cmdline": "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/tools/piscem-x86_64-unknown-linux-gnu/piscem map-sc -i /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici -g chromium_v3 -t 12 -1 /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/small_R1.fastq.gz -2 /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/small_R2.fastq.gz -o /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-piscem/map",
+        "consumer_measurement": {
+          "busy_nanos": 1595112893457,
+          "callback_setup_nanos": 13900636,
+          "output_flush_nanos": 593497005
+        },
+        "execution_plan": {
+          "allocation": {
+            "kind": "serial"
+          },
+          "decode_slots": 0,
+          "effective_budget": 12,
+          "map_threads": 12,
+          "requested_budget": 12,
+          "requested_decode_slots": null
+        },
+        "index_path": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici",
+        "k": 31,
+        "m": 19,
+        "mapping_seconds": 135.516552504,
+        "mode": "sc-rna",
+        "num_mapped": 87298202,
+        "num_poisoned": 0,
+        "num_reads": 100000000,
+        "num_refs": 276935,
+        "num_threads": 12,
+        "percent_mapped": "87.30",
+        "piscem_rs_version": "0.11.1",
+        "runtime_seconds": "136.07",
+        "signatures": {
+          "sha256_names": "46b4c3e28eef1839f9de68d15bdafe91b36ac6ae1037281e57381750e6976d05",
+          "sha256_seqs": "327a08718abe035e84ffc7cf1202c13f80cf16c2f4afe2935c0839ff11aba373",
+          "sha512_names": "a0bf445451b2444674d9143382b8d49060b08c86d37bb9bf2866f6e0ca9bd2f2d1227342e3235d4464e5f59dc9aabc5e488a70f537a097dbe2bd9dc25e294875",
+          "sha512_seqs": "a8da5ce7867f2725b6153681d39c894866300a100fa76c0729d8e3e55ad08b27a772bdda1188437bd65790cb0ea223f94a64823d801f69af6f9b1cd42ec3ca98"
+        },
+        "skipping_strategy": "permissive"
+      },
+      "forward_assignment_fraction": 0.78161007
+    },
+    "100m-kallisto": {
+      "pairs": 100000000,
+      "map_seconds": 314.42215679585934,
+      "count_seconds": 92.07727825175971,
+      "pipeline_seconds": 406.49943504761904,
+      "matrix_totals": {
+        "count": {
+          "S": {
+            "total": 23594884,
+            "nonzero": 9518156,
+            "sha256_canonical_arrays": "8b792f0b83769534606a1a17f1a80dcdf301197d7749acfa0711d3c45d837ca2",
+            "genes_with_counts": 23373,
+            "cells_with_counts": 11769
+          },
+          "U": {
+            "total": 16816413,
+            "nonzero": 10805690,
+            "sha256_canonical_arrays": "fb23f8ad85e0b4bb692d46e16a9092346e8b34d852591ec32da7a054b7c4200b",
+            "genes_with_counts": 24654,
+            "cells_with_counts": 11769
+          },
+          "A": {
+            "total": 7897321,
+            "nonzero": 3879947,
+            "sha256_canonical_arrays": "797d06498431df4c2a27ed692646e2ac4a5ea124ccc4352de88d209ea2b1e802",
+            "genes_with_counts": 18854,
+            "cells_with_counts": 11768
+          },
+          "total": 48308618,
+          "barcodes": 11769,
+          "genes": 58395
+        }
+      },
+      "count_policy": {
+        "count": "gene UMI split, exact UMIs"
+      },
+      "stages": {
+        "map": {
+          "seconds": 314.42215679585934,
+          "cpu_seconds": 3296.27,
+          "rss_gib": 14.28232192993164,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 98432,
+          "filesystem_output_blocks": 5050352
+        },
+        "correct": {
+          "seconds": 12.006371546071023,
+          "cpu_seconds": 4.26,
+          "rss_gib": 0.0138092041015625,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 0,
+          "filesystem_output_blocks": 4579336
+        },
+        "sort": {
+          "seconds": 13.7853321461007,
+          "cpu_seconds": 14.549999999999999,
+          "rss_gib": 2.0356597900390625,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 0,
+          "filesystem_output_blocks": 7205696
+        },
+        "count": {
+          "seconds": 66.28557455958799,
+          "cpu_seconds": 66.09,
+          "rss_gib": 0.35498046875,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 20472,
+          "filesystem_output_blocks": 609072
+        }
+      },
+      "million_pairs_per_second": 0.31804374417839026,
+      "pipeline_peak_rss_gib": 14.28232192993164,
+      "mapping_metrics": {
+        "n_targets": 276935,
+        "n_bootstraps": 0,
+        "n_processed": 100000000,
+        "n_pseudoaligned": 78609017,
+        "n_unique": 35500788,
+        "p_pseudoaligned": 78.6,
+        "p_unique": 35.5,
+        "kallisto_version": "0.52.0",
+        "index_version": 13,
+        "k-mer length": 31,
+        "start_time": "Sun Nov  1 06:02:19 2026",
+        "call": "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/tools/kallisto/kallisto bus -i /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/kallisto-splici.idx -x 10xv3 --fr-stranded -t 12 -o /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/100m-kallisto/map /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/small_R1.fastq.gz /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/small_R2.fastq.gz"
+      },
+      "forward_assigned_reads": 78609017,
+      "forward_assignment_fraction": 0.78609017
+    },
+    "500m-ours": {
+      "pairs": 500000000,
+      "map_seconds": 261.79297132138163,
+      "count_seconds": 60.4573173080571,
+      "pipeline_seconds": 322.2502886294387,
+      "matrix_totals": {
+        "count": {
+          "S": {
+            "total": 60757620,
+            "nonzero": 18410436,
+            "sha256_canonical_arrays": "93bdfb434bbb0e1b17d0b0455afd9a89079e9d8307de23ff40c1eeb3ce703f2a",
+            "genes_with_counts": 26176,
+            "cells_with_counts": 11769
+          },
+          "U": {
+            "total": 43459419,
+            "nonzero": 20747289,
+            "sha256_canonical_arrays": "a2276cd0957e3bb7add9554c99a094361a68aa315f158e6b8b938032583151a4",
+            "genes_with_counts": 26694,
+            "cells_with_counts": 11769
+          },
+          "A": {
+            "total": 14166789,
+            "nonzero": 5932697,
+            "sha256_canonical_arrays": "38fa64ead0b426d138475395d38518c331bc06bfbfa291c0bf0f6e73e16fa5da",
+            "genes_with_counts": 17203,
+            "cells_with_counts": 11769
+          },
+          "total": 118383828,
+          "barcodes": 11769,
+          "genes": 58395
+        },
+        "usa": {
+          "S": {
+            "total": 66724728,
+            "nonzero": 19613528,
+            "sha256_canonical_arrays": "0112c904faf1cb5bf6df0a422e57d6fd4928efcc76176b87a20d787d80a7eb36",
+            "genes_with_counts": 30346,
+            "cells_with_counts": 11769
+          },
+          "U": {
+            "total": 45624679,
+            "nonzero": 20979494,
+            "sha256_canonical_arrays": "0877e6e7aca68c3cd3f44e4048e20ef68c46f4b5ab086d36d957010e73092ba9",
+            "genes_with_counts": 26852,
+            "cells_with_counts": 11769
+          },
+          "A": {
+            "total": 15836472,
+            "nonzero": 6532497,
+            "sha256_canonical_arrays": "aa2e0f87c1c2580c1b49fa6347a4ea156196b42815eab3a8528ad936c124103c",
+            "genes_with_counts": 18159,
+            "cells_with_counts": 11769
+          },
+          "total": 128185879,
+          "barcodes": 11769,
+          "genes": 58395
+        }
+      },
+      "count_policy": {
+        "count": "intersection",
+        "usa": "usa"
+      },
+      "stages": {
+        "map": {
+          "seconds": 261.79297132138163,
+          "cpu_seconds": 2004.3400000000001,
+          "rss_gib": 4.267536163330078,
+          "major_page_faults": 126,
+          "filesystem_input_blocks": 113076656,
+          "filesystem_output_blocks": 33940888
+        },
+        "count": {
+          "seconds": 60.4573173080571,
+          "cpu_seconds": 92.06,
+          "rss_gib": 14.288436889648438,
+          "major_page_faults": 1,
+          "filesystem_input_blocks": 32341016,
+          "filesystem_output_blocks": 2215704
+        },
+        "usa": {
+          "seconds": 52.921633364167064,
+          "cpu_seconds": 75.07000000000001,
+          "rss_gib": 14.805545806884766,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 1876824,
+          "filesystem_output_blocks": 2322816
+        }
+      },
+      "million_pairs_per_second": 1.9099061272588225,
+      "pipeline_peak_rss_gib": 14.288436889648438,
+      "count_metrics": {
+        "ambiguous_including_conflict_unknown": 14166789,
+        "barcode_corrected": 7070947,
+        "barcode_exact": 360588478,
+        "barcode_rejected_rows": 26299879,
+        "cells": 11769,
+        "compatible_both": 13958269,
+        "conflicting_gene_groups": 1832307,
+        "conflicting_state": 208520,
+        "correct_umis": true,
+        "count_seconds": 59.537087827,
+        "invalid_barcode_rows": 0,
+        "mapped_valid_rows": 367659425,
+        "molecules_after_umi_correction": 118383828,
+        "molecules_before_umi_correction": 122967735,
+        "phase_seconds": {
+          "gather": 0.8391369,
+          "ingest": 49.192896965,
+          "resolve_and_collapse": 5.795189242,
+          "write": 3.70986255
+        },
+        "policy": "intersection of candidate genes within corrected barcode/exact UMI; skip unresolved/conflicting genes; deterministic one-hop directional UMI correction within cell/gene; intersect states across merged reads/UMIs",
+        "policy_changed_genes": 0,
+        "policy_changed_states": 0,
+        "policy_rescued_groups": 0,
+        "raw_barcode_umi_groups": 143448707,
+        "resolution": "intersection",
+        "rows": 500000000,
+        "spliced": 60757620,
+        "unknown_state": 0,
+        "unresolved_gene_groups": 18648665,
+        "unspliced": 43459419,
+        "usa_spliced_tiebreak_groups": 0,
+        "usa_unknown_conflict_fallback_groups": 0
+      },
+      "usa_metrics": {
+        "ambiguous_including_conflict_unknown": 15836472,
+        "barcode_corrected": 7070947,
+        "barcode_exact": 360588478,
+        "barcode_rejected_rows": 26299879,
+        "cells": 11769,
+        "compatible_both": 15808423,
+        "conflicting_gene_groups": 842347,
+        "conflicting_state": 28049,
+        "correct_umis": false,
+        "count_seconds": 52.507001309,
+        "invalid_barcode_rows": 0,
+        "mapped_valid_rows": 367659425,
+        "molecules_after_umi_correction": 128185879,
+        "molecules_before_umi_correction": 128185879,
+        "phase_seconds": {
+          "gather": 1.126111374,
+          "ingest": 45.641543974,
+          "resolve_and_collapse": 1.8375656249999999,
+          "write": 3.901779586
+        },
+        "policy": "exact UMI, maximum-support gene/state labels; USA spliced preference for cross-gene ties of at most ten labels; C/X groups use conservative intersection",
+        "policy_changed_genes": 291,
+        "policy_changed_states": 172798,
+        "policy_rescued_groups": 5222179,
+        "raw_barcode_umi_groups": 143448707,
+        "resolution": "usa",
+        "rows": 500000000,
+        "spliced": 66724728,
+        "unknown_state": 0,
+        "unresolved_gene_groups": 14420481,
+        "unspliced": 45624679,
+        "usa_spliced_tiebreak_groups": 4315306,
+        "usa_unknown_conflict_fallback_groups": 65739
+      },
+      "usa_policy_net_gain_vs_exact_intersection": {
+        "molecules": 5218144,
+        "fraction": 0.04243506640176791
+      },
+      "usa_pipeline_seconds": 314.7146046855487,
+      "mapping_metrics": {
+        "mode": "gene-ec",
+        "score_mode": "gene-ec",
+        "num_reads": 500000000,
+        "wall_seconds": 261.739643445,
+        "index_load_seconds": 0.036815212,
+        "fastq_load_seconds": 34.705235273999946,
+        "preprocess_seconds": 0.0,
+        "mapping_seconds": 221.82644916200087,
+        "candidate_generation_seconds": 221.82644916200087,
+        "bucket_build_seconds": 0.0,
+        "scoring_seconds": 0.0,
+        "assignment_seconds": 0.0,
+        "write_seconds": 4.801289122999997,
+        "hot_index_enabled": false,
+        "hot_mapping_seconds": 0.0,
+        "cold_fallback_seconds": 0.0,
+        "cold_fallback_reads": 0,
+        "cold_fallback_replaced_reads": 0,
+        "cold_fallback_shard_groups": 0,
+        "cold_shard_prefix_bits": 0,
+        "cold_evict_interval": 0,
+        "cold_shard_scheduling": false,
+        "cold_preload_seconds": 0.0,
+        "adaptive_rescue_seconds": 0.0,
+        "adaptive_rescue_reads": 0,
+        "adaptive_rescue_replaced_reads": 0,
+        "adaptive_rescue_stride": 0,
+        "reads_per_second": 1910295.2591324449,
+        "bases_per_second": 173836868.58105248,
+        "seed_lookups_per_read": 10.24107778,
+        "seed_candidates_considered_per_read": 10.24107778,
+        "candidate_hits_per_read": 23.966766098,
+        "candidate_buckets_per_read": 0.0,
+        "postings_skipped_due_to_frequency": 0,
+        "seeds_skipped_due_to_quality": 0,
+        "early_stopped_reads": 0,
+        "seed_lookups_saved_by_early_stop": 0,
+        "scored_candidates_per_read": 23.966766098,
+        "mean_candidate_bucket_size": 0.0,
+        "median_candidate_bucket_size": 0.0,
+        "max_candidate_bucket_size": 0,
+        "reads_with_no_valid_kmers": 0,
+        "reads_with_no_selected_seeds": 0,
+        "reads_with_no_seed_postings": 106040696,
+        "reads_all_selected_seeds_over_frequency_cap": 0,
+        "reads_with_candidate_hits": 393959304,
+        "selected_seeds_absent_from_index": 1433148831,
+        "selected_seeds_over_frequency_cap": 240814407,
+        "selected_seeds_with_postings": 3687390059,
+        "query_seed_occurrences_per_read": 10.24107778,
+        "distinct_seed_lists_loaded": 3687390059,
+        "posting_list_reuse_factor": 1.0,
+        "candidate_votes_per_read": 44.19221095,
+        "seed_groups_skipped_due_to_frequency": 0,
+        "sparse_probe_attempted_reads": 0,
+        "sparse_probe_accepted_reads": 0,
+        "sparse_probe_fallback_reads": 0,
+        "candidate_hits_pruned": 0,
+        "score_candidates_seen": 0,
+        "score_candidates_out_of_bounds": 0,
+        "score_candidates_failed_mismatch": 0,
+        "score_candidates_failed_min_scored_len": 0,
+        "score_candidates_failed_trimmed_out_of_bounds": 0,
+        "score_candidates_full_length_mismatch_only": 0,
+        "score_candidates_passed_full_length": 0,
+        "score_candidates_passed_trimmed_or_softclipped": 0,
+        "unique_gene_rate": 0.661586894,
+        "ambiguous_gene_rate": 0.126331714,
+        "same_gene_multitranscript_rate": 0.0,
+        "multi_gene_ambiguous_rate": 0.126331714,
+        "antisense_gene_rate": 0.0,
+        "gene_countable_rate": 0.661586894,
+        "exon_target_assignment_rate": 0.524277936,
+        "intron_target_assignment_rate": 0.564400514,
+        "gene_body_target_assignment_rate": 0.0,
+        "mixed_target_assignment_rate": 0.300759842,
+        "unknown_target_assignment_rate": 0.0,
+        "rescued_assignment_rate": 0.0,
+        "low_complexity_rate": 0.00611814,
+        "low_quality_rate": 0.000754388,
+        "unmapped_rate": 0.205208864,
+        "function_seconds": {
+          "LoadedEcIndex::load": 0.036815162,
+          "prepare_map_and_format_gene_ec_batches": 221.826449162,
+          "stream_fastq_pair_batches": 34.705235274
+        }
+      },
+      "forward_assigned_reads": 393959304,
+      "forward_assignment_fraction": 0.787918608
+    },
+    "500m-piscem": {
+      "pairs": 500000000,
+      "map_seconds": 680.6865104753524,
+      "count_seconds": 61.96283892262727,
+      "pipeline_seconds": 742.6493493979797,
+      "matrix_totals": {
+        "count": {
+          "S": {
+            "total": 68503016,
+            "nonzero": 19706499,
+            "sha256_canonical_arrays": "3c8b0751642ea5b45bbf9103a79f5751cbc1fe6ffd85bac4887c9580b3a25990",
+            "genes_with_counts": 30146,
+            "cells_with_counts": 11769
+          },
+          "U": {
+            "total": 44933518,
+            "nonzero": 20358165,
+            "sha256_canonical_arrays": "b8a4f8952e9b3cd696eb8ea9bf0f3eb8fc612ba406d848075689b00e898caacd",
+            "genes_with_counts": 26655,
+            "cells_with_counts": 11769
+          },
+          "A": {
+            "total": 15016685,
+            "nonzero": 6154512,
+            "sha256_canonical_arrays": "7ded3c19440910637de6377f0a85f00cf27f43fe08e9597cdfa2d8b4344560b6",
+            "genes_with_counts": 17360,
+            "cells_with_counts": 11769
+          },
+          "total": 128453219,
+          "barcodes": 11769,
+          "genes": 58395
+        }
+      },
+      "count_policy": {
+        "count": "cr-like WTA exact UMI"
+      },
+      "stages": {
+        "map": {
+          "seconds": 680.6865104753524,
+          "cpu_seconds": 7998.14,
+          "rss_gib": 3.301380157470703,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 113061896,
+          "filesystem_output_blocks": 22954000
+        },
+        "permit": {
+          "seconds": 6.034373122267425,
+          "cpu_seconds": 38.510000000000005,
+          "rss_gib": 0.5034103393554688,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 15273584,
+          "filesystem_output_blocks": 162152
+        },
+        "collate": {
+          "seconds": 47.889729598071426,
+          "cpu_seconds": 42.849999999999994,
+          "rss_gib": 0.9826812744140625,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 10211712,
+          "filesystem_output_blocks": 37380184
+        },
+        "quant": {
+          "seconds": 8.038736202288419,
+          "cpu_seconds": 89.47999999999999,
+          "rss_gib": 0.6782493591308594,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 1818816,
+          "filesystem_output_blocks": 1204032
+        }
+      },
+      "million_pairs_per_second": 0.7345525323409577,
+      "pipeline_peak_rss_gib": 3.301380157470703,
+      "barcode_correction": {
+        "ambiguous_distinct": 1187,
+        "ambiguous_reads": 33865,
+        "corrected_distinct": 475055,
+        "corrected_reads": 7631470,
+        "exact_distinct": 11769,
+        "exact_reads": 355251616,
+        "not_found_distinct": 3627190,
+        "not_found_reads": 25977526
+      },
+      "forward_assigned_reads": 388894477,
+      "mapping_metrics": {
+        "cmdline": "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/tools/piscem-x86_64-unknown-linux-gnu/piscem map-sc -i /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici -g chromium_v3 -t 12 -1 /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/large_R1.fastq.gz -2 /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/large_R2.fastq.gz -o /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-piscem/map",
+        "consumer_measurement": {
+          "busy_nanos": 7904836144626,
+          "callback_setup_nanos": 36297745,
+          "output_flush_nanos": 3396346577
+        },
+        "execution_plan": {
+          "allocation": {
+            "kind": "serial"
+          },
+          "decode_slots": 0,
+          "effective_budget": 12,
+          "map_threads": 12,
+          "requested_budget": 12,
+          "requested_decode_slots": null
+        },
+        "index_path": "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici",
+        "k": 31,
+        "m": 19,
+        "mapping_seconds": 680.422126227,
+        "mode": "sc-rna",
+        "num_mapped": 433899835,
+        "num_poisoned": 0,
+        "num_reads": 500000000,
+        "num_refs": 276935,
+        "num_threads": 12,
+        "percent_mapped": "86.78",
+        "piscem_rs_version": "0.11.1",
+        "runtime_seconds": "680.67",
+        "signatures": {
+          "sha256_names": "46b4c3e28eef1839f9de68d15bdafe91b36ac6ae1037281e57381750e6976d05",
+          "sha256_seqs": "327a08718abe035e84ffc7cf1202c13f80cf16c2f4afe2935c0839ff11aba373",
+          "sha512_names": "a0bf445451b2444674d9143382b8d49060b08c86d37bb9bf2866f6e0ca9bd2f2d1227342e3235d4464e5f59dc9aabc5e488a70f537a097dbe2bd9dc25e294875",
+          "sha512_seqs": "a8da5ce7867f2725b6153681d39c894866300a100fa76c0729d8e3e55ad08b27a772bdda1188437bd65790cb0ea223f94a64823d801f69af6f9b1cd42ec3ca98"
+        },
+        "skipping_strategy": "permissive"
+      },
+      "forward_assignment_fraction": 0.777788954
+    },
+    "500m-kallisto": {
+      "pairs": 500000000,
+      "map_seconds": 1303.07038214989,
+      "count_seconds": 230.71083315974101,
+      "pipeline_seconds": 1533.781215309631,
+      "matrix_totals": {
+        "count": {
+          "S": {
+            "total": 65578812,
+            "nonzero": 18826604,
+            "sha256_canonical_arrays": "16253890cf14758b3d879c89090bf2e484a13a9a6b037c4ef07ccda211d6bd9f",
+            "genes_with_counts": 27482,
+            "cells_with_counts": 11769
+          },
+          "U": {
+            "total": 46513256,
+            "nonzero": 21010599,
+            "sha256_canonical_arrays": "e2d48bca2ca3a43c4b49e7d789d45b1642da78e00c1d5c68137114ef63fe35be",
+            "genes_with_counts": 27514,
+            "cells_with_counts": 11769
+          },
+          "A": {
+            "total": 18326990,
+            "nonzero": 7292199,
+            "sha256_canonical_arrays": "76bd3f7cd48af08b91333e130b442e71dc0040b290e3bf843efc086b36e302f8",
+            "genes_with_counts": 21677,
+            "cells_with_counts": 11769
+          },
+          "total": 130419058,
+          "barcodes": 11769,
+          "genes": 58395
+        }
+      },
+      "count_policy": {
+        "count": "gene UMI split, exact UMIs"
+      },
+      "stages": {
+        "map": {
+          "seconds": 1303.07038214989,
+          "cpu_seconds": 14998.810000000001,
+          "rss_gib": 14.502593994140625,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 113061880,
+          "filesystem_output_blocks": 24731952
+        },
+        "correct": {
+          "seconds": 46.34353786287829,
+          "cpu_seconds": 21.91,
+          "rss_gib": 0.0135955810546875,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 16604344,
+          "filesystem_output_blocks": 22805320
+        },
+        "sort": {
+          "seconds": 38.8967432170175,
+          "cpu_seconds": 70.4,
+          "rss_gib": 2.0350112915039062,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 0,
+          "filesystem_output_blocks": 29223952
+        },
+        "count": {
+          "seconds": 145.47055207984522,
+          "cpu_seconds": 145.38,
+          "rss_gib": 0.6810874938964844,
+          "major_page_faults": 0,
+          "filesystem_input_blocks": 307712,
+          "filesystem_output_blocks": 1185176
+        }
+      },
+      "million_pairs_per_second": 0.38370912795598006,
+      "pipeline_peak_rss_gib": 14.502593994140625,
+      "mapping_metrics": {
+        "n_targets": 276935,
+        "n_bootstraps": 0,
+        "n_processed": 500000000,
+        "n_pseudoaligned": 391101338,
+        "n_unique": 176267099,
+        "p_pseudoaligned": 78.2,
+        "p_unique": 35.3,
+        "kallisto_version": "0.52.0",
+        "index_version": 13,
+        "k-mer length": 31,
+        "start_time": "Sun Nov  1 06:28:12 2026",
+        "call": "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/tools/kallisto/kallisto bus -i /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/kallisto-splici.idx -x 10xv3 --fr-stranded -t 12 -o /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-kallisto/map /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/large_R1.fastq.gz /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/large_R2.fastq.gz"
+      },
+      "forward_assigned_reads": 391101338,
+      "forward_assignment_fraction": 0.782202676
+    }
+  },
+  "speedups": {
+    "100": {
+      "piscem": {
+        "mapping": 3.0445509541128106,
+        "map_and_count": 2.4322576152102644
+      },
+      "kallisto": {
+        "mapping": 7.034287331125808,
+        "map_and_count": 7.011293822995272
+      }
+    },
+    "500": {
+      "piscem": {
+        "mapping": 2.6000946741986044,
+        "map_and_count": 2.3045731085503083
+      },
+      "kallisto": {
+        "mapping": 4.977484214235141,
+        "map_and_count": 4.759596094802426
+      }
+    }
+  },
+  "scaling": {
+    "ours": {
+      "map_seconds": 5.8568613621571215,
+      "count_seconds": 4.552749804235206,
+      "pipeline_seconds": 5.558166293297192,
+      "pipeline_peak_rss_gib": 3.3486460149300434
+    },
+    "piscem": {
+      "map_seconds": 5.001852248421937,
+      "count_seconds": 12.5683433823654,
+      "pipeline_seconds": 5.266383171042563,
+      "pipeline_peak_rss_gib": 1.0593642127940852
+    },
+    "kallisto": {
+      "map_seconds": 4.144333832669169,
+      "count_seconds": 2.5056217727127685,
+      "pipeline_seconds": 3.773144764961254,
+      "pipeline_peak_rss_gib": 1.0154227068462416
+    }
+  },
+  "protocol": {
+    "replicates": 1,
+    "cores": 12,
+    "prebuilt_indexes": true,
+    "combined_times": "sums of measured native stages; extra USA count and validation excluded"
+  }
+}

@@ -1,0 +1,39 @@
+bus: unrecognized option '--help'
+
+Error: kallisto index file missing
+Error: Missing read files
+Error: need to specify output directory 
+kallisto 0.52.0
+Generates BUS files for single-cell sequencing
+
+Usage: kallisto bus [arguments] FASTQ-files
+
+Required arguments:
+-i, --index=STRING            Filename for the kallisto index to be used for
+                              pseudoalignment
+-o, --output-dir=STRING       Directory to write output to
+
+Optional arguments:
+-x, --technology=STRING       Single-cell technology used 
+-l, --list                    List all single-cell technologies supported
+-B, --batch=FILE              Process files listed in FILE
+-t, --threads=INT             Number of threads to use (default: 1)
+-b, --bam                     Input file is a BAM file
+-n, --num                     Output number of read in flag column (incompatible with --bam)
+-N, --numReads                Maximum number of reads to process from supplied input
+-T, --tag=STRING              5′ tag sequence to identify UMI reads for certain technologies
+    --fr-stranded             Strand specific reads for UMI-tagged reads, first read forward
+    --rf-stranded             Strand specific reads for UMI-tagged reads, first read reverse
+    --unstranded              Treat all read as non-strand-specific
+    --paired                  Treat reads as paired
+    --long                    Treat reads as long
+    --threshold               Threshold for rate of unmapped kmers per read
+    --aa                      Align to index generated from a FASTA-file containing amino acid sequences
+    --inleaved                Specifies that input is an interleaved FASTQ file
+    --batch-barcodes          Records both batch and extracted barcode in BUS file
+    --genomebam               Project pseudoalignments to genome sorted BAM file
+-g, --gtf                     GTF file for transcriptome information
+                              (required for --genomebam)
+-c, --chromosomes             Tab separated file with chromosome names and lengths
+                              (optional for --genomebam, but recommended)
+    --verbose                 Print out progress information every 1M proccessed reads

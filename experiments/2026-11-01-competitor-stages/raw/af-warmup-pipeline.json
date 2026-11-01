@@ -1,0 +1,9 @@
+{
+  "seconds": 1.2424492053687572,
+  "stages_seconds": [
+    0.28215986769646406,
+    0.20120630227029324,
+    0.7584814820438623
+  ],
+  "policy": "cr-like WTA exact UMI, no molecule dump"
+}

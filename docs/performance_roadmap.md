@@ -1,6 +1,76 @@
 # Performance and frontier roadmap
 
-## Current stocktake (2026-08-02)
+## Scaling and usability update 2026-11-01
+
+The [100M/500M comparison](../experiments/2026-11-01-large-scale/README.md)
+now measures complete native mapping and counting, including USA output, and
+links the independently measured index builds. At 500M, the conservative
+workflow takes 322.25s versus 742.65s for piscem/alevin-fry and 1533.78s for
+kallisto/bustools (one run per configuration on twelve physical cores).
+
+The product workflow is now `index-ec` once per reference, then `quant` once per
+sample, with `--threads`, a bundled installation example, automatic metrics and
+intermediate cleanup. `quant` orchestrates the existing stages; it does not fuse
+them. The default conservative and optional exact-UMI USA policies remain explicit.
+
+Next performance priorities are serial evidence ingestion, retained counting
+memory, and avoiding the CSTRAD2 round trip. Distribution could be simplified
+further with tested prebuilt executables and versioned reference/index bundles;
+the supported installation path currently builds from source. Dated sections
+below preserve the earlier reasoning and should be read in that context.
+
+## Build and counting update 2026-10-31
+
+The partitioned builder and direct v9 writer remove the serial external merge
+and intermediate v4 conversion from the recommended build command. Slot-range
+partitioning also replaces the serial random-write fill. The state counter now
+keeps packed, cell-partitioned evidence and resolves cells independently, avoiding
+a global per-molecule hash table and repeated sparse tree insertion.
+
+See the [build-to-matrix experiment](../experiments/2026-10-31-build-count/README.md)
+for fresh matched timings, memory, full index verification and native USA parity.
+The optional USA resolver recovers additional assignments through explicit
+spliced preference, with a measured source-origin precision cost. It does not
+solve missing discriminating seeds. The next accuracy priority remains targeted
+reference/path verification of ambiguous and weak reads.
+
+## Comparison and quality update 2026-10-30
+
+The matched forward-strand comparison now covers piscem 0.24.0, kallisto 0.52.0,
+two PBMC lanes, and fresh 91bp/150bp genome/GTF simulations. The optional
+`--gene-ec-consensus` rule retains all genes supported by every distinct matched
+seed, requires two seeds, and avoids annotation-based tie resolution. Its median
+10M-pair time is 4.405s versus piscem's 13.958s. On the 91bp holdout, unique
+precision improves from 99.064% to 99.945%, but correct unique recall falls from
+90.155% to 85.181% (piscem: 87.344%). At 150bp, consensus recall is 88.977%,
+slightly above both competitors, with 99.984% precision.
+
+Prioritize targeted reference/path verification to recover weak short reads
+without restoring forced calls, then bring the bounded prefetch strategy into
+consensus lookup. A decoy-aware reference and native molecule-resolution
+comparison remain necessary before claiming broader biological equivalence.
+The [full report](../experiments/2026-10-30-consensus/README.md) corrects the
+orientation mismatch in the initial October 27 competitor comparison and records
+remaining scope limits. This is not yet a universal SOTA result.
+
+## Historical update 2026-10-27
+
+The packed pipeline and exact v9 prefetch path are retained. On the matched
+10M PBMC/12-core workload, no-output throughput is 3.641M reads/s and RAD+zstd
+throughput is 3.357M reads/s, improvements of 2.90x and 3.00x over the original
+PtrHash binary. Complete output bytes and all assignment metrics are unchanged;
+compressed-output max RSS is 4.265GiB with the same 4.428GB index. Reusable slabs,
+one persistent state per worker, fused preparation/output, bounded prefetching
+and zlib-rs decoding replaced the dominant allocation and latency costs.
+
+The sequence-aware unitig index and shared hot-key table remain proposed work,
+not implemented optimizations. Exact EC-run aggregation was tested and removed
+because it did not improve end-to-end time. The remaining large product gap is
+still molecule/count-matrix integration; this mapper speedup does not resolve
+output equivalence with alevin-fry counting. See
+`experiments/2026-10-27-packed-pipeline/README.md` for measurements and gates.
+
+## Historical stocktake (2026-08-02)
 
 Constellation is a fast gene-EC mapping prototype, but it is not yet a frontier
 single-cell tool worth releasing as a complete product.
@@ -64,6 +134,9 @@ copy, no writes in the map phase, and a cheap membership filter. Include the
 sampling/prepass cost in end-to-end time; remove it unless total runtime wins.
 
 ### 3. Molecule-first output and counting
+
+The standalone state counter and `quant` now provide FASTQ-to-matrix processing.
+The remaining proposal here is fused, bounded-memory aggregation:
 
 Stop treating a variable-length record per read as the final product. Carry the
 already packed 16-base barcode and 12-base UMI through mapping, aggregate

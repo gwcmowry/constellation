@@ -1,0 +1,41 @@
+diff --git a/crates/constellation-cli/src/cmd_map.rs b/crates/constellation-cli/src/cmd_map.rs
+index 6a2e352..5bec122 100644
+--- a/crates/constellation-cli/src/cmd_map.rs
++++ b/crates/constellation-cli/src/cmd_map.rs
+@@ -473,9 +473,14 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
+         args.gene_ec_adaptive_rescue && adaptive_rescue_stride < args.sparse_probe_stride.max(1);
+ 
+     loop {
++        let batch_assembly_started = Instant::now();
+         let Some((batch, read_elapsed)) = fastq_pipeline.next_batch()? else {
+             break;
+         };
++        function_timings.add_duration(
++            "diagnostic_batch_assembly",
++            batch_assembly_started.elapsed().saturating_sub(read_elapsed),
++        );
+         fastq_load_seconds += read_elapsed.as_secs_f64();
+         function_timings.add_duration("stream_fastq_pair_batches", read_elapsed);
+ 
+@@ -621,7 +626,7 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
+         let assignment_started = Instant::now();
+         let drained = if collect_diagnostics {
+             drain_mapped_gene_ec_reads_serial(
+-                mapped,
++                std::mem::take(&mut mapped),
+                 args.output_format,
+                 assignment_writer.is_some(),
+                 &mut diagnostic_assignments,
+@@ -651,6 +656,12 @@ fn run_map_gene_ec(args: MapArgs) -> Result<()> {
+             }
+             write_seconds += write_started.elapsed().as_secs_f64();
+         }
++        let drop_started = Instant::now();
++        drop(mapped);
++        function_timings.add_elapsed("diagnostic_drop_mapped", drop_started);
++        let drop_started = Instant::now();
++        drop(batch);
++        function_timings.add_elapsed("diagnostic_drop_fastq_batch", drop_started);
+     }
+ 
+     fastq_pipeline.finish()?;

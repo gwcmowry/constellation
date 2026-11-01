@@ -1,0 +1,21 @@
+{
+  "weighted": {
+    "byte_identical": true,
+    "sha256": "b7c5b5ad39e5b2bca42cf253d1d9e10ef9ac5e120f752384681a14fe4cb3b99a"
+  },
+  "consensus": {
+    "byte_identical": true,
+    "sha256": "3d59110cda44a37dca8d6186d85f3342b124ecb0db06b7b97df31093f0b5a53c"
+  },
+  "splicing_projection": {
+    "identical_gene_assignments": true,
+    "reads": 10000000,
+    "genes": 58395,
+    "candidate_state_counts": {
+      "2": 7135356,
+      "1": 5051307,
+      "3": 1354386,
+      "4": 2043
+    }
+  }
+}

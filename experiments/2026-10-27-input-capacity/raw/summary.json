@@ -1,0 +1,135 @@
+{
+  "measurements": {
+    "R1_decode_only_gzip": {
+      "median_seconds": 0.621453372,
+      "seconds_range": [
+        0.62057321,
+        0.623093477
+      ],
+      "million_records_per_second": 16.09131183537934,
+      "record_unit": "mate records",
+      "record_count_assumed_from_fixture": true,
+      "decompressed_input_GB_per_second": 1.8575820472014433
+    },
+    "R2_decode_only_gzip": {
+      "median_seconds": 1.595724559,
+      "seconds_range": [
+        1.5954405710000001,
+        1.599513784
+      ],
+      "million_records_per_second": 6.266745688407996,
+      "record_unit": "mate records",
+      "record_count_assumed_from_fixture": true,
+      "decompressed_input_GB_per_second": 1.5130434719341812
+    },
+    "paired_decode_only_gzip": {
+      "median_seconds": 1.605065744,
+      "seconds_range": [
+        1.600648294,
+        1.6064061920000001
+      ],
+      "million_records_per_second": 6.230274390554809,
+      "record_unit": "read pairs",
+      "record_count_assumed_from_fixture": true,
+      "decompressed_input_GB_per_second": 2.2234611057776084
+    },
+    "R1_parse_only_gzip": {
+      "median_seconds": 1.115617916,
+      "seconds_range": [
+        1.115033192,
+        1.115734916
+      ],
+      "million_records_per_second": 8.963642351545026,
+      "record_unit": "mate records",
+      "record_count_assumed_from_fixture": false,
+      "decompressed_input_GB_per_second": 1.034763435082733
+    },
+    "R1_slab_gzip": {
+      "median_seconds": 1.185315156,
+      "seconds_range": [
+        1.185272756,
+        1.186608173
+      ],
+      "million_records_per_second": 8.436574820949982,
+      "record_unit": "mate records",
+      "record_count_assumed_from_fixture": false,
+      "decompressed_input_GB_per_second": 0.9739187263037072
+    },
+    "R2_parse_only_gzip": {
+      "median_seconds": 2.149117516,
+      "seconds_range": [
+        2.148441833,
+        2.168001436
+      ],
+      "million_records_per_second": 4.653072680088845,
+      "record_unit": "mate records",
+      "record_count_assumed_from_fixture": false,
+      "decompressed_input_GB_per_second": 1.1234381596283076
+    },
+    "R2_slab_gzip": {
+      "median_seconds": 2.2607031859999998,
+      "seconds_range": [
+        2.2573389170000002,
+        2.268042699
+      ],
+      "million_records_per_second": 4.423402444835587,
+      "record_unit": "mate records",
+      "record_count_assumed_from_fixture": false,
+      "decompressed_input_GB_per_second": 1.0679865636284374
+    },
+    "paired_pipeline_gzip": {
+      "median_seconds": 2.3055289,
+      "seconds_range": [
+        2.299495364,
+        2.312958722
+      ],
+      "million_records_per_second": 4.337399544200031,
+      "record_unit": "read pairs",
+      "record_count_assumed_from_fixture": false,
+      "decompressed_input_GB_per_second": 1.54793169324401
+    },
+    "R1_slab_raw": {
+      "median_seconds": 0.62050348,
+      "seconds_range": [
+        0.617418398,
+        0.62725044
+      ],
+      "million_records_per_second": 16.115945070928532,
+      "record_unit": "mate records",
+      "record_count_assumed_from_fixture": false,
+      "decompressed_input_GB_per_second": 1.8604257094577457
+    },
+    "R2_slab_raw": {
+      "median_seconds": 0.759055666,
+      "seconds_range": [
+        0.758255552,
+        0.76627385
+      ],
+      "million_records_per_second": 13.174264349671557,
+      "record_unit": "mate records",
+      "record_count_assumed_from_fixture": false,
+      "decompressed_input_GB_per_second": 3.1807952106110755
+    },
+    "paired_pipeline_raw": {
+      "median_seconds": 0.796951162,
+      "seconds_range": [
+        0.795716564,
+        0.798390119
+      ],
+      "million_records_per_second": 12.54782033933467,
+      "record_unit": "read pairs",
+      "record_count_assumed_from_fixture": false,
+      "decompressed_input_GB_per_second": 4.478067696198427
+    }
+  },
+  "comparison": {
+    "none": {
+      "mapper_million_pairs_per_second": 3.641138185395281,
+      "isolated_reader_headroom_factor": 1.1912208005720508
+    },
+    "zstd": {
+      "mapper_million_pairs_per_second": 3.356731519905676,
+      "isolated_reader_headroom_factor": 1.2921496755039592
+    }
+  }
+}

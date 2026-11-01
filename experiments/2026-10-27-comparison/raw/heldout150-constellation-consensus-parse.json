@@ -1,0 +1,11 @@
+{
+  "records": 420000,
+  "returned_gene_sets": 352085,
+  "unique_gene": 321474,
+  "unique_calls_from_multiple_score_ties": 0,
+  "assignment_type_counts": {
+    "1": 321474,
+    "2": 30611,
+    "5": 67915
+  }
+}

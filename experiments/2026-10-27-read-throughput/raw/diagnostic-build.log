@@ -1,0 +1,4 @@
+   Compiling constellation-cli v0.1.0 (/home/grant/Desktop/programming/constellation/crates/constellation-cli)
+   Compiling criterion v0.8.2
+   Compiling constellation-core v0.1.0 (/home/grant/Desktop/programming/constellation/crates/constellation-core)
+    Finished `release` profile [optimized + debuginfo] target(s) in 21.57s

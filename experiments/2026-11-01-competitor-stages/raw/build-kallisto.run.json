@@ -1,0 +1,24 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-competitor-stages/raw/build-kallisto.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/tools/kallisto/kallisto",
+    "index",
+    "-t",
+    "12",
+    "-k",
+    "31",
+    "-i",
+    "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/kallisto-splici.idx",
+    "-T",
+    "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/kallisto-tmp",
+    "/home/grant/Desktop/programming/constellation/benchdata/reference/ensembl93/simpleaf_splici_r91_k31/ref/roers_ref.fa"
+  ],
+  "seconds": 1099.3762404462323,
+  "exit_code": 0
+}

@@ -1,0 +1,145 @@
+2026-10-28T01:58:05.628651Z  INFO piscem: starting piscem build
+2026-10-28T01:58:05.629441Z  INFO piscem: Computing and recording reference signatures...
+2026-10-28T01:58:08.934365Z  INFO piscem: done.
+2026-10-28T01:58:08.934378Z  INFO piscem: starting cDBG construction with cf1-rs
+2026-10-28T01:58:08.941546Z  INFO cf1_rs::pipeline: RSS at start: current=20 MB, peak=24 MB
+2026-10-28T01:58:08.941560Z  INFO cf1_rs::pipeline: Phase 1: Counting minimizer frequencies...
+2026-10-28T01:58:08.941563Z  INFO cf1_rs::minimizer: Counting minimizer frequencies with m=15, w=17, k=31
+2026-10-28T01:58:11.144077Z  INFO cf1_rs::minimizer: Histogram: 228456456 total minimizer occurrences across 65536 non-empty buckets
+2026-10-28T01:58:11.146487Z  INFO cf1_rs::pipeline: RSS after P1: current=1031 MB, peak=1716 MB
+2026-10-28T01:58:11.146506Z  INFO cf1_rs::pipeline: Phase 2: Partitioning minimizers and routing super k-mers...
+2026-10-28T01:58:11.146550Z  INFO cf1_rs::minimizer: Partitioned into 128 bins (target 1784816/bin)
+2026-10-28T01:58:11.146583Z  INFO cf1_rs::superkmer: Routing super k-mers to 128 bins with m=15, w=17
+2026-10-28T01:58:14.285958Z  INFO cf1_rs::superkmer: Finished routing super k-mers to bin files
+2026-10-28T01:58:14.288373Z  INFO cf1_rs::pipeline: RSS after P2: current=597 MB, peak=1716 MB
+2026-10-28T01:58:14.288385Z  INFO cf1_rs::pipeline: Phase 3: Building global MPHF...
+2026-10-28T01:58:14.290101Z  INFO cf1_rs::mphf: Reading canonical k-mers from 128 bins
+2026-10-28T01:58:14.292162Z  INFO cf1_rs::mphf: P3a: RSS before dedup: current=597 MB, peak=1716 MB
+2026-10-28T01:58:20.789085Z  INFO cf1_rs::mphf: Total 1450779424 distinct canonical k-mers across 128 bins (per-bin: min=7265697, max=11825340, avg=11334214)
+2026-10-28T01:58:20.791334Z  INFO cf1_rs::mphf: P3a: RSS after dedup: current=1453 MB, peak=3469 MB
+2026-10-28T01:58:24.524530Z  INFO cf1_rs::mphf: P3b: RSS after consolidation: current=1453 MB, peak=3469 MB
+2026-10-28T01:58:24.524547Z  INFO cf1_rs::mphf: Building global MPHF for 1450779424 distinct canonical k-mers (streaming, clone_threshold=300000000, threads=12)
+2026-10-28T01:58:52.423242Z  INFO cf1_rs::mphf: MPHF construction complete
+2026-10-28T01:58:53.181650Z  INFO cf1_rs::pipeline: RSS after P3 MPHF: current=5793 MB, peak=5791 MB
+2026-10-28T01:58:53.241939Z  INFO cf1_rs::pipeline: RSS after P3 StateVector: current=4494 MB, peak=5791 MB
+2026-10-28T01:58:53.465729Z  INFO cf1_rs::pipeline: Phase 4: Classifying k-mer vertices...
+2026-10-28T01:58:53.465742Z  INFO cf1_rs::classify: Phase 4: Classifying k-mer vertices
+2026-10-28T01:59:22.087243Z  INFO cf1_rs::classify: Classification complete
+2026-10-28T01:59:22.089729Z  INFO cf1_rs::pipeline: RSS after P4: current=1920 MB, peak=5791 MB
+2026-10-28T01:59:22.089749Z  INFO cf1_rs::pipeline: Phase 5: Extracting unitigs and writing output...
+2026-10-28T01:59:22.089761Z  INFO cf1_rs::output: Phase 5: Extracting unitigs and writing output
+2026-10-28T01:59:48.243424Z  INFO cf1_rs::output: Extracted 19050010 unitigs, 1450779424 vertices, avg length 106
+2026-10-28T01:59:48.246204Z  INFO cf1_rs::pipeline: RSS after P5: current=2219 MB, peak=5791 MB
+2026-10-28T01:59:48.246400Z  INFO cf1_rs::output: Wrote JSON output to benchdata/comparison-2026-10-27/piscem-splici_cfish.json
+2026-10-28T01:59:48.246406Z  INFO cf1_rs::pipeline: Pipeline complete.
+2026-10-28T01:59:48.246470Z  INFO piscem: cDBG construction complete: 19050010 unitigs, 1450779424 vertices
+2026-10-28T01:59:48.247006Z  INFO piscem_rs::index::build: Parsing segment file: benchdata/comparison-2026-10-27/piscem-splici_cfish.cf_seg
+2026-10-28T01:59:51.036899Z  INFO piscem_rs::index::build:   19050010 segments
+2026-10-28T01:59:51.051918Z  INFO piscem_rs::index::build: Building SSHash dictionary (k=31, m=19)
+2026-10-28T01:59:51.052363Z  INFO piscem_rs::index::mem_budget: sshash minimizer-sort RAM budget: 24 GiB (requested)
+2026-10-28T01:59:51.053939Z  INFO sshash_lib::builder::config: Build Configuration:
+2026-10-28T01:59:51.053961Z  INFO sshash_lib::builder::config:   k = 31
+2026-10-28T01:59:51.053965Z  INFO sshash_lib::builder::config:   m = 19
+2026-10-28T01:59:51.053973Z  INFO sshash_lib::builder::config:   num_threads = 12
+2026-10-28T01:59:51.053976Z  INFO sshash_lib::builder::dictionary_builder: Building SSHash Dictionary
+2026-10-28T01:59:51.053977Z  INFO sshash_lib::builder::dictionary_builder: Step 1: Encoding sequences...
+2026-10-28T01:59:51.814220Z  INFO sshash_lib::builder::dictionary_builder:   Encoded 19050010 sequences
+2026-10-28T01:59:51.814242Z  INFO sshash_lib::builder::dictionary_builder:   Total bases: 2022279724
+2026-10-28T01:59:51.814245Z  INFO sshash_lib::builder::dictionary_builder: Step 2: Extracting and coalescing minimizer tuples (in-memory)...
+2026-10-28T01:59:56.027085Z  INFO sshash_lib::builder::dictionary_builder:   Extracted and coalesced 224363031 tuples
+2026-10-28T01:59:56.027115Z  INFO sshash_lib::builder::dictionary_builder: Step 3: Classifying buckets (in-place)...
+2026-10-28T01:59:56.696604Z  INFO sshash_lib::builder::buckets: Bucket Statistics:
+2026-10-28T01:59:56.696627Z  INFO sshash_lib::builder::buckets:   Total buckets: 184146432
+2026-10-28T01:59:56.696629Z  INFO sshash_lib::builder::buckets:   Total k-mers: 1450779424
+2026-10-28T01:59:56.696630Z  INFO sshash_lib::builder::buckets:   Total positions: 224363031
+2026-10-28T01:59:56.696632Z  INFO sshash_lib::builder::buckets:   Singleton buckets: 174261936 (94.63%)
+2026-10-28T01:59:56.696634Z  INFO sshash_lib::builder::buckets:   Light buckets (2-64): 9824156 (5.33%)
+2026-10-28T01:59:56.696636Z  INFO sshash_lib::builder::buckets:   Heavy buckets (>64): 60340 (0.03%)
+2026-10-28T01:59:56.696638Z  INFO sshash_lib::builder::buckets:   Max bucket size: 283033
+2026-10-28T01:59:56.696639Z  INFO sshash_lib::builder::buckets:   Positions in light buckets: 35219441 (15.70%)
+2026-10-28T01:59:56.696640Z  INFO sshash_lib::builder::buckets:   Positions in heavy buckets: 14881654 (6.63%)
+2026-10-28T01:59:56.696642Z  INFO sshash_lib::builder::dictionary_builder: Step 4: Building minimizers control map...
+2026-10-28T01:59:56.696643Z  INFO sshash_lib::builder::dictionary_builder: Building PHastR MPHF for 184146432 minimizers (Streaming(Auto { min_keys: 16777216 }))
+2026-10-28T02:00:01.062483Z  INFO sshash_lib::builder::dictionary_builder:   Built MPHF for 184146432 minimizers
+2026-10-28T02:00:01.062511Z  INFO sshash_lib::builder::dictionary_builder: Step 5: Building sparse and skew index...
+2026-10-28T02:00:01.939135Z  INFO sshash_lib::sparse_and_skew_index:   Pass 1 (EF build): 0.88s — 184146432 buckets, 224363031 total super-kmers, max_bucket_size=283033
+2026-10-28T02:00:03.770480Z  INFO sshash_lib::sparse_and_skew_index:   Pass 2 (fill offsets): 1.83s — 60340 heavy buckets collected
+2026-10-28T02:00:03.773256Z  INFO sshash_lib::sparse_and_skew_index:     SkewIndex: max_bucket_size=283033, num_partitions=8
+2026-10-28T02:00:07.108401Z  INFO sshash_lib::sparse_and_skew_index:   Pass 3 (skew index): 3.34s
+2026-10-28T02:00:07.108420Z  INFO sshash_lib::builder::dictionary_builder:   Index built successfully
+2026-10-28T02:00:07.108423Z  INFO sshash_lib::builder::dictionary_builder: Dictionary Build Complete
+2026-10-28T02:00:07.108438Z  INFO sshash_lib::builder::dictionary_builder: Total memory: 1496.72 MB
+2026-10-28T02:00:07.116261Z  INFO piscem_rs::index::build:   Dictionary built: 19050010 strings
+2026-10-28T02:00:08.360984Z  INFO piscem_rs::index::build: First pass over benchdata/comparison-2026-10-27/piscem-splici_cfish.cf_seq
+2026-10-28T02:00:08.376458Z  INFO piscem_rs::index::build:   35 short references from JSON
+2026-10-28T02:00:08.448924Z  INFO piscem_rs::index::build:   processed 10000 references
+2026-10-28T02:00:08.506686Z  INFO piscem_rs::index::build:   processed 20000 references
+2026-10-28T02:00:08.566663Z  INFO piscem_rs::index::build:   processed 30000 references
+2026-10-28T02:00:08.622009Z  INFO piscem_rs::index::build:   processed 40000 references
+2026-10-28T02:00:08.674924Z  INFO piscem_rs::index::build:   processed 50000 references
+2026-10-28T02:00:08.726145Z  INFO piscem_rs::index::build:   processed 60000 references
+2026-10-28T02:00:08.788535Z  INFO piscem_rs::index::build:   processed 70000 references
+2026-10-28T02:00:08.843823Z  INFO piscem_rs::index::build:   processed 80000 references
+2026-10-28T02:00:08.890295Z  INFO piscem_rs::index::build:   processed 90000 references
+2026-10-28T02:00:08.952475Z  INFO piscem_rs::index::build:   processed 100000 references
+2026-10-28T02:00:09.019172Z  INFO piscem_rs::index::build:   processed 110000 references
+2026-10-28T02:00:09.067961Z  INFO piscem_rs::index::build:   processed 120000 references
+2026-10-28T02:00:09.116613Z  INFO piscem_rs::index::build:   processed 130000 references
+2026-10-28T02:00:09.182109Z  INFO piscem_rs::index::build:   processed 140000 references
+2026-10-28T02:00:09.235773Z  INFO piscem_rs::index::build:   processed 150000 references
+2026-10-28T02:00:09.286462Z  INFO piscem_rs::index::build:   processed 160000 references
+2026-10-28T02:00:09.333877Z  INFO piscem_rs::index::build:   processed 170000 references
+2026-10-28T02:00:09.387913Z  INFO piscem_rs::index::build:   processed 180000 references
+2026-10-28T02:00:09.435165Z  INFO piscem_rs::index::build:   processed 190000 references
+2026-10-28T02:00:09.486561Z  INFO piscem_rs::index::build:   processed 200000 references
+2026-10-28T02:00:11.074304Z  INFO piscem_rs::index::build:   processed 210000 references
+2026-10-28T02:00:13.834391Z  INFO piscem_rs::index::build:   processed 220000 references
+2026-10-28T02:00:16.847881Z  INFO piscem_rs::index::build:   processed 230000 references
+2026-10-28T02:00:19.215836Z  INFO piscem_rs::index::build:   processed 240000 references
+2026-10-28T02:00:22.099930Z  INFO piscem_rs::index::build:   processed 250000 references
+2026-10-28T02:00:25.483042Z  INFO piscem_rs::index::build:   processed 260000 references
+2026-10-28T02:00:28.918281Z  INFO piscem_rs::index::build:   processed 270000 references
+2026-10-28T02:00:31.106043Z  INFO piscem_rs::index::build:   276935 references, max_ref_len=2278213
+2026-10-28T02:00:31.106061Z  INFO piscem_rs::index::build: Second pass over benchdata/comparison-2026-10-27/piscem-splici_cfish.cf_seq to fill contig entries
+2026-10-28T02:00:31.331949Z  INFO piscem_rs::index::build:   processing reference #0
+2026-10-28T02:00:31.417786Z  INFO piscem_rs::index::build:   processing reference #10000
+2026-10-28T02:00:31.494713Z  INFO piscem_rs::index::build:   processing reference #20000
+2026-10-28T02:00:31.556593Z  INFO piscem_rs::index::build:   processing reference #30000
+2026-10-28T02:00:31.632837Z  INFO piscem_rs::index::build:   processing reference #40000
+2026-10-28T02:00:31.709492Z  INFO piscem_rs::index::build:   processing reference #50000
+2026-10-28T02:00:31.779471Z  INFO piscem_rs::index::build:   processing reference #60000
+2026-10-28T02:00:31.868148Z  INFO piscem_rs::index::build:   processing reference #70000
+2026-10-28T02:00:31.947549Z  INFO piscem_rs::index::build:   processing reference #80000
+2026-10-28T02:00:32.015326Z  INFO piscem_rs::index::build:   processing reference #90000
+2026-10-28T02:00:32.105082Z  INFO piscem_rs::index::build:   processing reference #100000
+2026-10-28T02:00:32.202938Z  INFO piscem_rs::index::build:   processing reference #110000
+2026-10-28T02:00:32.271452Z  INFO piscem_rs::index::build:   processing reference #120000
+2026-10-28T02:00:32.338346Z  INFO piscem_rs::index::build:   processing reference #130000
+2026-10-28T02:00:32.419969Z  INFO piscem_rs::index::build:   processing reference #140000
+2026-10-28T02:00:32.491311Z  INFO piscem_rs::index::build:   processing reference #150000
+2026-10-28T02:00:32.576917Z  INFO piscem_rs::index::build:   processing reference #160000
+2026-10-28T02:00:32.650397Z  INFO piscem_rs::index::build:   processing reference #170000
+2026-10-28T02:00:32.728564Z  INFO piscem_rs::index::build:   processing reference #180000
+2026-10-28T02:00:32.796225Z  INFO piscem_rs::index::build:   processing reference #190000
+2026-10-28T02:00:32.868140Z  INFO piscem_rs::index::build:   processing reference #200000
+2026-10-28T02:00:35.340018Z  INFO piscem_rs::index::build:   processing reference #210000
+2026-10-28T02:00:39.819018Z  INFO piscem_rs::index::build:   processing reference #220000
+2026-10-28T02:00:44.819154Z  INFO piscem_rs::index::build:   processing reference #230000
+2026-10-28T02:00:48.723605Z  INFO piscem_rs::index::build:   processing reference #240000
+2026-10-28T02:00:53.526796Z  INFO piscem_rs::index::build:   processing reference #250000
+2026-10-28T02:00:59.483034Z  INFO piscem_rs::index::build:   processing reference #260000
+2026-10-28T02:01:05.380056Z  INFO piscem_rs::index::build:   processing reference #270000
+2026-10-28T02:01:09.223271Z  INFO piscem_rs::index::build:   ContigTable: 19050010 contigs, 177240068 entries
+2026-10-28T02:01:09.223294Z  INFO piscem_rs::index::build: Building equivalence class table
+2026-10-28T02:01:15.560688Z  INFO piscem_rs::index::build:   EqClassMap: 19050010 tiles, 10472123 ECs, 153506540 label entries
+2026-10-28T02:01:15.560730Z  INFO piscem_rs::index::reference_index: Saving SSHash dictionary to benchdata/comparison-2026-10-27/piscem-splici.ssi
+2026-10-28T02:01:15.965993Z  INFO piscem_rs::index::reference_index: Saving contig table to benchdata/comparison-2026-10-27/piscem-splici.ctab
+2026-10-28T02:01:16.098584Z  INFO piscem_rs::index::reference_index: Saving reference info to benchdata/comparison-2026-10-27/piscem-splici.refinfo
+2026-10-28T02:01:16.103606Z  INFO piscem_rs::index::reference_index: Saving equivalence class table to benchdata/comparison-2026-10-27/piscem-splici.ectab
+2026-10-28T02:01:16.166421Z  INFO piscem_rs::index::reference_index: Index saved to benchdata/comparison-2026-10-27/piscem-splici
+2026-10-28T02:01:16.166434Z  INFO piscem_rs::index::build: Index built and saved to benchdata/comparison-2026-10-27/piscem-splici
+2026-10-28T02:01:16.166437Z  INFO piscem_rs::index::build: auto dict selection: 1450779424 canonical k-mers (100000000 threshold), emitting Tiny artifacts: false
+2026-10-28T02:01:16.166963Z  INFO piscem: removing intermediate cdBG files produced by cf1-rs.
+2026-10-28T02:01:16.335456Z  INFO piscem: removed segment file benchdata/comparison-2026-10-27/piscem-splici_cfish.cf_seg
+2026-10-28T02:01:16.485339Z  INFO piscem: removed tiling file benchdata/comparison-2026-10-27/piscem-splici_cfish.cf_seq
+2026-10-28T02:01:16.485420Z  INFO piscem: piscem build finished.

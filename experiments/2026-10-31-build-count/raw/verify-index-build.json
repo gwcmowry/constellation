@@ -1,0 +1,16 @@
+[
+  "rustc",
+  "--edition=2021",
+  "-O",
+  "experiments/2026-10-31-build-count/verify_index.rs",
+  "-L",
+  "dependency=target/release/deps",
+  "-o",
+  "benchdata/build-count-2026-10-31/verify-index",
+  "--extern",
+  "constellation_core=target/release/deps/libconstellation_core-253d24578a53def7.rlib",
+  "--extern",
+  "memmap2=target/release/deps/libmemmap2-f968d676be189a8f.rlib",
+  "--extern",
+  "rayon=target/release/deps/librayon-b35578fe99104586.rlib"
+]

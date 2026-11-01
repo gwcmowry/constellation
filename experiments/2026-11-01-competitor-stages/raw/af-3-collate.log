@@ -1,0 +1,8 @@
+2026-10-31 22:30:09 INFO paired : false, ref_count : 276,935, num_chunks : 611
+2026-10-31 22:30:09 INFO read 3 file-level tags
+2026-10-31 22:30:09 INFO read 2 read-level tags
+2026-10-31 22:30:09 INFO read 1 alignemnt-level tags
+2026-10-31 22:30:09 INFO File-level tag values TagMap { keys: [TagDesc { name: "cblen", typeid: Int(U16), role: None }, TagDesc { name: "ulen", typeid: Int(U16), role: None }, TagDesc { name: "known_rad_type", typeid: String, role: None }], dat: [U16(16), U16(12), String("sc_rna_basic")] }
+2026-10-31 22:30:09 INFO short read single-cell without poisition
+2026-10-31 22:30:09 INFO Optimized single-barcode collation: 7,204,991 records in 0.05s scatter, 11,769 chunks in 0.12s gather (11 spool files, 3 gather workers, 256 KiB flush threshold)
+2026-10-31 22:30:09 INFO Wrote collated chunk index /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/af-3/collation/map.collated.rad.chunkidx (11769 chunks, from gather)

@@ -1,0 +1,13 @@
+[
+  "rustc",
+  "--edition",
+  "2021",
+  "experiments/2026-10-30-state-comparison/sampling_audit.rs",
+  "-L",
+  "dependency=target/release/deps",
+  "--extern",
+  "constellation_core=target/release/deps/libconstellation_core-253d24578a53def7.rlib",
+  "-O",
+  "-o",
+  "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/sampling-audit"
+]

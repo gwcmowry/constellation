@@ -1,0 +1,16 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-competitor-stages/raw/bus-stream-1.time",
+    "taskset",
+    "-c",
+    "0-11",
+    "/home/grant/Desktop/programming/constellation/benchdata/comparison-2026-10-27/venv/bin/python",
+    "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-competitor-stages/stream_bus.py",
+    "bus-stream-1"
+  ],
+  "seconds": 1.397935246117413,
+  "exit_code": 0
+}

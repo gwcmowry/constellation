@@ -1,0 +1,2 @@
+{"run": "zlib-none-warmup", "wall_seconds": 2.803365571, "reads_per_second": 3567140.905006142, "mapping_seconds": 2.6732576960000003, "fastq_load_seconds": 0.070554894, "write_seconds": 0.0}
+{"run": "zlib-none-1", "wall_seconds": 2.852109385, "reads_per_second": 3506176.8852880094, "mapping_seconds": 2.7680434550000013, "fastq_load_seconds": 0.02835603200000002, "write_seconds": 0.0}

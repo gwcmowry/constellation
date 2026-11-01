@@ -1,0 +1,9 @@
+View a RAD file
+
+Usage: alevin-fry view [OPTIONS] --rad <RADFILE>
+
+Options:
+  -r, --rad <RADFILE>  input RAD file
+  -H, --header         flag for printing header
+  -h, --help           Print help
+  -V, --version        Print version

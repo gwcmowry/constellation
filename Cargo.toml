@@ -12,3 +12,9 @@ codegen-units = 1
 
 [profile.bench]
 debug = true
+
+# Portable distributable executables; keep profiler symbols in normal release builds.
+[profile.dist]
+inherits = "release"
+debug = false
+strip = "symbols"

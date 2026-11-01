@@ -1,0 +1,100 @@
+{
+  "baseline": {
+    "wall_seconds": [
+      8.121312476,
+      7.942366838,
+      8.13109505
+    ],
+    "median_wall_seconds": 8.121312476,
+    "median_reads_per_second": 1231328.0679141302,
+    "median_max_rss_kib": 4570156,
+    "major_faults": [
+      0,
+      0,
+      0
+    ],
+    "median_function_seconds": {
+      "LoadedEcIndex::load": 0.033571682,
+      "assign_gene_ec_reads": 0.076147398,
+      "prepare_and_map_gene_ec_batches": 5.609527397,
+      "stream_fastq_pair_batches": 0.040327813
+    },
+    "semantic_metrics_equal": true
+  },
+  "instrumented": {
+    "wall_seconds": [
+      7.917007284,
+      8.065877303,
+      8.166689395
+    ],
+    "median_wall_seconds": 8.065877303,
+    "median_reads_per_second": 1239790.7412105843,
+    "median_max_rss_kib": 4574708,
+    "major_faults": [
+      0,
+      0,
+      0
+    ],
+    "median_function_seconds": {
+      "LoadedEcIndex::load": 0.034546741,
+      "assign_gene_ec_reads": 0.075487661,
+      "diagnostic_batch_assembly": 0.979679888,
+      "diagnostic_drop_fastq_batch": 1.019493419,
+      "diagnostic_drop_mapped": 0.290136282,
+      "prepare_and_map_gene_ec_batches": 5.567820428,
+      "stream_fastq_pair_batches": 0.045866211
+    },
+    "semantic_metrics_equal": true
+  },
+  "tcmalloc": {
+    "wall_seconds": [
+      6.785708975,
+      6.862535303,
+      6.865515741
+    ],
+    "median_wall_seconds": 6.862535303,
+    "median_reads_per_second": 1457187.4035574635,
+    "median_max_rss_kib": 4557636,
+    "major_faults": [
+      0,
+      0,
+      0
+    ],
+    "median_function_seconds": {
+      "LoadedEcIndex::load": 0.035418141,
+      "assign_gene_ec_reads": 0.075880255,
+      "diagnostic_batch_assembly": 0.343711003,
+      "diagnostic_drop_fastq_batch": 0.453572272,
+      "diagnostic_drop_mapped": 0.227831796,
+      "prepare_and_map_gene_ec_batches": 5.686435231,
+      "stream_fastq_pair_batches": 0.034913516
+    },
+    "semantic_metrics_equal": true
+  },
+  "uncompressed": {
+    "wall_seconds": [
+      7.970939963,
+      7.787979539,
+      7.728508714
+    ],
+    "median_wall_seconds": 7.787979539,
+    "median_reads_per_second": 1284030.08121976,
+    "median_max_rss_kib": 4566012,
+    "major_faults": [
+      0,
+      0,
+      0
+    ],
+    "median_function_seconds": {
+      "LoadedEcIndex::load": 0.034913657,
+      "assign_gene_ec_reads": 0.071970838,
+      "diagnostic_batch_assembly": 1.109801651,
+      "diagnostic_drop_fastq_batch": 1.014137705,
+      "diagnostic_drop_mapped": 0.288921967,
+      "prepare_and_map_gene_ec_batches": 5.236347791,
+      "stream_fastq_pair_batches": 0.01860273
+    },
+    "semantic_metrics_equal": true
+  },
+  "historical_semantic_metrics_equal": true
+}

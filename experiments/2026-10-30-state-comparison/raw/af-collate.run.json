@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "experiments/2026-10-30-state-comparison/raw/af-collate.time",
+    "benchdata/state-comparison-2026-10-30/alevin-fry-x86_64-unknown-linux-gnu/alevin-fry",
+    "collate",
+    "-i",
+    "benchdata/state-comparison-2026-10-30/af-collation",
+    "-r",
+    "benchdata/comparison-2026-10-27/pbmc10m-piscem-forward",
+    "-t",
+    "12"
+  ],
+  "seconds": 0.20308856712654233,
+  "exit_code": 0
+}

@@ -1,0 +1,160 @@
+{
+  "pairs": 500000000,
+  "tool": "ours",
+  "steps": {
+    "map": {
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/500m-ours-map.time",
+        "taskset",
+        "-c",
+        "0-11",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/constellation.frozen",
+        "map",
+        "--splicing-state",
+        "--index",
+        "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/constellation.ecidx",
+        "--r1",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/large_R1.fastq.gz",
+        "--r2",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/inputs/large_R2.fastq.gz",
+        "--out",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-ours/map.cstrad2",
+        "--emit-metrics",
+        "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/500m-ours-map.metrics.json"
+      ],
+      "seconds": 261.79297132138163,
+      "exit_code": 0,
+      "sampled_peak_rss_bytes": 4585508864,
+      "memory_guard_gib": 46,
+      "stopped_by_memory_guard": false
+    },
+    "count": {
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/500m-ours-count.time",
+        "taskset",
+        "-c",
+        "0-11",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/constellation.frozen",
+        "count-splicing",
+        "--assignments",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-ours/map.cstrad2",
+        "--barcode-whitelist",
+        "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/barcodes.txt",
+        "--out-prefix",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-ours/count",
+        "--emit-metrics",
+        "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/500m-ours-count.metrics.json"
+      ],
+      "seconds": 60.4573173080571,
+      "exit_code": 0,
+      "sampled_peak_rss_bytes": 14906114048,
+      "memory_guard_gib": 46,
+      "stopped_by_memory_guard": false
+    },
+    "usa": {
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/500m-ours-usa.time",
+        "taskset",
+        "-c",
+        "0-11",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/constellation.frozen",
+        "count-splicing",
+        "--assignments",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-ours/map.cstrad2",
+        "--barcode-whitelist",
+        "/home/grant/Desktop/programming/constellation/benchdata/state-comparison-2026-10-30/barcodes.txt",
+        "--out-prefix",
+        "/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-ours/usa",
+        "--emit-metrics",
+        "/home/grant/Desktop/programming/constellation/experiments/2026-11-01-large-scale/raw/500m-ours-usa.metrics.json",
+        "--resolution",
+        "usa",
+        "--no-correct-umis"
+      ],
+      "seconds": 52.921633364167064,
+      "exit_code": 0,
+      "sampled_peak_rss_bytes": 14750982144,
+      "memory_guard_gib": 46,
+      "stopped_by_memory_guard": false
+    }
+  },
+  "count_policy": {
+    "count": "intersection",
+    "usa": "usa"
+  },
+  "matrix_totals": {
+    "count": {
+      "S": {
+        "total": 60757620,
+        "nonzero": 18410436,
+        "sha256_canonical_arrays": "93bdfb434bbb0e1b17d0b0455afd9a89079e9d8307de23ff40c1eeb3ce703f2a",
+        "genes_with_counts": 26176,
+        "cells_with_counts": 11769
+      },
+      "U": {
+        "total": 43459419,
+        "nonzero": 20747289,
+        "sha256_canonical_arrays": "a2276cd0957e3bb7add9554c99a094361a68aa315f158e6b8b938032583151a4",
+        "genes_with_counts": 26694,
+        "cells_with_counts": 11769
+      },
+      "A": {
+        "total": 14166789,
+        "nonzero": 5932697,
+        "sha256_canonical_arrays": "38fa64ead0b426d138475395d38518c331bc06bfbfa291c0bf0f6e73e16fa5da",
+        "genes_with_counts": 17203,
+        "cells_with_counts": 11769
+      },
+      "total": 118383828,
+      "barcodes": 11769,
+      "genes": 58395
+    },
+    "usa": {
+      "S": {
+        "total": 66724728,
+        "nonzero": 19613528,
+        "sha256_canonical_arrays": "0112c904faf1cb5bf6df0a422e57d6fd4928efcc76176b87a20d787d80a7eb36",
+        "genes_with_counts": 30346,
+        "cells_with_counts": 11769
+      },
+      "U": {
+        "total": 45624679,
+        "nonzero": 20979494,
+        "sha256_canonical_arrays": "0877e6e7aca68c3cd3f44e4048e20ef68c46f4b5ab086d36d957010e73092ba9",
+        "genes_with_counts": 26852,
+        "cells_with_counts": 11769
+      },
+      "A": {
+        "total": 15836472,
+        "nonzero": 6532497,
+        "sha256_canonical_arrays": "aa2e0f87c1c2580c1b49fa6347a4ea156196b42815eab3a8528ad936c124103c",
+        "genes_with_counts": 18159,
+        "cells_with_counts": 11769
+      },
+      "total": 128185879,
+      "barcodes": 11769,
+      "genes": 58395
+    }
+  },
+  "index_warmup": {
+    "seconds": 0.1841184590011835,
+    "bytes": 4427647629,
+    "files": [
+      "/home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/constellation.ecidx"
+    ],
+    "included_in_mapping_time": false
+  },
+  "count_seconds": 60.4573173080571,
+  "map_seconds": 261.79297132138163,
+  "pipeline_seconds": 322.2502886294387,
+  "usa_pipeline_seconds": 314.7146046855487
+}

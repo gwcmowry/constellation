@@ -1,0 +1,1 @@
+{"corpus": "heldout", "tool": "kallisto-forward", "records": 350403, "returned_gene_sets": 350403, "unique_gene": 315920, "unique_calls_from_multiple_score_ties": 0, "assignment_type_counts": {"1": 315920, "2": 34483, "0": 69597}}

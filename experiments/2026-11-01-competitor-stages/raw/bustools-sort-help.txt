@@ -1,0 +1,16 @@
+Usage: bustools sort [options] bus-files
+
+Options: 
+Default behavior is to sort by barcode, UMI, ec, then flag
+-t, --threads         Number of threads to use
+-m, --memory          Maximum memory used
+-T, --temp            Location and prefix for temporary files 
+                      required if using -p, otherwise defaults to output
+-o, --output          File for sorted output
+-p, --pipe            Write to standard output
+    --umi             Sort by UMI, barcode, then ec
+    --count           Sort by multiplicity, barcode, UMI, then ec
+    --flags           Sort by flag, ec, barcode, then UMI
+    --flags-bc        Sort by flag, barcode, UMI, then ec
+    --no-flags        Ignore and reset the flag while sorting
+

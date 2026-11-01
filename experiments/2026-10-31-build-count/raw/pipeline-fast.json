@@ -1,0 +1,15 @@
+{
+  "seconds": 30.760061314795166,
+  "includes": [
+    "reference_FASTA_to_index",
+    "index_conversion_if_needed",
+    "paired_FASTQ_to_CSTRAD2",
+    "CSTRAD2_to_all_count_matrices"
+  ],
+  "excludes": [
+    "reference_preparation",
+    "compilation",
+    "downloads"
+  ],
+  "policy": "intersection_with_directional_UMI_correction"
+}

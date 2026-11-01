@@ -1,0 +1,1 @@
+{"corpus": "lane2", "tool": "constellation-consensus", "records": 1000000, "returned_gene_sets": 782587, "unique_gene": 656004, "unique_calls_from_multiple_score_ties": 0, "assignment_type_counts": {"1": 656004, "5": 211198, "2": 126583, "6": 6215}}

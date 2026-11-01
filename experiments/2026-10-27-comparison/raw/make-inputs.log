@@ -1,0 +1,6 @@
+annotation: 203742 transcripts
+genome: 194 sequences
+generated mature
+generated junction
+generated intronic
+{"synthetic": {"seed": 20261027, "num_reads": 420000, "positive_sources": 90000, "negative_sources": 60000, "eligible_transcripts": 201350, "eligible_introns": 353469, "reference_checked_transcripts": 51667, "reference_checked_intronic_sources": 30000, "source_counts": {"mature": 120000, "junction": 120000, "intronic": 120000, "intergenic": 30000, "random": 30000}}, "real1m": {"num_reads": 1000000, "original_r1_valid": 999029}, "umi_xor_mask": 5913705, "fixed_barcode": "ACGTGTCAGTACGATC", "read_length": 91, "quality_model": "Phred40 for synthetic; original R2 for real"}

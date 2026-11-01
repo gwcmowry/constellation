@@ -1,0 +1,268 @@
+{
+  "microbenchmarks": {
+    "1": {
+      "encode": {
+        "checksum": 91,
+        "iterations_per_sample": 64,
+        "sample_seconds": [
+          0.000345829,
+          0.000331328,
+          0.000348088
+        ],
+        "seconds": [
+          5.403578125e-6,
+          5.177e-6,
+          5.438875e-6
+        ]
+      },
+      "hash_only": {
+        "checksum": 0,
+        "iterations_per_sample": 64,
+        "sample_seconds": [
+          0.000296809,
+          0.000304398,
+          0.000293829
+        ],
+        "seconds": [
+          4.637640625e-6,
+          4.75621875e-6,
+          4.591078125e-6
+        ]
+      },
+      "lookup_api_preselected": {
+        "checksum": 0,
+        "iterations_per_sample": 64,
+        "sample_seconds": [
+          0.000272409,
+          0.000268718,
+          0.000287869
+        ],
+        "seconds": [
+          4.256390625e-6,
+          4.19871875e-6,
+          4.497953125e-6
+        ]
+      },
+      "lookup_scalar_preselected": {
+        "checksum": 0,
+        "iterations_per_sample": 64,
+        "sample_seconds": [
+          0.000279979,
+          0.000287758,
+          0.000284629
+        ],
+        "seconds": [
+          4.374671875e-6,
+          4.49621875e-6,
+          4.447328125e-6
+        ]
+      },
+      "lookup_stream_prefetch_preselected": {
+        "checksum": 0,
+        "iterations_per_sample": 64,
+        "sample_seconds": [
+          0.000265639,
+          0.000278978,
+          0.000306209
+        ],
+        "seconds": [
+          4.150609375e-6,
+          4.35903125e-6,
+          4.784515625e-6
+        ]
+      },
+      "map_encoded": {
+        "checksum": 0,
+        "iterations_per_sample": 64,
+        "sample_seconds": [
+          0.001580243,
+          0.001249985,
+          0.001249394
+        ],
+        "seconds": [
+          0.000024691296875,
+          0.000019531015625,
+          0.00001952178125
+        ]
+      },
+      "select_syncmers": {
+        "checksum": 0,
+        "iterations_per_sample": 64,
+        "sample_seconds": [
+          0.000310679,
+          0.000315379,
+          0.000290638
+        ],
+        "seconds": [
+          4.854359375e-6,
+          4.927796875e-6,
+          4.54121875e-6
+        ]
+      }
+    },
+    "12": {
+      "encode": {
+        "checksum": 91,
+        "iterations_per_sample": 64,
+        "sample_seconds": [
+          0.000612797,
+          0.000324059,
+          0.000338348
+        ],
+        "seconds": [
+          9.574953125e-6,
+          5.063421875e-6,
+          5.2866875e-6
+        ]
+      },
+      "hash_only": {
+        "checksum": 0,
+        "iterations_per_sample": 64,
+        "sample_seconds": [
+          0.00013321,
+          0.000141489,
+          0.000123409
+        ],
+        "seconds": [
+          2.08140625e-6,
+          2.210765625e-6,
+          1.928265625e-6
+        ]
+      },
+      "lookup_api_preselected": {
+        "checksum": 0,
+        "iterations_per_sample": 64,
+        "sample_seconds": [
+          0.000289839,
+          0.000116699,
+          0.000175719
+        ],
+        "seconds": [
+          4.528734375e-6,
+          1.823421875e-6,
+          2.745609375e-6
+        ]
+      },
+      "lookup_scalar_preselected": {
+        "checksum": 0,
+        "iterations_per_sample": 64,
+        "sample_seconds": [
+          0.00014958,
+          0.000115849,
+          0.00013672
+        ],
+        "seconds": [
+          2.3371875e-6,
+          1.810140625e-6,
+          2.13625e-6
+        ]
+      },
+      "lookup_stream_prefetch_preselected": {
+        "checksum": 0,
+        "iterations_per_sample": 64,
+        "sample_seconds": [
+          0.000128389,
+          0.000181999,
+          0.000135069
+        ],
+        "seconds": [
+          2.006078125e-6,
+          2.843734375e-6,
+          2.110453125e-6
+        ]
+      },
+      "map_encoded": {
+        "checksum": 0,
+        "iterations_per_sample": 64,
+        "sample_seconds": [
+          0.003807533,
+          0.001270084,
+          0.001250944
+        ],
+        "seconds": [
+          0.000059492703125,
+          0.0000198450625,
+          0.000019546
+        ]
+      },
+      "select_syncmers": {
+        "checksum": 0,
+        "iterations_per_sample": 64,
+        "sample_seconds": [
+          0.000168549,
+          0.00011124,
+          0.000130349
+        ],
+        "seconds": [
+          2.633578125e-6,
+          1.738125e-6,
+          2.036703125e-6
+        ]
+      }
+    }
+  },
+  "trace": {
+    "absent_keys": 0,
+    "accepted_hits": 0,
+    "capped_hits": 0,
+    "distinct_ec_gene_visits": 0,
+    "distinct_ecs_per_read_sum": 0,
+    "eligible_reads": 0,
+    "gene_votes": 0,
+    "holdout_seed_occurrences": 0,
+    "hot_key_coverage": [
+      {
+        "keys": 1000,
+        "occurrences": 0
+      },
+      {
+        "keys": 10000,
+        "occurrences": 0
+      },
+      {
+        "keys": 100000,
+        "occurrences": 0
+      },
+      {
+        "keys": 1000000,
+        "occurrences": 0
+      }
+    ],
+    "hot_key_holdout_coverage": [
+      {
+        "holdout_occurrences": 0,
+        "keys": 1000
+      },
+      {
+        "holdout_occurrences": 0,
+        "keys": 10000
+      },
+      {
+        "holdout_occurrences": 0,
+        "keys": 100000
+      },
+      {
+        "holdout_occurrences": 0,
+        "keys": 1000000
+      }
+    ],
+    "index_bytes": 4427647629,
+    "index_keys": 259516542,
+    "index_slots": 262137600,
+    "reads": 1,
+    "reads_with_one_distinct_accepted_ec": 0,
+    "run_gene_visits": 0,
+    "same_ec_runs": 0,
+    "seed_occurrences": 0,
+    "singleton_keys": 0,
+    "singleton_target_hits": 0,
+    "slot_bytes": 4194201600,
+    "streaming_indices_verified": 0,
+    "supported_reads": 0,
+    "target_bytes": 133827300,
+    "training_reads": 0,
+    "unique_eligible_sequences": 0,
+    "unique_eligible_sequences_within_65536_read_batches": 0,
+    "unique_keys": 0
+  }
+}

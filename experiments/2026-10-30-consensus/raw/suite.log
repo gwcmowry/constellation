@@ -1,0 +1,34 @@
+heldout generated and reference-validated
+heldout150 generated and reference-validated
+Second lane generated
+{"tool": "constellation", "corpus": "heldout", "repeat": "validation", "process_wall_seconds": 0.15538186207413673, "pairs_per_second": 2703018.1926871687, "exit_code": 0}
+{"tool": "constellation-consensus", "corpus": "heldout", "repeat": "validation", "process_wall_seconds": 0.2099725748412311, "pairs_per_second": 2000261.2261033577, "exit_code": 0}
+{"tool": "piscem-forward", "corpus": "heldout", "repeat": "validation", "process_wall_seconds": 0.607837188988924, "pairs_per_second": 690974.5037131205, "exit_code": 0}
+{"tool": "kallisto-forward", "corpus": "heldout", "repeat": "validation", "process_wall_seconds": 60.69968925695866, "pairs_per_second": 6919.310545759521, "exit_code": 0}
+heldout evaluated
+{"tool": "constellation", "corpus": "heldout150", "repeat": "validation", "process_wall_seconds": 0.199385367333889, "pairs_per_second": 2106473.537231404, "exit_code": 0}
+{"tool": "constellation-consensus", "corpus": "heldout150", "repeat": "validation", "process_wall_seconds": 0.2945796116255224, "pairs_per_second": 1425760.5870358585, "exit_code": 0}
+{"tool": "piscem-forward", "corpus": "heldout150", "repeat": "validation", "process_wall_seconds": 0.8356109699234366, "pairs_per_second": 502626.2401012791, "exit_code": 0}
+{"tool": "kallisto-forward", "corpus": "heldout150", "repeat": "validation", "process_wall_seconds": 60.20559002319351, "pairs_per_second": 6976.096402978525, "exit_code": 0}
+heldout150 evaluated
+{"tool": "constellation", "corpus": "lane2", "repeat": "validation", "process_wall_seconds": 0.36339149065315723, "pairs_per_second": 2751853.0998142175, "exit_code": 0}
+{"tool": "constellation-consensus", "corpus": "lane2", "repeat": "validation", "process_wall_seconds": 0.5047603459097445, "pairs_per_second": 1981138.193804964, "exit_code": 0}
+{"tool": "piscem-forward", "corpus": "lane2", "repeat": "validation", "process_wall_seconds": 1.7931933500804007, "pairs_per_second": 557664.3477710662, "exit_code": 0}
+{"tool": "kallisto-forward", "corpus": "lane2", "repeat": "validation", "process_wall_seconds": 62.78574342979118, "pairs_per_second": 15927.182595492059, "exit_code": 0}
+lane2 evaluated
+{"tool": "constellation", "corpus": "pbmc10m", "repeat": "warmup", "process_wall_seconds": 3.15451826993376, "pairs_per_second": 3170056.136720357, "exit_code": 0}
+{"tool": "constellation-consensus", "corpus": "pbmc10m", "repeat": "warmup", "process_wall_seconds": 4.290750567335635, "pairs_per_second": 2330594.5761861317, "exit_code": 0}
+{"tool": "piscem-forward", "corpus": "pbmc10m", "repeat": "warmup", "process_wall_seconds": 13.90040505072102, "pairs_per_second": 719403.4967694194, "exit_code": 0}
+{"tool": "kallisto-forward", "corpus": "pbmc10m", "repeat": "warmup", "process_wall_seconds": 85.5901589510031, "pairs_per_second": 116835.8620028337, "exit_code": 0}
+{"tool": "constellation-consensus", "corpus": "pbmc10m", "repeat": 1, "process_wall_seconds": 4.283208640292287, "pairs_per_second": 2334698.3161010803, "exit_code": 0}
+{"tool": "piscem-forward", "corpus": "pbmc10m", "repeat": 1, "process_wall_seconds": 13.958013589959592, "pairs_per_second": 716434.3218001516, "exit_code": 0}
+{"tool": "kallisto-forward", "corpus": "pbmc10m", "repeat": 1, "process_wall_seconds": 85.79188874177635, "pairs_per_second": 116561.13586797049, "exit_code": 0}
+{"tool": "constellation", "corpus": "pbmc10m", "repeat": 1, "process_wall_seconds": 3.0563970673829317, "pairs_per_second": 3271826.1991275214, "exit_code": 0}
+{"tool": "piscem-forward", "corpus": "pbmc10m", "repeat": 2, "process_wall_seconds": 14.000472798012197, "pairs_per_second": 714261.5927527684, "exit_code": 0}
+{"tool": "kallisto-forward", "corpus": "pbmc10m", "repeat": 2, "process_wall_seconds": 85.51638428401202, "pairs_per_second": 116936.65586688726, "exit_code": 0}
+{"tool": "constellation", "corpus": "pbmc10m", "repeat": 2, "process_wall_seconds": 2.835402750875801, "pairs_per_second": 3526835.824967439, "exit_code": 0}
+{"tool": "constellation-consensus", "corpus": "pbmc10m", "repeat": 2, "process_wall_seconds": 4.404580834787339, "pairs_per_second": 2270363.599873135, "exit_code": 0}
+{"tool": "kallisto-forward", "corpus": "pbmc10m", "repeat": 3, "process_wall_seconds": 85.68239042675123, "pairs_per_second": 116710.09585743143, "exit_code": 0}
+{"tool": "constellation", "corpus": "pbmc10m", "repeat": 3, "process_wall_seconds": 3.19958113739267, "pairs_per_second": 3125409.0990638146, "exit_code": 0}
+{"tool": "constellation-consensus", "corpus": "pbmc10m", "repeat": 3, "process_wall_seconds": 4.4280016790144145, "pairs_per_second": 2258355.0605666894, "exit_code": 0}
+{"tool": "piscem-forward", "corpus": "pbmc10m", "repeat": 3, "process_wall_seconds": 13.87685275496915, "pairs_per_second": 720624.4943702461, "exit_code": 0}

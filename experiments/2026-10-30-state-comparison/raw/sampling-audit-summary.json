@@ -1,0 +1,12 @@
+{
+  "heldout150": {
+    "cases_with_discriminating_kmers": 190,
+    "any_filtered_seed": 2,
+    "all_discriminators_unsampled": 188
+  },
+  "heldout": {
+    "cases_with_discriminating_kmers": 198,
+    "any_filtered_seed": 4,
+    "all_discriminators_unsampled": 194
+  }
+}

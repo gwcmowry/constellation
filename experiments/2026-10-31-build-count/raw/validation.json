@@ -1,0 +1,33 @@
+{
+  "barcodes.tsv": "fa90c4edcc5ad614822e9a1a08f3f2adb0f427740f8cf36d10e40eddc3ab18cc",
+  "features.tsv": "227c0bd1ebba8414428dd2cf6f35c60422767057a805c9eb0ec5b280fd743e02",
+  "spliced.mtx": "a952e1110a6172f65224aae59f7b16fcd0384b6e2c7af11744778be325f7fd6b",
+  "unspliced.mtx": "75f850cbf20b355718d2e033b06a52949af25f12bc6fb1ba289db99db0160538",
+  "ambiguous.mtx": "d40d2fe7ec2724647d76256ddbec06a5424cd49a1eb5cca1910cd5dda3998911",
+  "compatible_both.mtx": "cd27e63b5024f40bab1bcb3107097c1a2fd95883f67559e491ad4e7f1b4d7039",
+  "conflicting.mtx": "9ba048b17f9ab9b8072e797fc4161dadbc03a392a8ddf5b353303855818e8c0f",
+  "unknown.mtx": "0aba7ee0a9c80d4e6bda0471e4fca0110f94c68584a375af74f38aa57fe8ba18",
+  "matrix.mtx": "cee66b25fa18a9ea3016fc984608076d9c11203d822684bca8152bd23621708b",
+  "native_piscem_usa_matrices_exact": true,
+  "mapping_bytes_identical": true,
+  "baseline_index_sha256": "a2887b7b560051f1850d4216f438f2d7aed1451250debfb8a3f39ee9e3a24930",
+  "optimized_index_sha256": "2160d2c968c41c8a1ce02e981cb1329bbe95678c091c6efb88b088d2f39cb9ff",
+  "index_bytes_identical": false,
+  "full_index_semantic_audit": {
+    "retained_keys_verified": 259516542,
+    "extra_probes": 1000000,
+    "gene_dictionaries_equal": true
+  },
+  "pipeline_mapping_bytes_identical": true,
+  "pipeline_count_output_bytes_identical": {
+    "barcodes.tsv": true,
+    "features.tsv": true,
+    "spliced.mtx": true,
+    "unspliced.mtx": true,
+    "ambiguous.mtx": true,
+    "compatible_both.mtx": true,
+    "conflicting.mtx": true,
+    "unknown.mtx": true,
+    "matrix.mtx": true
+  }
+}

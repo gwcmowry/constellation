@@ -1,0 +1,146 @@
+{"seconds": 0.0030274842865765095, "line": "2026-11-01T02:31:42.374285Z  INFO piscem: starting piscem build"}
+{"seconds": 0.0031494521535933018, "line": "2026-11-01T02:31:42.374431Z  INFO piscem: will use /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-work as the work directory for temporary files."}
+{"seconds": 0.003161052241921425, "line": "2026-11-01T02:31:42.374434Z  INFO piscem: Computing and recording reference signatures..."}
+{"seconds": 3.072295468300581, "line": "2026-11-01T02:31:45.443531Z  INFO piscem: done."}
+{"seconds": 3.0723254680633545, "line": "2026-11-01T02:31:45.443543Z  INFO piscem: starting cDBG construction with cf1-rs"}
+{"seconds": 3.074950867332518, "line": "2026-11-01T02:31:45.446221Z  INFO cf1_rs::pipeline: RSS at start: current=19 MB, peak=24 MB"}
+{"seconds": 3.0749619770795107, "line": "2026-11-01T02:31:45.446231Z  INFO cf1_rs::pipeline: Phase 1: Counting minimizer frequencies..."}
+{"seconds": 3.0749679673463106, "line": "2026-11-01T02:31:45.446233Z  INFO cf1_rs::minimizer: Counting minimizer frequencies with m=15, w=17, k=31"}
+{"seconds": 5.275228199083358, "line": "2026-11-01T02:31:47.646463Z  INFO cf1_rs::minimizer: Histogram: 228456456 total minimizer occurrences across 65536 non-empty buckets"}
+{"seconds": 5.2775198724120855, "line": "2026-11-01T02:31:47.648755Z  INFO cf1_rs::pipeline: RSS after P1: current=1064 MB, peak=1733 MB"}
+{"seconds": 5.277549252379686, "line": "2026-11-01T02:31:47.648765Z  INFO cf1_rs::pipeline: Phase 2: Partitioning minimizers and routing super k-mers..."}
+{"seconds": 5.277562742121518, "line": "2026-11-01T02:31:47.648813Z  INFO cf1_rs::minimizer: Partitioned into 128 bins (target 1784816/bin)"}
+{"seconds": 5.277570212259889, "line": "2026-11-01T02:31:47.648845Z  INFO cf1_rs::superkmer: Routing super k-mers to 128 bins with m=15, w=17"}
+{"seconds": 8.278879076242447, "line": "2026-11-01T02:31:50.650113Z  INFO cf1_rs::superkmer: Finished routing super k-mers to bin files"}
+{"seconds": 8.281780051998794, "line": "2026-11-01T02:31:50.653025Z  INFO cf1_rs::pipeline: RSS after P2: current=738 MB, peak=1733 MB"}
+{"seconds": 8.28180587105453, "line": "2026-11-01T02:31:50.653034Z  INFO cf1_rs::pipeline: Phase 3: Building global MPHF..."}
+{"seconds": 8.281813531182706, "line": "2026-11-01T02:31:50.653043Z  INFO cf1_rs::mphf: Reading canonical k-mers from 128 bins"}
+{"seconds": 8.284072955138981, "line": "2026-11-01T02:31:50.655345Z  INFO cf1_rs::mphf: P3a: RSS before dedup: current=738 MB, peak=1733 MB"}
+{"seconds": 14.742016366217285, "line": "2026-11-01T02:31:57.113238Z  INFO cf1_rs::mphf: Total 1450779424 distinct canonical k-mers across 128 bins (per-bin: min=7265697, max=11825340, avg=11334214)"}
+{"seconds": 14.750227959360927, "line": "2026-11-01T02:31:57.121500Z  INFO cf1_rs::mphf: P3a: RSS after dedup: current=2008 MB, peak=3703 MB"}
+{"seconds": 18.380442831199616, "line": "2026-11-01T02:32:00.751675Z  INFO cf1_rs::mphf: P3b: RSS after consolidation: current=1129 MB, peak=3703 MB"}
+{"seconds": 18.38048494141549, "line": "2026-11-01T02:32:00.751687Z  INFO cf1_rs::mphf: Building global MPHF for 1450779424 distinct canonical k-mers (streaming, clone_threshold=300000000, threads=12)"}
+{"seconds": 46.607863053213805, "line": "2026-11-01T02:32:28.979090Z  INFO cf1_rs::mphf: MPHF construction complete"}
+{"seconds": 47.342300709336996, "line": "2026-11-01T02:32:29.713547Z  INFO cf1_rs::pipeline: RSS after P3 MPHF: current=5462 MB, peak=5461 MB"}
+{"seconds": 47.40645673405379, "line": "2026-11-01T02:32:29.777697Z  INFO cf1_rs::pipeline: RSS after P3 StateVector: current=3836 MB, peak=5461 MB"}
+{"seconds": 47.62426573038101, "line": "2026-11-01T02:32:29.995487Z  INFO cf1_rs::pipeline: Phase 4: Classifying k-mer vertices..."}
+{"seconds": 47.62430370040238, "line": "2026-11-01T02:32:29.995497Z  INFO cf1_rs::classify: Phase 4: Classifying k-mer vertices"}
+{"seconds": 76.2881081700325, "line": "2026-11-01T02:32:58.659324Z  INFO cf1_rs::classify: Classification complete"}
+{"seconds": 76.29031531419605, "line": "2026-11-01T02:32:58.661553Z  INFO cf1_rs::pipeline: RSS after P4: current=1952 MB, peak=5461 MB"}
+{"seconds": 76.29034992307425, "line": "2026-11-01T02:32:58.661564Z  INFO cf1_rs::pipeline: Phase 5: Extracting unitigs and writing output..."}
+{"seconds": 76.29035818343982, "line": "2026-11-01T02:32:58.661573Z  INFO cf1_rs::output: Phase 5: Extracting unitigs and writing output"}
+{"seconds": 102.46046387916431, "line": "2026-11-01T02:33:24.831513Z  INFO cf1_rs::output: Extracted 19050010 unitigs, 1450779424 vertices, avg length 106"}
+{"seconds": 102.4628159319982, "line": "2026-11-01T02:33:24.834060Z  INFO cf1_rs::pipeline: RSS after P5: current=2170 MB, peak=5461 MB"}
+{"seconds": 102.46286104107276, "line": "2026-11-01T02:33:24.834146Z  INFO cf1_rs::output: Wrote JSON output to /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici_cfish.json"}
+{"seconds": 102.46286970144138, "line": "2026-11-01T02:33:24.834151Z  INFO cf1_rs::pipeline: Pipeline complete."}
+{"seconds": 102.46294305007905, "line": "2026-11-01T02:33:24.834208Z  INFO piscem: cDBG construction complete: 19050010 unitigs, 1450779424 vertices"}
+{"seconds": 102.46296314010397, "line": "2026-11-01T02:33:24.834238Z  INFO piscem_rs::index::build: Parsing segment file: /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici_cfish.cf_seg"}
+{"seconds": 105.34424950834364, "line": "2026-11-01T02:33:27.715473Z  INFO piscem_rs::index::build:   19050010 segments"}
+{"seconds": 105.35694605810568, "line": "2026-11-01T02:33:27.728212Z  INFO piscem_rs::index::build: Building SSHash dictionary (k=31, m=19)"}
+{"seconds": 105.35698417806998, "line": "2026-11-01T02:33:27.728236Z  INFO piscem_rs::index::mem_budget: sshash minimizer-sort RAM budget: 24 GiB (requested)"}
+{"seconds": 105.35724937543273, "line": "2026-11-01T02:33:27.728492Z  INFO sshash_lib::builder::config: Build Configuration:"}
+{"seconds": 105.35726664541289, "line": "2026-11-01T02:33:27.728527Z  INFO sshash_lib::builder::config:   k = 31"}
+{"seconds": 105.35727819427848, "line": "2026-11-01T02:33:27.728531Z  INFO sshash_lib::builder::config:   m = 19"}
+{"seconds": 105.35729397414252, "line": "2026-11-01T02:33:27.728534Z  INFO sshash_lib::builder::config:   num_threads = 12"}
+{"seconds": 105.35730564408004, "line": "2026-11-01T02:33:27.728538Z  INFO sshash_lib::builder::dictionary_builder: Building SSHash Dictionary"}
+{"seconds": 105.3573167542927, "line": "2026-11-01T02:33:27.728541Z  INFO sshash_lib::builder::dictionary_builder: Step 1: Encoding sequences..."}
+{"seconds": 106.11140944808722, "line": "2026-11-01T02:33:28.482622Z  INFO sshash_lib::builder::dictionary_builder:   Encoded 19050010 sequences"}
+{"seconds": 106.11145956814289, "line": "2026-11-01T02:33:28.482636Z  INFO sshash_lib::builder::dictionary_builder:   Total bases: 2022279724"}
+{"seconds": 106.11147102806717, "line": "2026-11-01T02:33:28.482638Z  INFO sshash_lib::builder::dictionary_builder: Step 2: Extracting and coalescing minimizer tuples (in-memory)..."}
+{"seconds": 110.3695561713539, "line": "2026-11-01T02:33:32.740379Z  INFO sshash_lib::builder::dictionary_builder:   Extracted and coalesced 224363031 tuples"}
+{"seconds": 110.3702713730745, "line": "2026-11-01T02:33:32.740393Z  INFO sshash_lib::builder::dictionary_builder: Step 3: Classifying buckets (in-place)..."}
+{"seconds": 111.0391372712329, "line": "2026-11-01T02:33:33.410367Z  INFO sshash_lib::builder::buckets: Bucket Statistics:"}
+{"seconds": 111.03917345032096, "line": "2026-11-01T02:33:33.410377Z  INFO sshash_lib::builder::buckets:   Total buckets: 184146432"}
+{"seconds": 111.03918533027172, "line": "2026-11-01T02:33:33.410379Z  INFO sshash_lib::builder::buckets:   Total k-mers: 1450779424"}
+{"seconds": 111.03919489029795, "line": "2026-11-01T02:33:33.410380Z  INFO sshash_lib::builder::buckets:   Total positions: 224363031"}
+{"seconds": 111.03920379001647, "line": "2026-11-01T02:33:33.410381Z  INFO sshash_lib::builder::buckets:   Singleton buckets: 174261936 (94.63%)"}
+{"seconds": 111.03921786043793, "line": "2026-11-01T02:33:33.410383Z  INFO sshash_lib::builder::buckets:   Light buckets (2-64): 9824156 (5.33%)"}
+{"seconds": 111.0392379690893, "line": "2026-11-01T02:33:33.410387Z  INFO sshash_lib::builder::buckets:   Heavy buckets (>64): 60340 (0.03%)"}
+{"seconds": 111.03924527904019, "line": "2026-11-01T02:33:33.410388Z  INFO sshash_lib::builder::buckets:   Max bucket size: 283033"}
+{"seconds": 111.03925213916227, "line": "2026-11-01T02:33:33.410389Z  INFO sshash_lib::builder::buckets:   Positions in light buckets: 35219441 (15.70%)"}
+{"seconds": 111.0392593392171, "line": "2026-11-01T02:33:33.410390Z  INFO sshash_lib::builder::buckets:   Positions in heavy buckets: 14881654 (6.63%)"}
+{"seconds": 111.03926591901109, "line": "2026-11-01T02:33:33.410391Z  INFO sshash_lib::builder::dictionary_builder: Step 4: Building minimizers control map..."}
+{"seconds": 111.03927278937772, "line": "2026-11-01T02:33:33.410393Z  INFO sshash_lib::builder::dictionary_builder: Building PHastR MPHF for 184146432 minimizers (Streaming(Auto { min_keys: 16777216 }))"}
+{"seconds": 115.35740879643708, "line": "2026-11-01T02:33:37.728636Z  INFO sshash_lib::builder::dictionary_builder:   Built MPHF for 184146432 minimizers"}
+{"seconds": 115.35744412522763, "line": "2026-11-01T02:33:37.728649Z  INFO sshash_lib::builder::dictionary_builder: Step 5: Building sparse and skew index..."}
+{"seconds": 116.2356166690588, "line": "2026-11-01T02:33:38.606807Z  INFO sshash_lib::sparse_and_skew_index:   Pass 1 (EF build): 0.88s \u2014 184146432 buckets, 224363031 total super-kmers, max_bucket_size=283033"}
+{"seconds": 117.65318550541997, "line": "2026-11-01T02:33:40.024419Z  INFO sshash_lib::sparse_and_skew_index:   Pass 2 (fill offsets): 1.42s \u2014 60340 heavy buckets collected"}
+{"seconds": 117.65355662116781, "line": "2026-11-01T02:33:40.024842Z  INFO sshash_lib::sparse_and_skew_index:     SkewIndex: max_bucket_size=283033, num_partitions=8"}
+{"seconds": 120.7822780571878, "line": "2026-11-01T02:33:43.153499Z  INFO sshash_lib::sparse_and_skew_index:   Pass 3 (skew index): 3.13s"}
+{"seconds": 120.78230722714216, "line": "2026-11-01T02:33:43.153512Z  INFO sshash_lib::builder::dictionary_builder:   Index built successfully"}
+{"seconds": 120.78231436619535, "line": "2026-11-01T02:33:43.153514Z  INFO sshash_lib::builder::dictionary_builder: Dictionary Build Complete"}
+{"seconds": 120.78231997601688, "line": "2026-11-01T02:33:43.153520Z  INFO sshash_lib::builder::dictionary_builder: Total memory: 1496.72 MB"}
+{"seconds": 120.79031040240079, "line": "2026-11-01T02:33:43.161353Z  INFO piscem_rs::index::build:   Dictionary built: 19050010 strings"}
+{"seconds": 122.12698128027841, "line": "2026-11-01T02:33:44.498206Z  INFO piscem_rs::index::build: First pass over /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici_cfish.cf_seq"}
+{"seconds": 122.13284852122888, "line": "2026-11-01T02:33:44.504106Z  INFO piscem_rs::index::build:   35 short references from JSON"}
+{"seconds": 122.20400618435815, "line": "2026-11-01T02:33:44.575230Z  INFO piscem_rs::index::build:   processed 10000 references"}
+{"seconds": 122.25683134235442, "line": "2026-11-01T02:33:44.628060Z  INFO piscem_rs::index::build:   processed 20000 references"}
+{"seconds": 122.30268512200564, "line": "2026-11-01T02:33:44.673899Z  INFO piscem_rs::index::build:   processed 30000 references"}
+{"seconds": 122.35478016920388, "line": "2026-11-01T02:33:44.726003Z  INFO piscem_rs::index::build:   processed 40000 references"}
+{"seconds": 122.42582240328193, "line": "2026-11-01T02:33:44.797057Z  INFO piscem_rs::index::build:   processed 50000 references"}
+{"seconds": 122.47854501241818, "line": "2026-11-01T02:33:44.849784Z  INFO piscem_rs::index::build:   processed 60000 references"}
+{"seconds": 122.54301057429984, "line": "2026-11-01T02:33:44.914234Z  INFO piscem_rs::index::build:   processed 70000 references"}
+{"seconds": 122.59883287735283, "line": "2026-11-01T02:33:44.970065Z  INFO piscem_rs::index::build:   processed 80000 references"}
+{"seconds": 122.64864214044064, "line": "2026-11-01T02:33:45.019874Z  INFO piscem_rs::index::build:   processed 90000 references"}
+{"seconds": 122.71264339704067, "line": "2026-11-01T02:33:45.083867Z  INFO piscem_rs::index::build:   processed 100000 references"}
+{"seconds": 122.781846083235, "line": "2026-11-01T02:33:45.153076Z  INFO piscem_rs::index::build:   processed 110000 references"}
+{"seconds": 122.82826332608238, "line": "2026-11-01T02:33:45.199498Z  INFO piscem_rs::index::build:   processed 120000 references"}
+{"seconds": 122.87314949836582, "line": "2026-11-01T02:33:45.244377Z  INFO piscem_rs::index::build:   processed 130000 references"}
+{"seconds": 122.93271851725876, "line": "2026-11-01T02:33:45.303954Z  INFO piscem_rs::index::build:   processed 140000 references"}
+{"seconds": 122.98427951009944, "line": "2026-11-01T02:33:45.355506Z  INFO piscem_rs::index::build:   processed 150000 references"}
+{"seconds": 123.03273351024836, "line": "2026-11-01T02:33:45.403966Z  INFO piscem_rs::index::build:   processed 160000 references"}
+{"seconds": 123.08164999401197, "line": "2026-11-01T02:33:45.452888Z  INFO piscem_rs::index::build:   processed 170000 references"}
+{"seconds": 123.13687967415899, "line": "2026-11-01T02:33:45.508117Z  INFO piscem_rs::index::build:   processed 180000 references"}
+{"seconds": 123.18596433615312, "line": "2026-11-01T02:33:45.557187Z  INFO piscem_rs::index::build:   processed 190000 references"}
+{"seconds": 123.23674756940454, "line": "2026-11-01T02:33:45.607969Z  INFO piscem_rs::index::build:   processed 200000 references"}
+{"seconds": 124.79403988039121, "line": "2026-11-01T02:33:47.165262Z  INFO piscem_rs::index::build:   processed 210000 references"}
+{"seconds": 127.57286510430276, "line": "2026-11-01T02:33:49.944100Z  INFO piscem_rs::index::build:   processed 220000 references"}
+{"seconds": 130.5963104693219, "line": "2026-11-01T02:33:52.967525Z  INFO piscem_rs::index::build:   processed 230000 references"}
+{"seconds": 132.85624273121357, "line": "2026-11-01T02:33:55.227479Z  INFO piscem_rs::index::build:   processed 240000 references"}
+{"seconds": 135.7425418603234, "line": "2026-11-01T02:33:58.113750Z  INFO piscem_rs::index::build:   processed 250000 references"}
+{"seconds": 139.24399994919077, "line": "2026-11-01T02:34:01.615233Z  INFO piscem_rs::index::build:   processed 260000 references"}
+{"seconds": 142.77607358805835, "line": "2026-11-01T02:34:05.147296Z  INFO piscem_rs::index::build:   processed 270000 references"}
+{"seconds": 145.02876298502088, "line": "2026-11-01T02:34:07.399976Z  INFO piscem_rs::index::build:   276935 references, max_ref_len=2278213"}
+{"seconds": 145.02882618410513, "line": "2026-11-01T02:34:07.399986Z  INFO piscem_rs::index::build: Second pass over /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici_cfish.cf_seq to fill contig entries"}
+{"seconds": 145.21282270923257, "line": "2026-11-01T02:34:07.584043Z  INFO piscem_rs::index::build:   processing reference #0"}
+{"seconds": 145.31830944726244, "line": "2026-11-01T02:34:07.689527Z  INFO piscem_rs::index::build:   processing reference #10000"}
+{"seconds": 145.39694894244894, "line": "2026-11-01T02:34:07.768169Z  INFO piscem_rs::index::build:   processing reference #20000"}
+{"seconds": 145.46170783927664, "line": "2026-11-01T02:34:07.832932Z  INFO piscem_rs::index::build:   processing reference #30000"}
+{"seconds": 145.53704162314534, "line": "2026-11-01T02:34:07.908278Z  INFO piscem_rs::index::build:   processing reference #40000"}
+{"seconds": 145.61467458913103, "line": "2026-11-01T02:34:07.985854Z  INFO piscem_rs::index::build:   processing reference #50000"}
+{"seconds": 145.6848763334565, "line": "2026-11-01T02:34:08.056098Z  INFO piscem_rs::index::build:   processing reference #60000"}
+{"seconds": 145.77285918733105, "line": "2026-11-01T02:34:08.144085Z  INFO piscem_rs::index::build:   processing reference #70000"}
+{"seconds": 145.84994810028002, "line": "2026-11-01T02:34:08.221169Z  INFO piscem_rs::index::build:   processing reference #80000"}
+{"seconds": 145.91835419507697, "line": "2026-11-01T02:34:08.289578Z  INFO piscem_rs::index::build:   processing reference #90000"}
+{"seconds": 146.0079639502801, "line": "2026-11-01T02:34:08.379194Z  INFO piscem_rs::index::build:   processing reference #100000"}
+{"seconds": 146.10707535408437, "line": "2026-11-01T02:34:08.478310Z  INFO piscem_rs::index::build:   processing reference #110000"}
+{"seconds": 146.17313911626115, "line": "2026-11-01T02:34:08.544361Z  INFO piscem_rs::index::build:   processing reference #120000"}
+{"seconds": 146.23710759310052, "line": "2026-11-01T02:34:08.608345Z  INFO piscem_rs::index::build:   processing reference #130000"}
+{"seconds": 146.3200463373214, "line": "2026-11-01T02:34:08.691280Z  INFO piscem_rs::index::build:   processing reference #140000"}
+{"seconds": 146.39199171215296, "line": "2026-11-01T02:34:08.763230Z  INFO piscem_rs::index::build:   processing reference #150000"}
+{"seconds": 146.4756296882406, "line": "2026-11-01T02:34:08.846824Z  INFO piscem_rs::index::build:   processing reference #160000"}
+{"seconds": 146.5441622612998, "line": "2026-11-01T02:34:08.915382Z  INFO piscem_rs::index::build:   processing reference #170000"}
+{"seconds": 146.62064558127895, "line": "2026-11-01T02:34:08.991854Z  INFO piscem_rs::index::build:   processing reference #180000"}
+{"seconds": 146.68793118931353, "line": "2026-11-01T02:34:09.059156Z  INFO piscem_rs::index::build:   processing reference #190000"}
+{"seconds": 146.7584507302381, "line": "2026-11-01T02:34:09.129679Z  INFO piscem_rs::index::build:   processing reference #200000"}
+{"seconds": 149.25932761421427, "line": "2026-11-01T02:34:11.630551Z  INFO piscem_rs::index::build:   processing reference #210000"}
+{"seconds": 153.82557018101215, "line": "2026-11-01T02:34:16.196791Z  INFO piscem_rs::index::build:   processing reference #220000"}
+{"seconds": 158.8723330432549, "line": "2026-11-01T02:34:21.243557Z  INFO piscem_rs::index::build:   processing reference #230000"}
+{"seconds": 162.79040358914062, "line": "2026-11-01T02:34:25.161627Z  INFO piscem_rs::index::build:   processing reference #240000"}
+{"seconds": 167.65981508931145, "line": "2026-11-01T02:34:30.031038Z  INFO piscem_rs::index::build:   processing reference #250000"}
+{"seconds": 173.54807142727077, "line": "2026-11-01T02:34:35.919288Z  INFO piscem_rs::index::build:   processing reference #260000"}
+{"seconds": 179.54513277532533, "line": "2026-11-01T02:34:41.916352Z  INFO piscem_rs::index::build:   processing reference #270000"}
+{"seconds": 183.42587855132297, "line": "2026-11-01T02:34:45.796859Z  INFO piscem_rs::index::build:   ContigTable: 19050010 contigs, 177240068 entries"}
+{"seconds": 183.42606766941026, "line": "2026-11-01T02:34:45.796871Z  INFO piscem_rs::index::build: Building equivalence class table"}
+{"seconds": 189.7624646234326, "line": "2026-11-01T02:34:52.133681Z  INFO piscem_rs::index::build:   EqClassMap: 19050010 tiles, 10472123 ECs, 153506540 label entries"}
+{"seconds": 189.76250340230763, "line": "2026-11-01T02:34:52.133707Z  INFO piscem_rs::index::reference_index: Saving SSHash dictionary to /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici.ssi"}
+{"seconds": 190.16479653818533, "line": "2026-11-01T02:34:52.536027Z  INFO piscem_rs::index::reference_index: Saving contig table to /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici.ctab"}
+{"seconds": 190.2909234231338, "line": "2026-11-01T02:34:52.662161Z  INFO piscem_rs::index::reference_index: Saving reference info to /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici.refinfo"}
+{"seconds": 190.29595706425607, "line": "2026-11-01T02:34:52.667212Z  INFO piscem_rs::index::reference_index: Saving equivalence class table to /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici.ectab"}
+{"seconds": 190.36421879101545, "line": "2026-11-01T02:34:52.735434Z  INFO piscem_rs::index::reference_index: Index saved to /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici"}
+{"seconds": 190.36427185032517, "line": "2026-11-01T02:34:52.735452Z  INFO piscem_rs::index::build: Index built and saved to /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici"}
+{"seconds": 190.36428341036662, "line": "2026-11-01T02:34:52.735455Z  INFO piscem_rs::index::build: auto dict selection: 1450779424 canonical k-mers (100000000 threshold), emitting Tiny artifacts: false"}
+{"seconds": 190.36476951418445, "line": "2026-11-01T02:34:52.736035Z  INFO piscem: removing intermediate cdBG files produced by cf1-rs."}
+{"seconds": 190.53630061540753, "line": "2026-11-01T02:34:52.907524Z  INFO piscem: removed segment file /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici_cfish.cf_seg"}
+{"seconds": 190.68802974000573, "line": "2026-11-01T02:34:53.059253Z  INFO piscem: removed tiling file /home/grant/Desktop/programming/constellation/benchdata/competitor-stages-2026-11-01/piscem-splici_cfish.cf_seq"}
+{"seconds": 190.68807194940746, "line": "2026-11-01T02:34:53.059334Z  INFO piscem: piscem build finished."}

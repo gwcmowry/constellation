@@ -1,0 +1,65 @@
+Index a reference sequence
+
+Usage: piscem build [OPTIONS] --threads <THREADS> --output <OUTPUT> <--ref-seqs <REF_SEQS>|--ref-lists <REF_LISTS>|--ref-dirs <REF_DIRS>>
+
+Options:
+  -o, --output <OUTPUT>            output file stem
+      --decoy-paths <DECOY_PATHS>  path to (optional) ',' separated list of decoy sequences used to
+                                   insert poison k-mer information into the index
+  -h, --help                       Print help
+  -V, --version                    Print version
+
+Input:
+  -s, --ref-seqs <REF_SEQS>    ',' separated list of reference FASTA files
+  -l, --ref-lists <REF_LISTS>  ',' separated list of files (each listing input FASTA files)
+  -d, --ref-dirs <REF_DIRS>    ',' separated list of directories (all FASTA files in each directory
+                               will be indexed, but not recursively)
+
+Index Construction Parameters:
+  -k, --klen <KLEN>
+          length of k-mer to use, must be <= 31 and odd [default: 31]
+  -m, --mlen <MLEN>
+          length of minimizer to use; must be < `klen` [default: 19]
+  -t, --threads <THREADS>
+          number of threads to use
+      --no-ec-table
+          skip the construction of the equivalence class lookup table when building the index (not
+          recommended)
+      --polya-clip-length <POLYA_CLIP_LENGTH>
+          If provided (default is not to clip polyA), then reference sequences ending with polyA
+          tails of length greater than or equal to this value will be clipped (all of their trailing
+          `A`s; case-sensitive). Only with `--ref-seqs`. The clipped reference is written to
+          `<output>.fa.gz` and removed after indexing unless `--keep-intermediate-dbg` is given
+      --seed <SEED>
+          index construction seed (seed value passed to SSHash index construction; useful if empty
+          buckets occur) [default: 1]
+      --dict <DICT>
+          dictionary artifacts to emit: `auto` (default), `sshash`, or `tiny` [default: auto]
+          [possible values: auto, sshash, tiny]
+      --mphf <MPHF>
+          how SSHash builds its minimizer MPHF: `streaming` (default; one function, built offline in
+          `--tmp-dir` for large references), `in-memory` (one function from a copy of the
+          minimizers; no temporary disk) or `partitioned` (~3M-key functions in parallel; no
+          temporary disk, slower lookups). The index format is the same [default: streaming]
+          [possible values: streaming, in-memory, partitioned]
+      --mphf-offline <MPHF_OFFLINE>
+          where `--mphf streaming` keeps its construction records (16 bytes per minimizer): `auto`
+          (default) in `--tmp-dir` from 2^24 minimizers on, `always` there, `never` in memory
+          [default: auto] [possible values: auto, always, never]
+
+Indexing Details:
+      --keep-intermediate-dbg          retain the reduced format GFA files produced by cf1-rs that
+                                       describe the reference cDBG (the default is to remove these)
+  -w, --work-dir <WORK_DIR>            working directory where temporary files should be placed
+                                       [default: ./workdir.noindex]
+      --overwrite                      overwrite an existing index if the output path is the same
+      --tmp-dir <TMP_DIR>              directory for SSHash's temporary files: its external
+                                       minimizer sort and offline MPHF construction, a distinct,
+                                       later phase from the cDBG construction. Unset uses
+                                       `sshash_tmp` inside `--work-dir`
+      --ram-limit-gib <RAM_LIMIT_GIB>  RAM ceiling, in GiB, for SSHash's external minimizer sort; a
+                                       smaller value spills to disk sooner, and 0 means no limit.
+                                       Unset, it is half of the memory this process may use (the
+                                       smallest of physical RAM, RLIMIT_AS and the cgroup limit),
+                                       but at least 8 GiB, or all of it if less is usable; 8 GiB if
+                                       memory cannot be detected

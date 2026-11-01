@@ -1,0 +1,10 @@
+
+[index] k-mer length: 31
+[index] number of targets: 10
+[index] number of k-mers: 549
+[quant] running in paired-end mode
+[quant] will process sample 1: /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/small_R1.fastq.gz
+                               /home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/smoke/small_R2.fastq.gz
+[quant] finding pseudoalignments for the reads ... done
+[quant] processed 2,000 reads, 27 reads pseudoaligned
+

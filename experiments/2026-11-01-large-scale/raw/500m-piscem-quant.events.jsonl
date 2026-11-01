@@ -1,0 +1,11 @@
+{"seconds": 0.010621157940477133, "line": "2026-11-01 06:27:54 INFO quantifying from collated RAD file File { fd: 5, path: \"/home/grant/Desktop/programming/constellation/benchdata/large-scale-2026-11-01/work/500m-piscem/collation/map.collated.rad\", read: true, write: false }"}
+{"seconds": 0.03976483503356576, "line": "2026-11-01 06:27:55 INFO record type is standard short read single-cell RNA-seq"}
+{"seconds": 0.039786554872989655, "line": "2026-11-01 06:27:55 INFO paired : false, ref_count : 276,935, num_chunks : 11,769"}
+{"seconds": 0.10553111508488655, "line": "2026-11-01 06:27:55 INFO tg-map contained 58,395 genes mapping to 276,935 transcripts."}
+{"seconds": 0.10802173428237438, "line": "2026-11-01 06:27:55 INFO read 3 file-level tags"}
+{"seconds": 0.10803289385512471, "line": "2026-11-01 06:27:55 INFO read 2 read-level tags"}
+{"seconds": 0.10803958401083946, "line": "2026-11-01 06:27:55 INFO read 1 alignemnt-level tags"}
+{"seconds": 0.10804849397391081, "line": "2026-11-01 06:27:55 INFO File-level tag values TagMap { keys: [TagDesc { name: \"cblen\", typeid: Int(U16), role: None }, TagDesc { name: \"ulen\", typeid: Int(U16), role: None }, TagDesc { name: \"known_rad_type\", typeid: String, role: None }], dat: [U16(16), U16(12), String(\"sc_rna_basic\")] }"}
+{"seconds": 0.11329935910180211, "line": "2026-11-01 06:27:55 INFO parallel RAD reader: 4 readers over 11769 chunks (codec: none)"}
+{"seconds": 8.02347255218774, "line": "2026-11-01 06:28:02 INFO wrote streamed count matrix: 46,219,176 nonzeros"}
+{"seconds": 8.026807741262019, "line": "2026-11-01 06:28:03 INFO processed 362,883,086 total read records"}

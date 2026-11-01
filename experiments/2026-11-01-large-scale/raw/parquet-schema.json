@@ -1,0 +1,29 @@
+{
+  "directory": "benchdata/large-scale-2026-11-01/matrices",
+  "files": "{100,500}m-{ours-count,ours-usa,piscem-count,kallisto-count}-{S,U,A}.parquet",
+  "columns": {
+    "gene_id": "uint32, zero-based index into canonical genes",
+    "cell_id": "uint32, zero-based index into canonical cells",
+    "count": "uint64, positive integer molecule count"
+  },
+  "axes": {
+    "genes": {
+      "path": "experiments/2026-11-01-competitor-stages/raw/canonical-genes.json",
+      "entries": 58395
+    },
+    "cells": {
+      "path": "experiments/2026-11-01-competitor-stages/raw/canonical-cells.json",
+      "entries": 11769
+    }
+  },
+  "sort_order": [
+    "gene_id",
+    "cell_id"
+  ],
+  "implicit_zeros": true,
+  "states": {
+    "S": "spliced",
+    "U": "unspliced",
+    "A": "ambiguous (including unresolved state diagnostics in Constellation)"
+  }
+}
