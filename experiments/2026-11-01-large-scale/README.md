@@ -21,6 +21,10 @@ optional additional counting policies.
 [Vector SVG](figures/pipeline_runtime.svg). Counting is hatched; panels use
 independent linear time axes. The USA row reuses the same Constellation mapping.
 
+For sharing: [runtime versus read count (PNG)](figures/runtime_vs_read_pairs.png)
+or [vector SVG](figures/runtime_vs_read_pairs.svg). This line chart uses the
+conservative Constellation workflow and only the two measured input sizes.
+
 | Pairs | Workflow | Mapping | Counting | Combined | Peak pipeline RSS |
 |---|---|---:|---:|---:|---:|
 | 100M | Constellation, conservative | 44.70s | 13.28s | 57.98s | 4.27 GiB |
@@ -314,3 +318,9 @@ MPLCONFIGDIR=/tmp/constellation-mpl OPENBLAS_NUM_THREADS=1 \
   benchdata/comparison-2026-10-27/venv/bin/python experiments/2026-11-01-large-scale/plots.py
 python3 experiments/2026-11-01-large-scale/finalize.py
 ```
+
+For the separate 2000×1500 sharing figure, run `plot_scaling.py` with the same
+Python environment. It plots total native mapping/counting runtime against
+read-pair count for the three primary workflows. Only 100M and 500M are measured;
+lines connect those points. Values and the source hash are saved in
+[scaling-figure-data.json](raw/scaling-figure-data.json).

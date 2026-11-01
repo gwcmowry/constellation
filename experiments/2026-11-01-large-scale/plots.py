@@ -114,6 +114,9 @@ from these first tables; build costs are reported separately below.
 [Vector SVG]({prefix}figures/pipeline_runtime.svg). Hatched segments are counting;
 each panel has its own linear time axis. No error bars are implied by one run.
 
+For sharing: [runtime versus read count (PNG)]({prefix}figures/runtime_vs_read_pairs.png)
+or [vector SVG]({prefix}figures/runtime_vs_read_pairs.svg).
+
 {runtime_table(rows)}
 
 At 500M pairs, the conservative Constellation workflow is

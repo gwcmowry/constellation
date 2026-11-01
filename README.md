@@ -228,6 +228,9 @@ from these first tables; build costs are reported separately below.
 [Vector SVG](experiments/2026-11-01-large-scale/figures/pipeline_runtime.svg). Hatched segments are counting;
 each panel has its own linear time axis. No error bars are implied by one run.
 
+For sharing: [runtime versus read count (PNG)](experiments/2026-11-01-large-scale/figures/runtime_vs_read_pairs.png)
+or [vector SVG](experiments/2026-11-01-large-scale/figures/runtime_vs_read_pairs.svg).
+
 | Pairs | Workflow | Map (s) | Count (s) | Total (s) | Peak RSS (GiB) |
 |---|---|---:|---:|---:|---:|
 | 100M | Constellation · conservative | 44.70 | 13.28 | **57.98** | 4.27 |

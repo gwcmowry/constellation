@@ -1,0 +1,45 @@
+{
+  "source": "raw/summary.json",
+  "source_sha256": "317f56dc277297c4dea8df6256953918c02833265ad865cc897a4e5d7c27a823",
+  "runtime": "native mapping + complete native counting; prebuilt indexes",
+  "constellation_policy": "conservative intersection + directional UMI correction",
+  "series": {
+    "ours": {
+      "pairs": [
+        100000000,
+        500000000
+      ],
+      "seconds": [
+        57.97780628083274,
+        322.2502886294387
+      ]
+    },
+    "piscem": {
+      "pairs": [
+        100000000,
+        500000000
+      ],
+      "seconds": [
+        141.01696083974093,
+        742.6493493979797
+      ]
+    },
+    "kallisto": {
+      "pairs": [
+        100000000,
+        500000000
+      ],
+      "seconds": [
+        406.49943504761904,
+        1533.781215309631
+      ]
+    }
+  },
+  "replicates": 1,
+  "intermediate_sizes_measured": false,
+  "output_pixels": [
+    2000,
+    1500
+  ],
+  "matplotlib_version": "3.10.7"
+}

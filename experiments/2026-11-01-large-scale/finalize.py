@@ -19,6 +19,10 @@ optional additional counting policies.
 [Vector SVG](figures/pipeline_runtime.svg). Counting is hatched; panels use
 independent linear time axes. The USA row reuses the same Constellation mapping.
 
+For sharing: [runtime versus read count (PNG)](figures/runtime_vs_read_pairs.png)
+or [vector SVG](figures/runtime_vs_read_pairs.svg). This line chart uses the
+conservative Constellation workflow and only the two measured input sizes.
+
 | Pairs | Workflow | Mapping | Counting | Combined | Peak pipeline RSS |
 |---|---|---:|---:|---:|---:|
 '''
